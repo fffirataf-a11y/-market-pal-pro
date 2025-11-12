@@ -1,3 +1,6 @@
+/* stylelint-disable */
+/* postcss-bem-linter: ignore */
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -55,19 +58,12 @@ All colors MUST be HSL.
     --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
 
     --sidebar-background: 0 0% 98%;
-
     --sidebar-foreground: 240 5.3% 26.1%;
-
     --sidebar-primary: 240 5.9% 10%;
-
     --sidebar-primary-foreground: 0 0% 98%;
-
     --sidebar-accent: 240 4.8% 95.9%;
-
     --sidebar-accent-foreground: 240 5.9% 10%;
-
     --sidebar-border: 220 13% 91%;
-
     --sidebar-ring: 217.2 91.2% 59.8%;
   }
 
@@ -164,4 +160,47 @@ All colors MUST be HSL.
   .shadow-elevated {
     box-shadow: var(--shadow-lg);
   }
+}
+
+/* ============================================ */
+/* Barkod Tarayıcı Animasyonu                  */
+/* ============================================ */
+@keyframes scan-line {
+  0% {
+    top: 10%;
+    opacity: 0;
+    transform: scaleY(0);
+  }
+  10% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  90% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+  100% {
+    top: 90%;
+    opacity: 0;
+    transform: scaleY(0);
+  }
+}
+
+@keyframes scan-pulse {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+.animate-scan-line {
+  animation: scan-line 2s ease-in-out infinite;
+}
+
+.animate-scan-pulse {
+  animation: scan-pulse 1.5s ease-in-out infinite;
 }

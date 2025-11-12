@@ -1,0 +1,226 @@
+{
+  "common": {
+    "success": "성공",
+    "error": "오류",
+    "loading": "로드 중...",
+    "save": "저장",
+    "cancel": "취소",
+    "delete": "삭제",
+    "edit": "편집",
+    "add": "추가",
+    "search": "검색",
+    "back": "뒤로",
+    "and": "및"
+  },
+  "nav": {
+    "myLists": "내 목록",
+    "scanner": "스캐너",
+    "aiChef": "AI 셰프",
+    "settings": "설정"
+  },
+  "welcome": {
+    "next": "다음",
+    "skip": "건너뛰기",
+    "getStarted": "시작하기",
+    "step1": {
+      "title": "스마트 쇼핑 목록",
+      "description": "쇼핑 목록을 쉽고 빠르게 관리하세요."
+    },
+    "step2": {
+      "title": "놓치지 마세요",
+      "description": "쇼핑하면서 항목을 체크하고 정리하세요."
+    },
+    "step3": {
+      "title": "함께 쇼핑하기",
+      "description": "가족 및 친구와 실시간으로 목록을 공유하세요."
+    },
+    "step4": {
+      "title": "AI 레시피 도우미",
+      "description": "AI가 개인 맞춤 레시피를 제안합니다."
+    }
+  },
+  "lists": {
+    "title": "쇼핑 목록",
+    "myLists": "내 목록",
+    "sharedLists": "공유 목록",
+    "weeklyGroceries": "주간 장보기",
+    "inviteFriends": "친구를 초대하여 함께 사용하세요",
+    "shareList": "목록 공유",
+    "addItem": "항목 추가",
+    "addedBy": "추가한 사람",
+    "addedByYou": "목록에 추가됨",
+    "itemName": "항목 이름",
+    "quantity": "수량",
+    "noSharedLists": "공유된 목록이 없습니다",
+    "inviteToList": "목록에 초대",
+    "inviteByEmail": "이메일로 초대",
+    "inviteByLink": "링크로 공유",
+    "managePermissions": "권한 관리",
+    "owner": "소유자",
+    "canEdit": "편집 가능",
+    "canView": "보기만 가능",
+    "done": "완료",
+    "categories": {
+      "Fruits": "과일",
+      "Vegetables": "채소",
+      "Dairy": "유제품",
+      "Bakery": "베이커리",
+      "Meat": "육류",
+      "Seafood": "해산물",
+      "Beverages": "음료",
+      "Snacks": "간식",
+      "Cleaning": "청소용품",
+      "Personal Care": "개인 관리",
+      "Baby Care": "유아용품",
+      "Pet Care": "반려동물",
+      "Household": "생활용품",
+      "Frozen": "냉동식품",
+      "Canned": "통조림",
+      "Grains": "곡물 및 파스타",
+      "Condiments": "조미료",
+      "Other": "기타"
+    }
+  },
+  "auth": {
+    "login": "로그인",
+    "loginSubtitle": "계정에 로그인",
+    "signUp": "회원가입",
+    "signUpSubtitle": "계정을 생성하세요",
+    "email": "이메일",
+    "password": "비밀번호",
+    "fullName": "이름",
+    "alreadyHaveAccount": "이미 계정이 있으신가요?",
+    "dontHaveAccount": "계정이 없으신가요?"
+  },
+  "scanner": {
+    "title": "바코드 스캐너",
+    "scanProduct": "제품 스캔",
+    "scan": "스캔",
+    "scanWithCamera": "카메라로 스캔",
+    "enterManually": "직접 입력",
+    "addToList": "목록에 추가",
+    "productNotFound": "제품을 찾을 수 없습니다"
+  },
+  "aichef": {
+    "title": "AI 셰프",
+    "recipeGenerator": "레시피 생성기",
+    "cookingIdeas": "요리 아이디어",
+    "generateRecipe": "레시피 만들기",
+    "getCookingIdeas": "아이디어 받기",
+    "ingredients": "재료",
+    "servings": "인분"
+  },
+  "ads": {
+    "rewardedTitle": "추가 기능을 위해 광고 시청",
+    "rewardedDescription": "무료 플랜 사용자에게 곧 짧은 광고 시청 보너스를 제공합니다.",
+    "watch": "광고 영역 미리보기",
+    "loading": "준비 중...",
+    "completed": "미리보기 완료. 실제 광고는 SDK를 통합하세요.",
+    "lastPlayed": "마지막 시뮬레이션: {{time}}",
+    "rewardToastTitle": "광고 영역 준비 완료",
+    "rewardToastDescription": "이것은 미리보기입니다. 광고 파트너 SDK를 연결하세요."
+  },
+  "settings": {
+    "title": "설정",
+    "viewProfile": "프로필 보기",
+    "preferences": "환경 설정",
+    "language": "언어",
+    "theme": "테마",
+    "lightMode": "라이트 모드",
+    "darkMode": "다크 모드",
+    "notifications": "알림",
+    "notificationsDesc": "업데이트와 알림을 받으세요",
+    "contactUs": "문의하기",
+    "contactDescription": "제안, 불만 또는 광고 제휴는 이메일로 문의하세요.",
+    "sendEmail": "이메일 보내기",
+    "appSettings": "앱 설정",
+    "clearCache": "캐시 삭제",
+    "logout": "로그아웃",
+    "subscription": {
+      "title": "구독 플랜",
+      "free": "무료",
+      "premium": "프리미엄",
+      "pro": "프로",
+      "perMonth": "/월",
+      "current": "현재",
+      "manage": "관리",
+      "items": "{{count}}개 항목",
+      "unlimited": "무제한 항목"
+    }
+  },
+  "subscription": {
+    "title": "구독 플랜",
+    "upgrade": "프리미엄으로 업그레이드",
+    "monthly": "월간",
+    "yearly": "연간",
+    "monthlyUsage": "월간 사용량",
+    "upgradeForMore": "더 많은 기능을 위해 업그레이드",
+    "totalActions": "총 작업",
+    "remaining": "남음",
+    "unlimited": "무제한",
+    "used": "사용됨",
+    "today": "오늘",
+    "dailyLeft": "오늘 남은 작업",
+    "daysLeft": "남은 일수",
+    "unlimitedAccess": "무제한 액세스",
+    "detailedStats": "상세 통계",
+    "viewReports": "보고서 보기",
+    "trialDaysLeft": "체험 기간 {{days}}일 남음",
+    "trialExpired": "체험 기간이 종료되었습니다",
+    "dailyActionsLeft": "오늘 남은 작업 {{count}}건",
+    "unlimitedActions": "무제한 작업",
+    "free": {
+      "name": "무료 체험",
+      "price": "$0.00",
+      "dailyLimit": "하루 10회",
+      "features": [
+        "7일 무료 체험",
+        "하루 10회 작업",
+        "AI 셰프 레시피",
+        "바코드 스캔",
+        "쇼핑 목록",
+        "최대 2명과 공유",
+        "초대 보너스: 초대당 +7일"
+      ]
+    },
+    "premium": {
+      "name": "프리미엄",
+      "price": "$4.99/월",
+      "yearlyPrice": "$54.99/년",
+      "yearlySavings": "연간 플랜으로 $4.89 절약",
+      "dailyLimit": "하루 30회",
+      "features": [
+        "하루 30회 작업",
+        "체험 기간 제한 없음",
+        "AI 셰프 레시피",
+        "바코드 스캔",
+        "쇼핑 목록",
+        "공유 기능",
+        "광고 없는 경험",
+        "우선 지원",
+        "고급 AI 추천",
+        "주간 영양 보고서"
+      ]
+    },
+    "pro": {
+      "name": "프로",
+      "price": "$8.99/월",
+      "yearlyPrice": "$98.99/년",
+      "yearlySavings": "연간 플랜으로 $8.89 절약",
+      "dailyLimit": "무제한 작업",
+      "features": [
+        "무제한 작업",
+        "체험 기간 제한 없음",
+        "무제한 AI 레시피",
+        "무제한 스캔",
+        "무제한 목록",
+        "무제한 공유",
+        "광고 없음",
+        "우선 지원",
+        "고급 AI 추천",
+        "새로운 기능 선공개"
+      ]
+    }
+  }
+}
+

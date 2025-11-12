@@ -1,0 +1,226 @@
+{
+  "common": {
+    "success": "Erfolg",
+    "error": "Fehler",
+    "loading": "Wird geladen...",
+    "save": "Speichern",
+    "cancel": "Abbrechen",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "add": "Hinzufügen",
+    "search": "Suchen",
+    "back": "Zurück",
+    "and": "und"
+  },
+  "nav": {
+    "myLists": "Meine Listen",
+    "scanner": "Scanner",
+    "aiChef": "KI-Koch",
+    "settings": "Einstellungen"
+  },
+  "welcome": {
+    "next": "Weiter",
+    "skip": "Überspringen",
+    "getStarted": "Jetzt starten",
+    "step1": {
+      "title": "Intelligente Einkaufslisten",
+      "description": "Erstelle und verwalte deine Einkaufslisten ganz einfach."
+    },
+    "step2": {
+      "title": "Nichts vergessen",
+      "description": "Hake Artikel beim Einkaufen ab und bleibe organisiert."
+    },
+    "step3": {
+      "title": "Gemeinsam einkaufen",
+      "description": "Teile Listen in Echtzeit mit Familie und Freunden."
+    },
+    "step4": {
+      "title": "KI-Rezeptassistent",
+      "description": "Erhalte personalisierte Rezeptideen mit KI-Unterstützung."
+    }
+  },
+  "lists": {
+    "title": "Einkaufslisten",
+    "myLists": "Meine Listen",
+    "sharedLists": "Geteilte Listen",
+    "weeklyGroceries": "Wöchentliche Einkäufe",
+    "inviteFriends": "Lade Freunde zur gemeinsamen Nutzung ein",
+    "shareList": "Liste teilen",
+    "addItem": "Artikel hinzufügen",
+    "addedBy": "Hinzugefügt von",
+    "addedByYou": "zur Liste hinzugefügt",
+    "itemName": "Artikelname",
+    "quantity": "Menge",
+    "noSharedLists": "Keine geteilten Listen",
+    "inviteToList": "Zur Liste einladen",
+    "inviteByEmail": "Per E-Mail einladen",
+    "inviteByLink": "Per Link einladen",
+    "managePermissions": "Berechtigungen verwalten",
+    "owner": "Eigentümer",
+    "canEdit": "Kann bearbeiten",
+    "canView": "Kann ansehen",
+    "done": "Fertig",
+    "categories": {
+      "Fruits": "Obst",
+      "Vegetables": "Gemüse",
+      "Dairy": "Milchprodukte",
+      "Bakery": "Bäckerei",
+      "Meat": "Fleisch",
+      "Seafood": "Meeresfrüchte",
+      "Beverages": "Getränke",
+      "Snacks": "Snacks",
+      "Cleaning": "Reinigungsmittel",
+      "Personal Care": "Körperpflege",
+      "Baby Care": "Babypflege",
+      "Pet Care": "Tierbedarf",
+      "Household": "Haushaltswaren",
+      "Frozen": "Tiefkühlkost",
+      "Canned": "Konserven",
+      "Grains": "Getreide & Pasta",
+      "Condiments": "Gewürze & Soßen",
+      "Other": "Andere"
+    }
+  },
+  "auth": {
+    "login": "Anmelden",
+    "loginSubtitle": "Melde dich in deinem Konto an",
+    "signUp": "Registrieren",
+    "signUpSubtitle": "Erstelle dein Konto",
+    "email": "E-Mail",
+    "password": "Passwort",
+    "fullName": "Vollständiger Name",
+    "alreadyHaveAccount": "Du hast bereits ein Konto?",
+    "dontHaveAccount": "Noch kein Konto?"
+  },
+  "scanner": {
+    "title": "Barcode-Scanner",
+    "scanProduct": "Produkt scannen",
+    "scan": "Scannen",
+    "scanWithCamera": "Mit Kamera scannen",
+    "enterManually": "Manuell eingeben",
+    "addToList": "Zur Liste hinzufügen",
+    "productNotFound": "Produkt nicht gefunden"
+  },
+  "aichef": {
+    "title": "KI-Koch",
+    "recipeGenerator": "Rezepterstellung",
+    "cookingIdeas": "Kochideen",
+    "generateRecipe": "Rezept erstellen",
+    "getCookingIdeas": "Kochideen erhalten",
+    "ingredients": "Zutaten",
+    "servings": "Portionen"
+  },
+  "ads": {
+    "rewardedTitle": "Anzeige ansehen und Extras erhalten",
+    "rewardedDescription": "Gratisnutzer können bald eine kurze Videoanzeige ansehen und Boni erhalten.",
+    "watch": "Anzeigenplatz ansehen",
+    "loading": "Wird vorbereitet...",
+    "completed": "Vorschau abgeschlossen. Integriere den Produktions-SDK für echte Anzeigen.",
+    "lastPlayed": "Letzte simulierte Anzeige: {{time}}",
+    "rewardToastTitle": "Anzeigenplatz bereit",
+    "rewardToastDescription": "Dies ist nur eine Vorschau. Verbinde deinen Anzeigenpartner-SDK für echte Ausspielungen."
+  },
+  "settings": {
+    "title": "Einstellungen",
+    "viewProfile": "Profil anzeigen",
+    "preferences": "Einstellungen",
+    "language": "Sprache",
+    "theme": "Design",
+    "lightMode": "Heller Modus",
+    "darkMode": "Dunkler Modus",
+    "notifications": "Benachrichtigungen",
+    "notificationsDesc": "Erhalte Updates und Erinnerungen",
+    "contactUs": "Kontakt",
+    "contactDescription": "Hast du einen Vorschlag, eine Beschwerde oder Werbeanfrage? Schreib uns eine E-Mail.",
+    "sendEmail": "E-Mail senden",
+    "appSettings": "App-Einstellungen",
+    "clearCache": "Cache leeren",
+    "logout": "Abmelden",
+    "subscription": {
+      "title": "Abonnementpläne",
+      "free": "Kostenlos",
+      "premium": "Premium",
+      "pro": "Pro",
+      "perMonth": "/Monat",
+      "current": "Aktuell",
+      "manage": "Verwalten",
+      "items": "{{count}} Elemente",
+      "unlimited": "Unbegrenzte Elemente"
+    }
+  },
+  "subscription": {
+    "title": "Abonnementpläne",
+    "upgrade": "Upgrade auf Premium",
+    "monthly": "Monatlich",
+    "yearly": "Jährlich",
+    "monthlyUsage": "Monatliche Nutzung",
+    "upgradeForMore": "Upgrade für weitere Funktionen",
+    "totalActions": "Gesamte Aktionen",
+    "remaining": "verbleibend",
+    "unlimited": "Unbegrenzt",
+    "used": "genutzt",
+    "today": "Heute",
+    "dailyLeft": "Heute verbleibend",
+    "daysLeft": "Tage übrig",
+    "unlimitedAccess": "Unbegrenzter Zugriff",
+    "detailedStats": "Detaillierte Statistiken",
+    "viewReports": "Berichte anzeigen",
+    "trialDaysLeft": "{{days}} Tage verbleiben in der Testphase",
+    "trialExpired": "Testphase abgelaufen",
+    "dailyActionsLeft": "Heute verbleiben {{count}} Aktionen",
+    "unlimitedActions": "Unbegrenzte Aktionen",
+    "free": {
+      "name": "Kostenlose Testphase",
+      "price": "0,00 $",
+      "dailyLimit": "10 Aktionen/Tag",
+      "features": [
+        "7 Tage kostenlose Testphase",
+        "10 Aktionen pro Tag",
+        "KI-Kochrezepte",
+        "Barcode-Scanner",
+        "Einkaufslisten",
+        "Teilen mit 2 Personen",
+        "Bonus durch Einladungen"
+      ]
+    },
+    "premium": {
+      "name": "Premium",
+      "price": "4,99 $/Monat",
+      "yearlyPrice": "54,99 $/Jahr",
+      "yearlySavings": "Spare $4.89 mit dem Jahresplan",
+      "dailyLimit": "30 Aktionen/Tag",
+      "features": [
+        "30 Aktionen pro Tag",
+        "Keine Testzeitbegrenzung",
+        "KI-Kochrezepte",
+        "Barcode-Scanner",
+        "Einkaufslisten",
+        "Teilen",
+        "Werbefreie Erfahrung",
+        "Prioritäts-Support",
+        "Erweiterte KI-Empfehlungen",
+        "Wöchentliche Ernährungsberichte"
+      ]
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "8,99 $/Monat",
+      "yearlyPrice": "98,99 $/Jahr",
+      "yearlySavings": "Spare $8.89 mit dem Jahresplan",
+      "dailyLimit": "Unbegrenzte Aktionen",
+      "features": [
+        "Unbegrenzte Aktionen",
+        "Keine Testzeitbegrenzung",
+        "Unbegrenzte KI-Rezepte",
+        "Unbegrenztes Scannen",
+        "Unbegrenzte Listen",
+        "Unbegrenztes Teilen",
+        "Werbefrei",
+        "Prioritäts-Support",
+        "Erweiterte KI-Empfehlungen",
+        "Früher Zugriff auf neue Funktionen"
+      ]
+    }
+  }
+}
+

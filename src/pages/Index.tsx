@@ -1,9 +1,18 @@
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShoppingCart } from "lucide-react";
 
 const Index = () => {
   const navigate = useNavigate();
+
+  useEffect(() => {
+    const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
+    
+    if (hasSeenOnboarding === "true") {
+      navigate("/login");
+    }
+  }, [navigate]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background">

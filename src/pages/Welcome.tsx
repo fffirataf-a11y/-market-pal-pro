@@ -1,7 +1,8 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ChevronRight, ShoppingBag, Users, ChefHat, Check } from "lucide-react";
-import { useNavigate } from "react-router-dom";
 import welcomeHero from "@/assets/welcome-hero.png";
 import onboarding1 from "@/assets/onboarding-1.png";
 import onboarding2 from "@/assets/onboarding-2.png";
@@ -10,30 +11,31 @@ import onboarding3 from "@/assets/onboarding-3.png";
 const Welcome = () => {
   const [step, setStep] = useState(0);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const onboardingSteps = [
     {
       image: welcomeHero,
-      title: "Welcome to SmartMarket",
-      description: "Collaborate on shopping lists with friends and family, making shopping easier and more efficient.",
+      title: t('welcome.step1.title'),
+      description: t('welcome.step1.description'),
       icon: ShoppingBag,
     },
     {
       image: onboarding1,
-      title: "Organize Your Shopping",
-      description: "Create multiple lists, add items with smart search, and track everything in one place.",
+      title: t('welcome.step2.title'),
+      description: t('welcome.step2.description'),
       icon: Check,
     },
     {
       image: onboarding2,
-      title: "Shop Together",
-      description: "Share lists with friends and family. See real-time updates and avoid duplicate purchases.",
+      title: t('welcome.step3.title'),
+      description: t('welcome.step3.description'),
       icon: Users,
     },
     {
       image: onboarding3,
-      title: "AI Chef Assistant",
-      description: "Get recipe suggestions, generate ingredient lists, and discover creative cooking ideas.",
+      title: t('welcome.step4.title'),
+      description: t('welcome.step4.description'),
       icon: ChefHat,
     },
   ];
@@ -45,12 +47,17 @@ const Welcome = () => {
     if (step < onboardingSteps.length - 1) {
       setStep(step + 1);
     } else {
-      navigate("/auth");
+      handleGetStarted();
     }
   };
 
   const handleSkip = () => {
-    navigate("/auth");
+    handleGetStarted();
+  };
+
+  const handleGetStarted = () => {
+    localStorage.setItem("onboardingCompleted", "true");
+    navigate("/auth"); // Bu satırı güncelle
   };
 
   return (
@@ -105,7 +112,7 @@ const Welcome = () => {
               className="w-full h-14 text-base font-semibold"
               size="lg"
             >
-              {step < onboardingSteps.length - 1 ? "Next" : "Get Started"}
+              {step < onboardingSteps.length - 1 ? t('welcome.next') : t('welcome.getStarted')}
               <ChevronRight className="ml-2 h-5 w-5" />
             </Button>
 
@@ -116,7 +123,7 @@ const Welcome = () => {
                 className="w-full"
                 size="lg"
               >
-                Skip
+                {t('welcome.skip')}
               </Button>
             )}
           </div>

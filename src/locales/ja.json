@@ -1,0 +1,226 @@
+{
+  "common": {
+    "success": "成功",
+    "error": "エラー",
+    "loading": "読み込み中...",
+    "save": "保存",
+    "cancel": "キャンセル",
+    "delete": "削除",
+    "edit": "編集",
+    "add": "追加",
+    "search": "検索",
+    "back": "戻る",
+    "and": "と"
+  },
+  "nav": {
+    "myLists": "マイリスト",
+    "scanner": "スキャナー",
+    "aiChef": "AIシェフ",
+    "settings": "設定"
+  },
+  "welcome": {
+    "next": "次へ",
+    "skip": "スキップ",
+    "getStarted": "始める",
+    "step1": {
+      "title": "スマートな買い物リスト",
+      "description": "買い物リストを簡単に作成して管理できます。"
+    },
+    "step2": {
+      "title": "買い忘れゼロへ",
+      "description": "買い物中にチェックしてリストを管理しましょう。"
+    },
+    "step3": {
+      "title": "家族とシェア",
+      "description": "家族や友人とリアルタイムでリストを共有しましょう。"
+    },
+    "step4": {
+      "title": "AIレシピアシスタント",
+      "description": "AIがパーソナライズされたレシピを提案します。"
+    }
+  },
+  "lists": {
+    "title": "買い物リスト",
+    "myLists": "マイリスト",
+    "sharedLists": "共有リスト",
+    "weeklyGroceries": "週間買い物リスト",
+    "inviteFriends": "友達を招待して一緒に使いましょう",
+    "shareList": "リストを共有",
+    "addItem": "アイテムを追加",
+    "addedBy": "追加者",
+    "addedByYou": "リストに追加しました",
+    "itemName": "アイテム名",
+    "quantity": "数量",
+    "noSharedLists": "共有リストはありません",
+    "inviteToList": "リストに招待",
+    "inviteByEmail": "メールで招待",
+    "inviteByLink": "リンクを共有",
+    "managePermissions": "権限を管理",
+    "owner": "オーナー",
+    "canEdit": "編集可能",
+    "canView": "閲覧のみ",
+    "done": "完了",
+    "categories": {
+      "Fruits": "果物",
+      "Vegetables": "野菜",
+      "Dairy": "乳製品",
+      "Bakery": "パン・ベーカリー",
+      "Meat": "肉",
+      "Seafood": "魚介類",
+      "Beverages": "飲み物",
+      "Snacks": "スナック",
+      "Cleaning": "掃除用品",
+      "Personal Care": "パーソナルケア",
+      "Baby Care": "ベビー用品",
+      "Pet Care": "ペット用品",
+      "Household": "家庭用品",
+      "Frozen": "冷凍食品",
+      "Canned": "缶詰",
+      "Grains": "穀物・パスタ",
+      "Condiments": "調味料",
+      "Other": "その他"
+    }
+  },
+  "auth": {
+    "login": "ログイン",
+    "loginSubtitle": "アカウントにログイン",
+    "signUp": "新規登録",
+    "signUpSubtitle": "アカウントを作成",
+    "email": "メールアドレス",
+    "password": "パスワード",
+    "fullName": "氏名",
+    "alreadyHaveAccount": "すでにアカウントがありますか？",
+    "dontHaveAccount": "アカウントをお持ちでないですか？"
+  },
+  "scanner": {
+    "title": "バーコードスキャナー",
+    "scanProduct": "商品をスキャン",
+    "scan": "スキャン",
+    "scanWithCamera": "カメラでスキャン",
+    "enterManually": "手入力",
+    "addToList": "リストに追加",
+    "productNotFound": "商品が見つかりません"
+  },
+  "aichef": {
+    "title": "AIシェフ",
+    "recipeGenerator": "レシピ生成",
+    "cookingIdeas": "料理アイデア",
+    "generateRecipe": "レシピを作成",
+    "getCookingIdeas": "アイデアを取得",
+    "ingredients": "材料",
+    "servings": "人数"
+  },
+  "ads": {
+    "rewardedTitle": "追加機能のために広告を見る",
+    "rewardedDescription": "無料プランのユーザーは広告視聴でボーナスを獲得できます。",
+    "watch": "広告枠をプレビュー",
+    "loading": "準備中...",
+    "completed": "プレビュー完了。本番広告にはSDKを統合してください。",
+    "lastPlayed": "最後のシミュレーション: {{time}}",
+    "rewardToastTitle": "広告枠の準備完了",
+    "rewardToastDescription": "これはプレビューです。広告パートナーのSDKを接続してください。"
+  },
+  "settings": {
+    "title": "設定",
+    "viewProfile": "プロフィールを見る",
+    "preferences": "環境設定",
+    "language": "言語",
+    "theme": "テーマ",
+    "lightMode": "ライトモード",
+    "darkMode": "ダークモード",
+    "notifications": "通知",
+    "notificationsDesc": "更新とリマインダーを受け取ります",
+    "contactUs": "お問い合わせ",
+    "contactDescription": "ご意見・ご要望・広告提携はメールでご連絡ください。",
+    "sendEmail": "メールを送信",
+    "appSettings": "アプリ設定",
+    "clearCache": "キャッシュをクリア",
+    "logout": "ログアウト",
+    "subscription": {
+      "title": "サブスクリプションプラン",
+      "free": "無料",
+      "premium": "プレミアム",
+      "pro": "プロ",
+      "perMonth": "/月",
+      "current": "現在",
+      "manage": "管理",
+      "items": "{{count}} 件",
+      "unlimited": "無制限の項目"
+    }
+  },
+  "subscription": {
+    "title": "サブスクリプションプラン",
+    "upgrade": "プレミアムにアップグレード",
+    "monthly": "月額",
+    "yearly": "年額",
+    "monthlyUsage": "月間利用状況",
+    "upgradeForMore": "さらに多くの機能のためにアップグレード",
+    "totalActions": "合計アクション",
+    "remaining": "残り",
+    "unlimited": "無制限",
+    "used": "使用済み",
+    "today": "今日",
+    "dailyLeft": "今日の残り",
+    "daysLeft": "残り日数",
+    "unlimitedAccess": "無制限アクセス",
+    "detailedStats": "詳細統計",
+    "viewReports": "レポートを表示",
+    "trialDaysLeft": "試用期間残り {{days}} 日",
+    "trialExpired": "試用期間が終了しました",
+    "dailyActionsLeft": "本日残り {{count}} アクション",
+    "unlimitedActions": "無制限のアクション",
+    "free": {
+      "name": "無料トライアル",
+      "price": "$0.00",
+      "dailyLimit": "1日10アクション",
+      "features": [
+        "7日間の無料トライアル",
+        "1日10アクション",
+        "AIシェフのレシピ",
+        "バーコードスキャン",
+        "買い物リスト",
+        "最大2名と共有",
+        "招待ボーナス: 招待ごとに+7日"
+      ]
+    },
+    "premium": {
+      "name": "プレミアム",
+      "price": "$4.99/月",
+      "yearlyPrice": "$54.99/年",
+      "yearlySavings": "年額プランで$4.89お得",
+      "dailyLimit": "1日30アクション",
+      "features": [
+        "1日30アクション",
+        "試用期間の制限なし",
+        "AIシェフのレシピ",
+        "バーコードスキャン",
+        "買い物リスト",
+        "共有機能",
+        "広告なし",
+        "優先サポート",
+        "高度なAIおすすめ",
+        "週間栄養レポート"
+      ]
+    },
+    "pro": {
+      "name": "プロ",
+      "price": "$8.99/月",
+      "yearlyPrice": "$98.99/年",
+      "yearlySavings": "年額プランで$8.89お得",
+      "dailyLimit": "無制限のアクション",
+      "features": [
+        "無制限のアクション",
+        "試用期間の制限なし",
+        "無制限のAIレシピ",
+        "無制限のスキャン",
+        "無制限のリスト",
+        "無制限の共有",
+        "広告なし",
+        "優先サポート",
+        "高度なAIおすすめ",
+        "新機能への先行アクセス"
+      ]
+    }
+  }
+}
+

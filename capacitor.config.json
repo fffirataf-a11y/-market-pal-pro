@@ -1,0 +1,13 @@
+{
+    "appId": "com.smartmarket.app",
+    "appName": "SmartMarket",
+    "webDir": "dist",
+    "server": {
+      "androidScheme": "https"
+    },
+    "plugins": {
+      "PurchasesPlugin": {
+        "apiKey": "test_nwXexLeAzfEaJLJyaBbAKLKNSWH"
+      }
+    }
+  }

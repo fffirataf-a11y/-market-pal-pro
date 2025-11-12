@@ -1,0 +1,226 @@
+{
+  "common": {
+    "success": "Succès",
+    "error": "Erreur",
+    "loading": "Chargement...",
+    "save": "Enregistrer",
+    "cancel": "Annuler",
+    "delete": "Supprimer",
+    "edit": "Modifier",
+    "add": "Ajouter",
+    "search": "Rechercher",
+    "back": "Retour",
+    "and": "et"
+  },
+  "nav": {
+    "myLists": "Mes listes",
+    "scanner": "Scanner",
+    "aiChef": "Chef IA",
+    "settings": "Paramètres"
+  },
+  "welcome": {
+    "next": "Suivant",
+    "skip": "Passer",
+    "getStarted": "Commencer",
+    "step1": {
+      "title": "Listes de courses intelligentes",
+      "description": "Créez et gérez vos listes de courses facilement."
+    },
+    "step2": {
+      "title": "N'oubliez plus rien",
+      "description": "Cochez les articles pendant vos achats pour rester organisé."
+    },
+    "step3": {
+      "title": "Faites vos courses ensemble",
+      "description": "Partagez vos listes en temps réel avec vos proches."
+    },
+    "step4": {
+      "title": "Assistant de recettes IA",
+      "description": "Recevez des idées de recettes personnalisées grâce à l'IA."
+    }
+  },
+  "lists": {
+    "title": "Listes de courses",
+    "myLists": "Mes listes",
+    "sharedLists": "Listes partagées",
+    "weeklyGroceries": "Courses hebdomadaires",
+    "inviteFriends": "Invitez vos amis à collaborer",
+    "shareList": "Partager la liste",
+    "addItem": "Ajouter un article",
+    "addedBy": "Ajouté par",
+    "addedByYou": "ajouté à la liste",
+    "itemName": "Nom de l'article",
+    "quantity": "Quantité",
+    "noSharedLists": "Aucune liste partagée",
+    "inviteToList": "Inviter à la liste",
+    "inviteByEmail": "Inviter par e-mail",
+    "inviteByLink": "Inviter via un lien",
+    "managePermissions": "Gérer les autorisations",
+    "owner": "Propriétaire",
+    "canEdit": "Peut modifier",
+    "canView": "Peut voir",
+    "done": "Terminé",
+    "categories": {
+      "Fruits": "Fruits",
+      "Vegetables": "Légumes",
+      "Dairy": "Produits laitiers",
+      "Bakery": "Boulangerie",
+      "Meat": "Viande",
+      "Seafood": "Produits de la mer",
+      "Beverages": "Boissons",
+      "Snacks": "Snacks",
+      "Cleaning": "Produits d'entretien",
+      "Personal Care": "Soin personnel",
+      "Baby Care": "Puériculture",
+      "Pet Care": "Animaux domestiques",
+      "Household": "Maison",
+      "Frozen": "Surgelés",
+      "Canned": "Conserves",
+      "Grains": "Céréales & pâtes",
+      "Condiments": "Condiments & sauces",
+      "Other": "Autre"
+    }
+  },
+  "auth": {
+    "login": "Connexion",
+    "loginSubtitle": "Connectez-vous à votre compte",
+    "signUp": "Inscription",
+    "signUpSubtitle": "Créez votre compte",
+    "email": "E-mail",
+    "password": "Mot de passe",
+    "fullName": "Nom complet",
+    "alreadyHaveAccount": "Vous avez déjà un compte ?",
+    "dontHaveAccount": "Pas encore de compte ?"
+  },
+  "scanner": {
+    "title": "Scanner de codes-barres",
+    "scanProduct": "Scanner un produit",
+    "scan": "Scanner",
+    "scanWithCamera": "Scanner avec la caméra",
+    "enterManually": "Saisir manuellement",
+    "addToList": "Ajouter à la liste",
+    "productNotFound": "Produit introuvable"
+  },
+  "aichef": {
+    "title": "Chef IA",
+    "recipeGenerator": "Générateur de recettes",
+    "cookingIdeas": "Idées de cuisine",
+    "generateRecipe": "Créer une recette",
+    "getCookingIdeas": "Obtenir des idées",
+    "ingredients": "Ingrédients",
+    "servings": "Portions"
+  },
+  "ads": {
+    "rewardedTitle": "Regardez une pub pour débloquer plus",
+    "rewardedDescription": "Les utilisateurs du plan gratuit pourront bientôt regarder une courte vidéo et gagner des bonus.",
+    "watch": "Prévisualiser l'espace pub",
+    "loading": "Préparation...",
+    "completed": "Prévisualisation terminée. Intégrez le SDK de production pour les vraies annonces.",
+    "lastPlayed": "Dernière annonce simulée : {{time}}",
+    "rewardToastTitle": "Emplacement publicitaire prêt",
+    "rewardToastDescription": "Ceci est une prévisualisation. Connectez votre partenaire pub pour diffuser de vraies annonces."
+  },
+  "settings": {
+    "title": "Paramètres",
+    "viewProfile": "Voir le profil",
+    "preferences": "Préférences",
+    "language": "Langue",
+    "theme": "Thème",
+    "lightMode": "Mode clair",
+    "darkMode": "Mode sombre",
+    "notifications": "Notifications",
+    "notificationsDesc": "Recevez des mises à jour et des rappels",
+    "contactUs": "Contactez-nous",
+    "contactDescription": "Suggestion, plainte ou partenariat publicitaire ? Envoyez-nous un e-mail.",
+    "sendEmail": "Envoyer un e-mail",
+    "appSettings": "Paramètres de l'application",
+    "clearCache": "Vider le cache",
+    "logout": "Déconnexion",
+    "subscription": {
+      "title": "Plans d'abonnement",
+      "free": "Gratuit",
+      "premium": "Premium",
+      "pro": "Pro",
+      "perMonth": "/mois",
+      "current": "Actuel",
+      "manage": "Gérer",
+      "items": "{{count}} éléments",
+      "unlimited": "Éléments illimités"
+    }
+  },
+  "subscription": {
+    "title": "Plans d'abonnement",
+    "upgrade": "Passer à Premium",
+    "monthly": "Mensuel",
+    "yearly": "Annuel",
+    "monthlyUsage": "Utilisation mensuelle",
+    "upgradeForMore": "Passez à l'offre supérieure",
+    "totalActions": "actions au total",
+    "remaining": "restant",
+    "unlimited": "Illimité",
+    "used": "utilisé",
+    "today": "Aujourd'hui",
+    "dailyLeft": "Restant aujourd'hui",
+    "daysLeft": "Jours restants",
+    "unlimitedAccess": "Accès illimité",
+    "detailedStats": "Statistiques détaillées",
+    "viewReports": "Voir les rapports",
+    "trialDaysLeft": "{{days}} jours restants dans l'essai",
+    "trialExpired": "Essai expiré",
+    "dailyActionsLeft": "{{count}} actions restantes aujourd'hui",
+    "unlimitedActions": "Actions illimitées",
+    "free": {
+      "name": "Essai gratuit",
+      "price": "0,00 $",
+      "dailyLimit": "10 actions/jour",
+      "features": [
+        "Essai gratuit de 7 jours",
+        "10 actions par jour",
+        "Recettes Chef IA",
+        "Scanner de codes-barres",
+        "Listes de courses",
+        "Partage avec 2 personnes",
+        "Bonus de parrainage"
+      ]
+    },
+    "premium": {
+      "name": "Premium",
+      "price": "4,99 $/mois",
+      "yearlyPrice": "54,99 $/an",
+      "yearlySavings": "Économisez 4,89 $ avec l'offre annuelle",
+      "dailyLimit": "30 actions/jour",
+      "features": [
+        "30 actions par jour",
+        "Pas de limite d'essai",
+        "Recettes Chef IA",
+        "Scanner de codes-barres",
+        "Listes de courses",
+        "Partage avancé",
+        "Expérience sans publicité",
+        "Support prioritaire",
+        "Recommandations IA avancées",
+        "Rapports nutritionnels hebdomadaires"
+      ]
+    },
+    "pro": {
+      "name": "Pro",
+      "price": "8,99 $/mois",
+      "yearlyPrice": "98,99 $/an",
+      "yearlySavings": "Économisez 8,89 $ avec l'offre annuelle",
+      "dailyLimit": "Actions illimitées",
+      "features": [
+        "Actions illimitées",
+        "Pas de limite d'essai",
+        "Recettes IA illimitées",
+        "Scan illimité",
+        "Listes illimitées",
+        "Partage illimité",
+        "Sans publicité",
+        "Support prioritaire",
+        "Recommandations IA avancées",
+        "Accès anticipé aux nouvelles fonctionnalités"
+      ]
+    }
+  }
+}
+
