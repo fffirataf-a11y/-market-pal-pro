@@ -37,7 +37,7 @@ const RewardedAdSlot = ({
 
     try {
       setStatus("loading");
-      await showRewardedAdPlaceholder({
+      await showRewardedAdPlaceholder(plan, {
         placement,
         onComplete: () => {
           setStatus("completed");

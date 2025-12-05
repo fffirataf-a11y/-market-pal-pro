@@ -8,6 +8,23 @@ export default defineConfig(({ mode }) => ({
     host: "::",
     port: 8080,
     // ✅ HTTPS'i kaldır - HTTP kullan
+    headers: {
+      'Cache-Control': 'no-cache, no-store, must-revalidate',
+    },
+  },
+  // Static assets için cache ayarları
+  build: {
+    rollupOptions: {
+      output: {
+        assetFileNames: (assetInfo) => {
+          // Icon dosyaları için cache busting
+          if (assetInfo.name && assetInfo.name.includes('icon')) {
+            return `assets/[name]-[hash][extname]`;
+          }
+          return `assets/[name]-[hash][extname]`;
+        },
+      },
+    },
   },
   plugins: [
     react(),

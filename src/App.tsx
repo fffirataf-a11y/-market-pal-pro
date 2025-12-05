@@ -13,8 +13,14 @@ import Scanner from "./pages/Scanner";
 import AIChef from "./pages/AIChef";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
-import { useState, useEffect } from "react";
-import { useRealtimeNotifications } from "@/hooks/useNotifications"; // ✅ EKLE
+import IconPreview from "./pages/IconPreview";
+import Checkout from "./pages/Checkout";
+import { useState, useEffect, useRef } from "react";
+import { useRealtimeNotifications } from "@/hooks/useNotifications";
+import { useSubscription } from "@/hooks/useSubscription";
+import { usePurchases } from "@/hooks/usePurchases";
+import { showAppOpenAd } from "@/lib/adManager";
+import { Capacitor } from "@capacitor/core";
 
 const queryClient = new QueryClient();
 
@@ -22,12 +28,31 @@ const App = () => {
   // ✅ Gerçek zamanlı notification dinleyici
   useRealtimeNotifications();
 
+  const { plan, upgradeToPremium, upgradeToPro } = useSubscription();
+  const { customerInfo, isLoading: purchasesLoading } = usePurchases();
+  const appOpenAdShown = useRef(false);
+
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem("userToken")
   );
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(
     localStorage.getItem("onboardingCompleted") === "true"
   );
+
+  // RevenueCat ile abonelik durumunu senkronize et
+  useEffect(() => {
+    if (!purchasesLoading && customerInfo) {
+      const entitlements = customerInfo.entitlements.active;
+
+      if (entitlements['pro'] && plan !== 'pro') {
+        console.log('🔄 Syncing subscription: Upgrading to PRO');
+        upgradeToPro();
+      } else if (entitlements['premium'] && plan !== 'premium' && plan !== 'pro') {
+        console.log('🔄 Syncing subscription: Upgrading to PREMIUM');
+        upgradeToPremium();
+      }
+    }
+  }, [customerInfo, purchasesLoading, plan, upgradeToPremium, upgradeToPro]);
 
   // localStorage değişikliklerini dinle
   useEffect(() => {
@@ -49,6 +74,24 @@ const App = () => {
       window.removeEventListener("auth-change", handleStorageChange);
     };
   }, []);
+
+  // App Open Ad - Uygulama açılışında göster (sadece free plan kullanıcılarına)
+  useEffect(() => {
+    // Sadece mobil platformlarda ve ilk açılışta göster
+    if (!Capacitor.isNativePlatform() || appOpenAdShown.current) {
+      return;
+    }
+
+    // Kısa bir gecikme ile göster (splash screen'den sonra)
+    const timer = setTimeout(() => {
+      if (!appOpenAdShown.current) {
+        appOpenAdShown.current = true;
+        showAppOpenAd(plan);
+      }
+    }, 1000); // 1 saniye gecikme
+
+    return () => clearTimeout(timer);
+  }, [plan]);
 
   return (
     <ErrorBoundary>
@@ -105,6 +148,18 @@ const App = () => {
                 <Route
                   path="/profile"
                   element={isAuthenticated ? <Profile /> : <Navigate to="/auth" replace />}
+                />
+
+                {/* Icon Preview - Public */}
+                <Route
+                  path="/icon-preview"
+                  element={<IconPreview />}
+                />
+
+                {/* Checkout - Protected */}
+                <Route
+                  path="/checkout"
+                  element={isAuthenticated ? <Checkout /> : <Navigate to="/auth" replace />}
                 />
 
                 <Route path="*" element={<Navigate to="/" replace />} />

@@ -9,15 +9,15 @@ interface UsePurchasesReturn {
   customerInfo: CustomerInfo | null;
   isLoading: boolean;
   error: string | null;
-  purchasePremium: () => Promise<boolean>;
-  purchasePro: () => Promise<boolean>;
+  purchasePremium: (period?: 'monthly' | 'yearly') => Promise<boolean>;
+  purchasePro: (period?: 'monthly' | 'yearly') => Promise<boolean>;
   restorePurchases: () => Promise<boolean>;
   checkActiveSubscription: () => 'free' | 'premium' | 'pro';
 }
 
 const REVENUECAT_API_KEY = {
-  ios: 'test_nwXexLeAzfEaJLJyaBbAKLKNSWH',
-  android: 'test_nwXexLeAzfEaJLJyaBbAKLKNSWH',
+  ios: 'appl_pMUUgJTRkfjqIQxitaAgTgSSBLV',
+  android: 'goog_VeKdfhekIaXDfJyinZIRpzlqHON',
 };
 
 export const usePurchases = (): UsePurchasesReturn => {
@@ -39,9 +39,6 @@ export const usePurchases = (): UsePurchasesReturn => {
         const platform = Capacitor.getPlatform();
         const apiKey = platform === 'ios' ? REVENUECAT_API_KEY.ios : REVENUECAT_API_KEY.android;
 
-        // RevenueCat'i başlat - görüntüdeki örneğe göre
-        // iOS için apikey (küçük), Android için apiKey (camelCase)
-        // Ancak RevenueCat Capacitor SDK her ikisi için de apiKey kullanır
         await Purchases.configure({ apiKey: apiKey });
         await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
 
@@ -57,30 +54,14 @@ export const usePurchases = (): UsePurchasesReturn => {
         console.log('📦 Available offerings:', offerings);
         console.log('👤 Customer info:', info);
 
-        // Premium ve Pro paketlerinin mevcut olup olmadığını kontrol et
-        if (offerings?.current) {
-          const premiumPackage = offerings.current.availablePackages.find(
-            (pkg) => pkg.identifier === 'premium_monthly'
-          );
-          const proPackage = offerings.current.availablePackages.find(
-            (pkg) => pkg.identifier === 'pro_monthly'
-          );
+        // Listener ekle
+        await Purchases.addCustomerInfoUpdateListener((info) => {
+          console.log('🔄 Customer Info Updated:', info);
+          setCustomerInfo(info);
+        });
 
-          if (premiumPackage) {
-            console.log('✅ Premium plan package found:', premiumPackage.identifier);
-          } else {
-            console.warn('⚠️ Premium plan package (premium_monthly) not found');
-          }
-
-          if (proPackage) {
-            console.log('✅ Pro plan package found:', proPackage.identifier);
-          } else {
-            console.warn('⚠️ Pro plan package (pro_monthly) not found');
-          }
-        }
-      } catch (err: any) {
-        console.error('❌ RevenueCat init error:', err);
-        setError(err.message || 'RevenueCat initialization failed');
+      } catch (err) {
+        console.error('RevenueCat init error:', err);
       }
     };
 
@@ -88,7 +69,7 @@ export const usePurchases = (): UsePurchasesReturn => {
   }, []);
 
   // Premium satın al
-  const purchasePremium = async (): Promise<boolean> => {
+  const purchasePremium = async (period: 'monthly' | 'yearly' = 'monthly'): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
@@ -102,22 +83,28 @@ export const usePurchases = (): UsePurchasesReturn => {
         throw new Error('Ürün bulunamadı');
       }
 
-      // Premium package'ı bul (identifier: premium_monthly)
+      // Premium package'ı bul
+      const identifier = period === 'monthly' ? 'premium_monthly' : 'premium_yearly';
       const premiumPackage = offering.availablePackages.find(
-        (pkg) => pkg.identifier === 'premium_monthly'
+        (pkg) => pkg.identifier === identifier
       );
 
       if (!premiumPackage) {
-        console.error('❌ Premium package not found. Available packages:', 
+        console.error(`❌ Premium package (${identifier}) not found. Available packages:`,
           offering.availablePackages.map(p => p.identifier));
         throw new Error('Premium paketi bulunamadı');
       }
 
-      console.log('🛒 Purchasing Premium plan:', premiumPackage.identifier);
+      // Heuristic check
+      if (period === 'yearly' && !premiumPackage.identifier.includes('yearly')) {
+        console.warn('⚠️ Warning: Requested YEARLY period but package identifier does not contain "yearly". Check RevenueCat configuration.');
+      }
 
-      // Satın alma işlemi
+      console.log(`🛒 Purchasing Premium plan (${period}):`, premiumPackage.identifier);
+      console.log(`🆔 Product ID:`, premiumPackage.product.identifier);
+
       const result = await Purchases.purchasePackage({ aPackage: premiumPackage });
-      
+
       console.log('📦 Purchase result:', result);
 
       if (result.customerInfo.entitlements.active['premium']) {
@@ -130,14 +117,14 @@ export const usePurchases = (): UsePurchasesReturn => {
       throw new Error('Satın alma başarısız - Premium entitlement aktif değil');
     } catch (err: any) {
       console.error('❌ Premium purchase error:', err);
-      setError(err.message || 'Premium plan satın alma başarısız');
+      setError(err.message);
       setIsLoading(false);
       return false;
     }
   };
 
   // Pro satın al
-  const purchasePro = async (): Promise<boolean> => {
+  const purchasePro = async (period: 'monthly' | 'yearly' = 'monthly'): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
 
@@ -151,22 +138,28 @@ export const usePurchases = (): UsePurchasesReturn => {
         throw new Error('Ürün bulunamadı');
       }
 
-      // Pro package'ı bul (identifier: pro_monthly)
+      // Pro package'ı bul
+      const identifier = period === 'monthly' ? 'pro_monthly' : 'pro_yearly';
       const proPackage = offering.availablePackages.find(
-        (pkg) => pkg.identifier === 'pro_monthly'
+        (pkg) => pkg.identifier === identifier
       );
 
       if (!proPackage) {
-        console.error('❌ Pro package not found. Available packages:', 
+        console.error(`❌ Pro package (${identifier}) not found. Available packages:`,
           offering.availablePackages.map(p => p.identifier));
         throw new Error('Pro paketi bulunamadı');
       }
 
-      console.log('🛒 Purchasing Pro plan:', proPackage.identifier);
+      // Heuristic check
+      if (period === 'yearly' && !proPackage.identifier.includes('yearly')) {
+        console.warn('⚠️ Warning: Requested YEARLY period but package identifier does not contain "yearly". Check RevenueCat configuration.');
+      }
 
-      // Satın alma işlemi
+      console.log(`🛒 Purchasing Pro plan (${period}):`, proPackage.identifier);
+      console.log(`🆔 Product ID:`, proPackage.product.identifier);
+
       const result = await Purchases.purchasePackage({ aPackage: proPackage });
-      
+
       console.log('📦 Purchase result:', result);
 
       if (result.customerInfo.entitlements.active['pro']) {
@@ -179,17 +172,16 @@ export const usePurchases = (): UsePurchasesReturn => {
       throw new Error('Satın alma başarısız - Pro entitlement aktif değil');
     } catch (err: any) {
       console.error('❌ Pro purchase error:', err);
-      setError(err.message || 'Pro plan satın alma başarısız');
+      setError(err.message);
       setIsLoading(false);
       return false;
     }
   };
 
-  // Satın almaları geri yükle
+  // Satın alımları geri yükle
   const restorePurchases = async (): Promise<boolean> => {
     setIsLoading(true);
     setError(null);
-
     try {
       if (!Capacitor.isNativePlatform()) {
         throw new Error('IAP sadece mobil platformlarda çalışır');
@@ -215,7 +207,7 @@ export const usePurchases = (): UsePurchasesReturn => {
 
     if (entitlements['pro']) return 'pro';
     if (entitlements['premium']) return 'premium';
-    
+
     return 'free';
   };
 

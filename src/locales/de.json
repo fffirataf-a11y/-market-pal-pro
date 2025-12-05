@@ -135,21 +135,12 @@
     "sendEmail": "E-Mail senden",
     "appSettings": "App-Einstellungen",
     "clearCache": "Cache leeren",
-    "logout": "Abmelden",
-    "subscription": {
-      "title": "Abonnementpläne",
-      "free": "Kostenlos",
-      "premium": "Premium",
-      "pro": "Pro",
-      "perMonth": "/Monat",
-      "current": "Aktuell",
-      "manage": "Verwalten",
-      "items": "{{count}} Elemente",
-      "unlimited": "Unbegrenzte Elemente"
-    }
+    "logout": "Abmelden"
   },
   "subscription": {
     "title": "Abonnementpläne",
+    "currentPlan": "Aktueller Plan",
+    "upgradeTo": "Upgrade auf {{plan}}",
     "upgrade": "Upgrade auf Premium",
     "monthly": "Monatlich",
     "yearly": "Jährlich",
@@ -221,6 +212,24 @@
         "Früher Zugriff auf neue Funktionen"
       ]
     }
+  },
+  "referral": {
+    "inviteFriend": "Invite Friend",
+    "earn2x": "+2x usage",
+    "title": "Invite Friends",
+    "subtitle": "Share your code and earn 2x daily limits",
+    "yourCode": "Your Referral Code",
+    "copy": "Copy Code",
+    "copied": "Copied!",
+    "howItWorks": "How It Works",
+    "step1": "Share your unique code",
+    "step2": "Friend signs up with your code",
+    "step3": "Both get 2x daily limits (5→10)",
+    "enterCode": "Have a referral code?",
+    "enterCodePlaceholder": "Enter code (optional)",
+    "apply": "Apply Code",
+    "success": "Referral code applied! You now have 2x daily limits!",
+    "invalid": "Invalid referral code",
+    "alreadyUsed": "You've already used a referral code"
   }
 }
-

@@ -4,6 +4,10 @@
 
 **URL**: https://lovable.dev/projects/aba28a19-3390-4883-9dfc-77a90729fade
 
+## Description
+
+**SmartMarket** - Alışveriş listelerinizi organize edin, arkadaşlarınızla paylaşın, barkod tarayın ve AI Chef ile tarif önerileri alın. İşbirlikçi alışveriş listeleri ve akıllı özelliklerle alışveriş deneyiminizi kolaylaştırın.
+
 ## How can I edit this code?
 
 There are several ways of editing your application.

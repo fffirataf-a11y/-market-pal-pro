@@ -135,21 +135,12 @@
     "sendEmail": "이메일 보내기",
     "appSettings": "앱 설정",
     "clearCache": "캐시 삭제",
-    "logout": "로그아웃",
-    "subscription": {
-      "title": "구독 플랜",
-      "free": "무료",
-      "premium": "프리미엄",
-      "pro": "프로",
-      "perMonth": "/월",
-      "current": "현재",
-      "manage": "관리",
-      "items": "{{count}}개 항목",
-      "unlimited": "무제한 항목"
-    }
+    "logout": "로그아웃"
   },
   "subscription": {
     "title": "구독 플랜",
+    "currentPlan": "현재 플랜",
+    "upgradeTo": "{{plan}}로 업그레이드",
     "upgrade": "프리미엄으로 업그레이드",
     "monthly": "월간",
     "yearly": "연간",
@@ -221,6 +212,24 @@
         "새로운 기능 선공개"
       ]
     }
+  },
+  "referral": {
+    "inviteFriend": "Invite Friend",
+    "earn2x": "+2x usage",
+    "title": "Invite Friends",
+    "subtitle": "Share your code and earn 2x daily limits",
+    "yourCode": "Your Referral Code",
+    "copy": "Copy Code",
+    "copied": "Copied!",
+    "howItWorks": "How It Works",
+    "step1": "Share your unique code",
+    "step2": "Friend signs up with your code",
+    "step3": "Both get 2x daily limits (5→10)",
+    "enterCode": "Have a referral code?",
+    "enterCodePlaceholder": "Enter code (optional)",
+    "apply": "Apply Code",
+    "success": "Referral code applied! You now have 2x daily limits!",
+    "invalid": "Invalid referral code",
+    "alreadyUsed": "You've already used a referral code"
   }
 }
-

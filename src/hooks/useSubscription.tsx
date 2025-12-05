@@ -1,50 +1,43 @@
-import { useState, useEffect } from 'react';
-import { doc, getDoc, updateDoc, increment } from 'firebase/firestore';
-import { db, auth } from '@/config/firebase';
+import { useState, useEffect, useCallback } from 'react';
+import { PlanType } from '../types/subscription';
+import { auth } from '../config/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
+import { doc, getDoc, setDoc, updateDoc, increment } from 'firebase/firestore';
+import { db } from '../config/firebase';
 
-export type PlanType = 'free' | 'premium' | 'pro';
-
-interface SubscriptionState {
+export interface SubscriptionState {
   plan: PlanType;
-  dailyLimit: number;
-  dailyUsed: number;
-  trialStartDate: string | null;
+  startDate?: string;
   trialEndDate: string | null;
   isTrialActive: boolean;
+  dailyLimit: number;
+  dailyUsed: number;
   lastResetDate: string;
-  hasReferral: boolean;
-  referralCode: string;
-  referralCount: number; // Kaç kişi davet etti
-  usedReferralCode: string | null;
-  promoCodeUsed: string | null;
-  hasUsedReferralButton: boolean; // Davet butonu kullanıldı mı?
+  referralCode?: string;
+  referredBy?: string;
+  referralCount: number;
+  bonusDays?: number;
+  hasUsedReferralButton: boolean;
+  adRewardCount: number; // Track rewarded ads watched today
+  trialStartDate?: string | null;
+  hasReferral?: boolean;
+  usedReferralCode?: string | null;
+  promoCodeUsed?: string | null;
 }
 
 const STORAGE_KEY_PREFIX = 'subscription_state_';
 
-// Kullanıcı ID'sine göre storage key oluştur
-const getStorageKey = (userId: string | null): string => {
-  if (!userId) {
-    return 'subscription_state_guest';
-  }
-  return `${STORAGE_KEY_PREFIX}${userId}`;
+const getStorageKey = (userId: string | null) => {
+  return userId ? `${STORAGE_KEY_PREFIX}${userId}` : 'subscription_state_guest';
 };
 
-// Generate unique referral code (longer and more random)
-const generateReferralCode = (): string => {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-  let code = 'SMART-';
-  // Generate 12 random characters for longer code
-  for (let i = 0; i < 12; i++) {
-    code += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-  return code;
+const generateReferralCode = () => {
+  return 'SMART-' + Math.random().toString(36).substring(2, 14).toUpperCase();
 };
 
-// Check if date needs reset
-const needsReset = (lastResetDate: string): boolean => {
-  const today = new Date().toDateString();
+// Helper to check if it's a new day
+const checkIfNewDay = (lastResetDate: string): boolean => {
+  const today = new Date().toISOString().split('T')[0];
   return lastResetDate !== today;
 };
 
@@ -65,7 +58,7 @@ const isTrialStillActive = (trialEndDate: string | null): boolean => {
 
 export const useSubscription = () => {
   const [currentUserId, setCurrentUserId] = useState<string | null>(auth.currentUser?.uid || null);
-  
+
   // Auth state değişikliklerini dinle
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -79,10 +72,10 @@ export const useSubscription = () => {
     const userId = auth.currentUser?.uid || null;
     const storageKey = getStorageKey(userId);
     const saved = localStorage.getItem(storageKey);
-    
+
     if (saved) {
       const parsed = JSON.parse(saved);
-      
+
       // Check if trial expired
       if (parsed.plan === 'free' && parsed.trialEndDate) {
         if (!isTrialStillActive(parsed.trialEndDate)) {
@@ -92,10 +85,11 @@ export const useSubscription = () => {
             isTrialActive: false,
             dailyLimit: 0,
             hasUsedReferralButton: parsed.hasUsedReferralButton ?? false,
+            adRewardCount: parsed.adRewardCount ?? 0, // Default to 0 if not present
           };
         }
       }
-      
+
       // Check for referral bonuses from referral_states
       if (parsed.referralCode) {
         const referralStates = JSON.parse(localStorage.getItem('referral_states') || '{}');
@@ -116,19 +110,23 @@ export const useSubscription = () => {
           }
         }
       }
-      
+
       // Eski state'lerde hasUsedReferralButton olmayabilir, default false yap
       if (parsed.hasUsedReferralButton === undefined) {
         parsed.hasUsedReferralButton = false;
       }
-      
+      // Eski state'lerde adRewardCount olmayabilir, default 0 yap
+      if (parsed.adRewardCount === undefined) {
+        parsed.adRewardCount = 0;
+      }
+
       return parsed;
     }
-    
+
     // Initial state for new users - Free trial başlat
     const now = new Date();
     const trialEnd = calculateTrialEndDate(now);
-    
+
     return {
       plan: 'free' as PlanType,
       dailyLimit: 10,
@@ -143,6 +141,7 @@ export const useSubscription = () => {
       usedReferralCode: null,
       promoCodeUsed: null,
       hasUsedReferralButton: false,
+      adRewardCount: 0,
     };
   });
 
@@ -151,13 +150,13 @@ export const useSubscription = () => {
     const userId = auth.currentUser?.uid || null;
     const storageKey = getStorageKey(userId);
     localStorage.setItem(storageKey, JSON.stringify(state));
-    
+
     // Register referral code in registry
     if (state.referralCode) {
       const referralRegistry = JSON.parse(localStorage.getItem('referral_registry') || '{}');
       referralRegistry[state.referralCode] = state.referralCode; // Store code owner
       localStorage.setItem('referral_registry', JSON.stringify(referralRegistry));
-      
+
       // Store state for referral bonus
       const referralStates = JSON.parse(localStorage.getItem('referral_states') || '{}');
       referralStates[state.referralCode] = {
@@ -175,12 +174,12 @@ export const useSubscription = () => {
     if (currentUserId !== null) {
       const storageKey = getStorageKey(currentUserId);
       const saved = localStorage.getItem(storageKey);
-      
+
       if (!saved) {
         // Yeni kullanıcı için free plan başlat
         const now = new Date();
         const trialEnd = calculateTrialEndDate(now);
-        
+
         const newState: SubscriptionState = {
           plan: 'free' as PlanType,
           dailyLimit: 10,
@@ -195,24 +194,28 @@ export const useSubscription = () => {
           usedReferralCode: null,
           promoCodeUsed: null,
           hasUsedReferralButton: false,
+          adRewardCount: 0,
         };
-        
+
         setState(newState);
         localStorage.setItem(storageKey, JSON.stringify(newState));
       } else {
         // Mevcut kullanıcının state'ini yükle
         const parsed = JSON.parse(saved);
+        // Ensure new fields are initialized if loading old state
+        if (parsed.hasUsedReferralButton === undefined) parsed.hasUsedReferralButton = false;
+        if (parsed.adRewardCount === undefined) parsed.adRewardCount = 0;
         setState(parsed);
       }
     } else {
       // Guest kullanıcı için free plan
       const storageKey = getStorageKey(null);
       const saved = localStorage.getItem(storageKey);
-      
+
       if (!saved) {
         const now = new Date();
         const trialEnd = calculateTrialEndDate(now);
-        
+
         const newState: SubscriptionState = {
           plan: 'free' as PlanType,
           dailyLimit: 10,
@@ -227,19 +230,27 @@ export const useSubscription = () => {
           usedReferralCode: null,
           promoCodeUsed: null,
           hasUsedReferralButton: false,
+          adRewardCount: 0,
         };
-        
+
         setState(newState);
+      } else {
+        const parsed = JSON.parse(saved);
+        // Ensure new fields are initialized if loading old state
+        if (parsed.hasUsedReferralButton === undefined) parsed.hasUsedReferralButton = false;
+        if (parsed.adRewardCount === undefined) parsed.adRewardCount = 0;
+        setState(parsed);
       }
     }
   }, [currentUserId]);
 
   // Check and reset daily limits
   useEffect(() => {
-    if (needsReset(state.lastResetDate)) {
+    if (checkIfNewDay(state.lastResetDate)) {
       setState(prev => ({
         ...prev,
         dailyUsed: 0,
+        adRewardCount: 0,
         lastResetDate: new Date().toDateString(),
       }));
     }
@@ -257,28 +268,13 @@ export const useSubscription = () => {
   }, [state.lastResetDate, state.plan, state.isTrialActive, state.trialEndDate]);
 
   const canPerformAction = (): boolean => {
-    // Pro plan - sınırsız
-    if (state.plan === 'pro') return true;
-    
-    // Free plan - trial kontrolü
-    if (state.plan === 'free') {
-      if (!state.isTrialActive) return false; // Trial bitti
-      if (state.dailyUsed >= state.dailyLimit) return false; // Günlük limit doldu
-      return true;
+    if (state.plan === 'pro') {
+      return true; // Pro plan sınırsız
     }
-    
-    // Premium plan - günlük limit kontrolü
-    if (state.plan === 'premium') {
-      if (state.dailyUsed >= state.dailyLimit) return false;
-      return true;
-    }
-    
-    return false;
+    return state.dailyUsed < state.dailyLimit;
   };
 
-  const incrementAction = () => {
-    if (state.plan === 'pro') return; // Pro için saymaya gerek yok
-    
+  const incrementAction = (): void => {
     if (canPerformAction()) {
       setState(prev => ({
         ...prev,
@@ -288,48 +284,61 @@ export const useSubscription = () => {
   };
 
   const getRemainingActions = (): number => {
-    if (state.plan === 'pro') return -1; // Sınırsız için -1
-    if (state.plan === 'free' && !state.isTrialActive) return 0; // Trial bitti
-    return state.dailyLimit - state.dailyUsed;
+    if (state.plan === 'pro') {
+      return -1; // Sınırsız
+    }
+    return Math.max(0, state.dailyLimit - state.dailyUsed);
+  };
+
+  const getUsagePercentage = (): number => {
+    if (state.plan === 'pro') {
+      return 0; // Sınırsız olduğu için yüzde hesaplaması anlamsız
+    }
+    if (state.dailyLimit === 0) {
+      return 100; // Limit 0 ise %100 kullanılmış sayılır
+    }
+    return (state.dailyUsed / state.dailyLimit) * 100;
   };
 
   const getTrialDaysRemaining = (): number => {
-    if (state.plan !== 'free' || !state.trialEndDate) return 0;
-    
+    if (!state.isTrialActive || !state.trialEndDate) {
+      return 0;
+    }
+
     const now = new Date();
     const endDate = new Date(state.trialEndDate);
     const diffTime = endDate.getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     return Math.max(0, diffDays);
   };
 
-  const applyReferralCode = (code: string): boolean => {
+  const applyReferralCode = (code: string): { success: boolean; message: string } => {
     if (state.usedReferralCode) {
-      return false; // Already used a referral
+      return { success: false, message: 'Daha önce bir davet kodu kullandınız.' };
     }
 
     if (state.plan !== 'free') {
-      return false; // Only free users can use referral
+      return { success: false, message: 'Sadece ücretsiz plandaki kullanıcılar davet kodu kullanabilir.' };
     }
 
     // Validate code format (SMART-XXXXXXXXXXXX = 18 characters)
     if (!code.startsWith('SMART-') || code.length !== 18) {
-      return false;
+      return { success: false, message: 'Geçersiz kod formatı.' };
     }
 
     // Check if code exists in referral registry
     const referralRegistry = JSON.parse(localStorage.getItem('referral_registry') || '{}');
-    
+
     if (!referralRegistry[code]) {
-      return false; // Code doesn't exist
+      return { success: false, message: 'Davet kodu bulunamadı.' };
     }
 
     // +7 gün bonus ekle (kod kullanan kişiye)
     const currentEndDate = new Date(state.trialEndDate || new Date());
     const newEndDate = new Date(currentEndDate);
     newEndDate.setDate(newEndDate.getDate() + 7);
-    
+
     setState(prev => ({
       ...prev,
       usedReferralCode: code,
@@ -357,7 +366,7 @@ export const useSubscription = () => {
             // Limit değişmez
           };
           localStorage.setItem('referral_states', JSON.stringify(allStates));
-          
+
           // Eğer davet eden kullanıcı şu anda aktifse (aynı tarayıcıda), onun state'ini de güncelle
           const currentUserId = auth.currentUser?.uid || null;
           const currentStorageKey = getStorageKey(currentUserId);
@@ -375,7 +384,7 @@ export const useSubscription = () => {
       }
     }
 
-    return true;
+    return { success: true, message: 'Davet kodu başarıyla uygulandı! +7 gün eklendi.' };
   };
 
   const shareReferralCode = (): void => {
@@ -384,7 +393,7 @@ export const useSubscription = () => {
       const currentEndDate = new Date(state.trialEndDate);
       const newEndDate = new Date(currentEndDate);
       newEndDate.setDate(newEndDate.getDate() + 7);
-      
+
       setState(prev => ({
         ...prev,
         referralCount: prev.referralCount + 1,
@@ -418,31 +427,22 @@ export const useSubscription = () => {
     }));
   };
 
-  const getUsagePercentage = (): number => {
-    if (state.plan === 'pro') return 0; // Sınırsız
-    if (state.dailyLimit === 0) return 100; // Trial bitti
-    return Math.round((state.dailyUsed / state.dailyLimit) * 100);
-  };
-  const applyPromoCode = async (code: string): Promise<{
-    success: boolean;
-    message: string;
-    plan?: PlanType;
-  }> => {
+  const applyPromoCode = async (code: string): Promise<{ success: boolean; message: string; plan?: PlanType }> => {
     try {
       // 1. Kullanıcı daha önce promo code kullandı mı?
       if (state.promoCodeUsed) {
-        return { 
-          success: false, 
-          message: 'Daha önce bir promosyon kodu kullandınız' 
+        return {
+          success: false,
+          message: 'Daha önce bir promosyon kodu kullandınız'
         };
       }
 
       // 1.5 Auth kontrolü
       console.log('🔍 Current auth state:', auth.currentUser);
       if (!auth.currentUser) {
-        return { 
-          success: false, 
-          message: 'Önce giriş yapmalısınız' 
+        return {
+          success: false,
+          message: 'Önce giriş yapmalısınız'
         };
       }
 
@@ -514,6 +514,24 @@ export const useSubscription = () => {
     }));
   };
 
+  const rewardAdWatched = (): { success: boolean; message: string } => {
+    if (state.plan !== 'free') {
+      return { success: false, message: 'Bu özellik sadece ücretsiz plandaki kullanıcılar içindir.' };
+    }
+
+    if (state.adRewardCount >= 3) {
+      return { success: false, message: 'Günlük reklam izleme limitinize ulaştınız (3/gün).' };
+    }
+
+    setState(prev => ({
+      ...prev,
+      dailyLimit: prev.dailyLimit + 3, // Reklam izledikçe günlük limit artar
+      adRewardCount: prev.adRewardCount + 1,
+    }));
+
+    return { success: true, message: 'Reklam izlendi! Günlük limitinize 3 hak eklendi.' };
+  };
+
   return {
     // State values
     plan: state.plan,
@@ -525,18 +543,20 @@ export const useSubscription = () => {
     usedReferralCode: state.usedReferralCode,
     promoCodeUsed: state.promoCodeUsed,
     hasUsedReferralButton: state.hasUsedReferralButton,
-    
+    adRewardCount: state.adRewardCount,
+
     // Functions
     canPerformAction,
     incrementAction,
     getRemainingActions,
-    getTrialDaysRemaining,
     getUsagePercentage,
+    getTrialDaysRemaining,
     applyReferralCode,
     shareReferralCode,
     regenerateReferralCode,
     upgradeToPremium,
     upgradeToPro,
     applyPromoCode,
+    rewardAdWatched,
   };
 };

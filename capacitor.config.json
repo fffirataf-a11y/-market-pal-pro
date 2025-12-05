@@ -1,13 +1,29 @@
 {
-    "appId": "com.smartmarket.app",
-    "appName": "SmartMarket",
-    "webDir": "dist",
-    "server": {
-      "androidScheme": "https"
+  "appId": "com.lionx.smartmarket",
+  "appName": "SmartMarket",
+  "webDir": "dist",
+  "showSpinner": false,
+  "splashFullScreen": true,
+  "splashImmersive": true,
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": [
+        "badge",
+        "sound",
+        "alert"
+      ]
     },
-    "plugins": {
-      "PurchasesPlugin": {
-        "apiKey": "test_nwXexLeAzfEaJLJyaBbAKLKNSWH"
+    "Camera": {
+      "permissions": {
+        "camera": "Bu uygulama barkod taramak için kameraya erişim gerektirir.",
+        "photos": "Bu uygulama fotoğrafları kaydetmek için galeri erişimi gerektir."
+      }
+    },
+    "AdMob": {
+      "appId": {
+        "ios": "ca-app-pub-3272601063768123~1569350116",
+        "android": "ca-app-pub-3272601063768123~7349673296"
       }
     }
   }
+}

@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { ShoppingCart } from "lucide-react";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const { login } = useAuth();
+  const { loading, loginWithEmail } = useFirebaseAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -28,19 +27,12 @@ const Login = () => {
       return;
     }
 
-    setLoading(true);
-
     try {
-      await login(email, password);
+      await loginWithEmail(email, password);
       navigate("/lists");
     } catch (error: any) {
-      toast({
-        title: "Login Failed",
-        description: error.message || "Invalid email or password",
-        variant: "destructive",
-      });
-    } finally {
-      setLoading(false);
+      // Error handling is done in useFirebaseAuth hook
+      console.error('Login error:', error);
     }
   };
 

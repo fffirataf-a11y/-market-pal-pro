@@ -135,21 +135,12 @@
     "sendEmail": "メールを送信",
     "appSettings": "アプリ設定",
     "clearCache": "キャッシュをクリア",
-    "logout": "ログアウト",
-    "subscription": {
-      "title": "サブスクリプションプラン",
-      "free": "無料",
-      "premium": "プレミアム",
-      "pro": "プロ",
-      "perMonth": "/月",
-      "current": "現在",
-      "manage": "管理",
-      "items": "{{count}} 件",
-      "unlimited": "無制限の項目"
-    }
+    "logout": "ログアウト"
   },
   "subscription": {
     "title": "サブスクリプションプラン",
+    "currentPlan": "現在のプラン",
+    "upgradeTo": "{{plan}}にアップグレード",
     "upgrade": "プレミアムにアップグレード",
     "monthly": "月額",
     "yearly": "年額",
@@ -221,6 +212,24 @@
         "新機能への先行アクセス"
       ]
     }
+  },
+  "referral": {
+    "inviteFriend": "Invite Friend",
+    "earn2x": "+2x usage",
+    "title": "Invite Friends",
+    "subtitle": "Share your code and earn 2x daily limits",
+    "yourCode": "Your Referral Code",
+    "copy": "Copy Code",
+    "copied": "Copied!",
+    "howItWorks": "How It Works",
+    "step1": "Share your unique code",
+    "step2": "Friend signs up with your code",
+    "step3": "Both get 2x daily limits (5→10)",
+    "enterCode": "Have a referral code?",
+    "enterCodePlaceholder": "Enter code (optional)",
+    "apply": "Apply Code",
+    "success": "Referral code applied! You now have 2x daily limits!",
+    "invalid": "Invalid referral code",
+    "alreadyUsed": "You've already used a referral code"
   }
 }
-

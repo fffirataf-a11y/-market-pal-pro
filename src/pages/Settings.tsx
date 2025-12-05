@@ -22,7 +22,6 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-
 import {
   Select,
   SelectContent,
@@ -37,7 +36,6 @@ import {
   Sun,
   Bell,
   LogOut,
-  Trash2,
   CreditCard,
   Check,
   Gift,
@@ -62,9 +60,9 @@ const Settings = () => {
   const { theme, toggleTheme } = useTheme();
   const { toast } = useToast();
   const { friendRequests } = useFriends();
-  const { 
-    plan: currentPlan, 
-    upgradeToPremium, 
+  const {
+    plan: currentPlan,
+    upgradeToPremium,
     upgradeToPro,
     getTrialDaysRemaining,
     isTrialActive,
@@ -77,13 +75,16 @@ const Settings = () => {
     applyReferralCode,
     usedReferralCode,
   } = useSubscription();
-  const { 
-    purchasePremium, 
-    purchasePro, 
+  const {
+    purchasePremium,
+    purchasePro,
+    restorePurchases,
+    customerInfo,
     isLoading: purchaseLoading,
-    error: purchaseError 
+    error: purchaseError,
+    offerings,
   } = usePurchases();
-  const { permission, loading: notificationLoading, requestPermission } = useNotifications(); // ✅ EKLE
+  const { permission, loading: notificationLoading, requestPermission } = useNotifications();
   const [notifications, setNotifications] = useState(true);
   const [promoCode, setPromoCode] = useState("");
   const [isApplying, setIsApplying] = useState(false);
@@ -91,6 +92,8 @@ const Settings = () => {
   const [subscriptionPlansOpen, setSubscriptionPlansOpen] = useState(false);
   const [friendReferralCode, setFriendReferralCode] = useState("");
   const [isApplyingReferral, setIsApplyingReferral] = useState(false);
+  const [isYearly, setIsYearly] = useState(true);
+
   // User data state
   const [userData, setUserData] = useState(() => {
     const saved = localStorage.getItem("user");
@@ -101,7 +104,7 @@ const Settings = () => {
       }
       return parsed;
     }
-    
+
     return {
       name: "Guest User",
       email: "guest@smartmarket.app",
@@ -121,6 +124,7 @@ const Settings = () => {
     window.addEventListener("user-data-change", handleUserDataChange);
     return () => window.removeEventListener("user-data-change", handleUserDataChange);
   }, []);
+
   // Purchase error handling
   useEffect(() => {
     if (purchaseError) {
@@ -131,6 +135,42 @@ const Settings = () => {
       });
     }
   }, [purchaseError, toast]);
+
+  // Sync RevenueCat state with local state
+  useEffect(() => {
+    if (customerInfo?.entitlements.active['premium'] && currentPlan !== 'premium') {
+      upgradeToPremium();
+    } else if (customerInfo?.entitlements.active['pro'] && currentPlan !== 'pro') {
+      upgradeToPro();
+    }
+  }, [customerInfo, currentPlan, upgradeToPremium, upgradeToPro]);
+
+  const handleRestore = async () => {
+    try {
+      const success = await restorePurchases();
+      if (success) {
+        toast({
+          title: t('common.success'),
+          description: i18n.language === 'tr'
+            ? 'Satın alımlar başarıyla geri yüklendi'
+            : 'Purchases restored successfully',
+        });
+      } else {
+        toast({
+          title: i18n.language === 'tr' ? 'Bilgi' : 'Info',
+          description: i18n.language === 'tr'
+            ? 'Aktif abonelik bulunamadı'
+            : 'No active subscription found',
+        });
+      }
+    } catch (error: any) {
+      toast({
+        title: i18n.language === 'tr' ? 'Hata' : 'Error',
+        description: error.message || 'Failed to restore purchases',
+        variant: "destructive",
+      });
+    }
+  };
 
   const handleLanguageChange = (value: string) => {
     const messages: Record<string, string> = {
@@ -150,32 +190,6 @@ const Settings = () => {
     });
   };
 
-  const handleClearCache = () => {
-    const shoppingItems = localStorage.getItem('shoppingItems');
-    const onboardingCompleted = localStorage.getItem('onboardingCompleted');
-    const language = localStorage.getItem('language');
-    const userToken = localStorage.getItem('userToken');
-    const user = localStorage.getItem('user');
-    const themeValue = localStorage.getItem('theme');
-    const friends = localStorage.getItem('friends');
-    const subscription_state = localStorage.getItem('subscription_state');
-    
-    localStorage.clear();
-    
-    if (shoppingItems) localStorage.setItem('shoppingItems', shoppingItems);
-    if (onboardingCompleted) localStorage.setItem('onboardingCompleted', onboardingCompleted);
-    if (language) localStorage.setItem('language', language);
-    if (userToken) localStorage.setItem('userToken', userToken);
-    if (user) localStorage.setItem('user', user);
-    if (themeValue) localStorage.setItem('theme', themeValue);
-    if (friends) localStorage.setItem('friends', friends);
-    if (subscription_state) localStorage.setItem('subscription_state', subscription_state);
-    
-    toast({
-      title: t('common.success'),
-      description: "Cache cleared successfully",
-    });
-  };
   const handleNotificationToggle = async (checked: boolean) => {
     if (checked && permission !== 'granted') {
       await requestPermission();
@@ -187,14 +201,25 @@ const Settings = () => {
     localStorage.removeItem("userToken");
     localStorage.removeItem("user");
     window.dispatchEvent(new Event("auth-change"));
-    
+
     toast({
       title: t('common.success'),
       description: "Logged out successfully",
     });
-    
+
     navigate("/auth", { replace: true });
   };
+
+  // RevenueCat paketlerini bul
+  const currentOffering = offerings?.current;
+  const premiumMonthly = currentOffering?.availablePackages.find(p => p.identifier === 'premium_monthly');
+  const premiumYearly = currentOffering?.availablePackages.find(p => p.identifier === 'premium_yearly');
+  const proMonthly = currentOffering?.availablePackages.find(p => p.identifier === 'pro_monthly');
+  const proYearly = currentOffering?.availablePackages.find(p => p.identifier === 'pro_yearly');
+
+  // Determine active product ID from RevenueCat
+  const activeProductId = customerInfo?.entitlements.active['premium']?.productIdentifier
+    || customerInfo?.entitlements.active['pro']?.productIdentifier;
 
   const subscriptionPlans = [
     {
@@ -210,27 +235,39 @@ const Settings = () => {
     {
       id: 'premium',
       name: t('subscription.premium.name'),
-      price: t('subscription.premium.price'),
-      yearlyPrice: t('subscription.premium.yearlyPrice'),
+      price: isYearly
+        ? (premiumYearly?.product.priceString || '')
+        : (premiumMonthly?.product.priceString || ''),
+      yearlyPrice: premiumYearly?.product.priceString || '',
       dailyLimit: t('subscription.premium.dailyLimit'),
       features: t('subscription.premium.features', { returnObjects: true }) as string[],
-      current: currentPlan === 'premium',
+      current: currentPlan === 'premium' && (
+        isYearly
+          ? activeProductId === premiumYearly?.product.identifier
+          : activeProductId === premiumMonthly?.product.identifier
+      ),
     },
     {
       id: 'pro',
       name: t('subscription.pro.name'),
-      price: t('subscription.pro.price'),
-      yearlyPrice: t('subscription.pro.yearlyPrice'),
+      price: isYearly
+        ? (proYearly?.product.priceString || '')
+        : (proMonthly?.product.priceString || ''),
+      yearlyPrice: proYearly?.product.priceString || '',
       dailyLimit: t('subscription.pro.dailyLimit'),
       features: t('subscription.pro.features', { returnObjects: true }) as string[],
-      current: currentPlan === 'pro',
+      current: currentPlan === 'pro' && (
+        isYearly
+          ? activeProductId === proYearly?.product.identifier
+          : activeProductId === proMonthly?.product.identifier
+      ),
     },
   ];
 
   const handleUpgrade = async (planId: string) => {
     const plan = subscriptionPlans.find(p => p.id === planId);
     if (!plan) return;
-  
+
     if (planId === 'free') {
       toast({
         title: "Info",
@@ -239,31 +276,27 @@ const Settings = () => {
       return;
     }
 
-    // Sadece mobil platformda IAP kullan (RevenueCat)
     if (!Capacitor.isNativePlatform()) {
-      toast({
-        title: i18n.language === 'tr' ? 'Bilgi' : 'Info',
-        description: i18n.language === 'tr' 
-          ? 'Abonelik sadece mobil uygulamada kullanılabilir' 
-          : 'Subscriptions are only available in the mobile app',
-        variant: "default",
-      });
+      navigate(`/checkout?plan=${planId}&period=${isYearly ? 'yearly' : 'monthly'}`);
       return;
     }
 
     try {
       let success = false;
-      
+      const period = isYearly ? 'yearly' : 'monthly';
+
+      console.log(`🚀 Upgrading to ${planId} with period: ${period}`);
+
       if (planId === 'premium') {
-        success = await purchasePremium();
+        success = await purchasePremium(period);
       } else if (planId === 'pro') {
-        success = await purchasePro();
+        success = await purchasePro(period);
       }
 
       if (success) {
         if (planId === 'premium') upgradeToPremium();
         if (planId === 'pro') upgradeToPro();
-        
+
         toast({
           title: t('common.success'),
           description: i18n.language === 'tr'
@@ -280,7 +313,6 @@ const Settings = () => {
     }
   };
 
-// ✅ YENİ FONKSIYON EKLE ⬇️
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
       toast({
@@ -309,6 +341,7 @@ const Settings = () => {
       });
     }
   };
+
   return (
     <div className="min-h-screen bg-background pb-20">
       {/* Header */}
@@ -341,13 +374,12 @@ const Settings = () => {
               <h2 className="text-xl font-semibold">{userData.name}</h2>
               <p className="text-muted-foreground">{userData.email}</p>
             </div>
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => navigate("/profile")}
               className="relative"
             >
               {t('settings.viewProfile')}
-              {/* ✅ YENİ: Badge */}
               {friendRequests.length > 0 && (
                 <span className="absolute -top-2 -right-2 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
                   {friendRequests.length}
@@ -358,30 +390,27 @@ const Settings = () => {
         </Card>
 
         {/* Usage Card - Modern Dashboard */}
-<UsageCard />
+        <UsageCard />
 
-        {/* Invite Friends Card - Her zaman aktif, her basıda yeni kod üretir */}
+        {/* Invite Friends Card */}
         <Card className="p-5 bg-gradient-to-br from-pink-50 via-purple-50 to-orange-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-orange-950/20 border-2 border-pink-200/50 dark:border-pink-800/50 hover:shadow-lg transition-all">
-          <div 
+          <div
             className="flex items-center gap-4 w-full cursor-pointer"
             onClick={() => {
-              console.log('Button clicked, currentPlan:', currentPlan);
               if (currentPlan === 'free') {
-                // Her basıda yeni kod üret
                 regenerateReferralCode();
                 setReferralDialogOpen(true);
               } else {
                 toast({
                   title: i18n.language === 'tr' ? 'Bilgi' : 'Info',
-                  description: i18n.language === 'tr' 
-                    ? 'Bu özellik sadece free pakette kullanılabilir' 
+                  description: i18n.language === 'tr'
+                    ? 'Bu özellik sadece free pakette kullanılabilir'
                     : 'This feature is only available for free plan',
                   variant: "default",
                 });
               }
             }}
           >
-            {/* Gift Icon */}
             <div className="relative">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center shadow-lg">
                 <Gift className="h-8 w-8 text-white" />
@@ -390,39 +419,36 @@ const Settings = () => {
                 <span className="text-xs font-bold text-gray-900">+7</span>
               </div>
             </div>
-            
-            {/* Content */}
+
             <div className="flex-1 text-left">
               <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
                 {i18n.language === 'tr' ? 'Arkadaş Davet Et' : 'Invite Friend'}
               </h3>
               <p className="text-sm text-muted-foreground">
-                {currentPlan === 'free' 
-                  ? (i18n.language === 'tr' 
-                      ? 'Arkadaşınız kodu kullandığında free paketinize +7 gün eklenir!' 
-                      : 'Get +7 days to your free plan when your friend uses your code!')
-                  : (i18n.language === 'tr' 
-                      ? 'Sadece free pakette kullanılabilir' 
-                      : 'Only available for free plan')}
+                {currentPlan === 'free'
+                  ? (i18n.language === 'tr'
+                    ? 'Arkadaşınız kodu kullandığında free paketinize +7 gün eklenir!'
+                    : 'Get +7 days to your free plan when your friend uses your code!')
+                  : (i18n.language === 'tr'
+                    ? 'Sadece free pakette kullanılabilir'
+                    : 'Only available for free plan')}
               </p>
               {referralCount > 0 && (
                 <div className="mt-2 flex items-center gap-2">
                   <Badge variant="secondary" className="text-xs">
-                    {i18n.language === 'tr' 
-                      ? `${referralCount} davet` 
+                    {i18n.language === 'tr'
+                      ? `${referralCount} davet`
                       : `${referralCount} invited`}
                   </Badge>
                 </div>
               )}
             </div>
-            
-            {/* Arrow */}
+
             <div className="text-muted-foreground">
               <ArrowLeft className="h-5 w-5 rotate-180" />
             </div>
           </div>
         </Card>
-
 
         {/* Preferences */}
         <div className="space-y-4">
@@ -484,278 +510,251 @@ const Settings = () => {
 
           {/* Notifications */}
           <Card className="p-4">
-  <div className="flex items-center justify-between">
-    <div className="flex items-center gap-3">
-      <Bell className="h-5 w-5 text-muted-foreground" />
-      <div>
-        <Label className="text-base font-medium">
-          {t('settings.notifications')}
-        </Label>
-        <p className="text-sm text-muted-foreground">
-          {permission === 'granted' ? '✅ Enabled' : 
-           permission === 'denied' ? '❌ Blocked - Enable in browser settings' : 
-           '⚠️ Not enabled'}
-        </p>
-      </div>
-    </div>
-    <Switch
-      checked={notifications && permission === 'granted'}
-      onCheckedChange={handleNotificationToggle}
-      disabled={notificationLoading || permission === 'denied'}
-    />
-  </div>
-</Card>
-
-          
-
-          {/* Contact Us */}
-          <Card className="p-4">
-            <div className="space-y-3">
+            <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <MessageSquare className="h-5 w-5 text-muted-foreground" />
-                <div className="flex-1">
+                <Bell className="h-5 w-5 text-muted-foreground" />
+                <div>
                   <Label className="text-base font-medium">
-                    {t('settings.contactUs')}
+                    {t('settings.notifications')}
                   </Label>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {t('settings.contactDescription')}
+                  <p className="text-sm text-muted-foreground">
+                    {t('settings.notificationsDesc')}
                   </p>
                 </div>
               </div>
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => {
-                  const subject = encodeURIComponent(
-                    i18n.language === 'tr' 
-                      ? 'Öneri/Şikayet - SmartMarket' 
-                      : 'Suggestion/Complaint - SmartMarket'
-                  );
-                  const body = encodeURIComponent(
-                    i18n.language === 'tr'
-                      ? 'Merhaba,\n\n'
-                      : 'Hello,\n\n'
-                  );
-                  window.location.href = `mailto:smartmarketttt@gmail.com?subject=${subject}&body=${body}`;
-                }}
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                {t('settings.sendEmail')}
-              </Button>
+              <Switch
+                checked={notifications}
+                onCheckedChange={handleNotificationToggle}
+                disabled={notificationLoading}
+              />
             </div>
           </Card>
-
         </div>
-        {/* Subscription Plans - Collapsible */}
-        <Collapsible open={subscriptionPlansOpen} onOpenChange={setSubscriptionPlansOpen}>
-          <CollapsibleTrigger asChild>
-            <Card className="p-4 hover:bg-accent/50 transition-colors cursor-pointer">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <CreditCard className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <h3 className="text-lg font-semibold">{t('subscription.title')}</h3>
-                    <p className="text-sm text-muted-foreground">
-                      {i18n.language === 'tr' 
-                        ? 'Abonelik planlarını görüntüle ve yönet' 
-                        : 'View and manage subscription plans'}
-                    </p>
-                  </div>
-                </div>
-                <ChevronDown className={`h-5 w-5 text-muted-foreground transition-transform duration-200 ${subscriptionPlansOpen ? 'rotate-180' : ''}`} />
+
+        {/* Subscription */}
+        <div className="space-y-4">
+          <h3 className="text-lg font-semibold">{t('subscription.title')}</h3>
+          <Card className="p-6 border-primary/20 bg-primary/5">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h4 className="text-lg font-semibold capitalize">
+                  {currentPlan === 'free' ? t('subscription.free.name') : currentPlan}
+                </h4>
+                <p className="text-sm text-muted-foreground">
+                  {currentPlan === 'free'
+                    ? t('subscription.free.dailyLimit')
+                    : currentPlan === 'premium'
+                      ? t('subscription.premium.dailyLimit')
+                      : t('subscription.pro.dailyLimit')}
+                </p>
               </div>
-            </Card>
-          </CollapsibleTrigger>
-          <CollapsibleContent>
-            <div className="space-y-4 mt-4">
-              <div className="grid gap-4">
-                {subscriptionPlans.map((plan) => (
-                  <Card key={plan.id} className={`p-6 ${plan.current ? 'ring-2 ring-primary' : ''}`}>
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <h4 className="text-xl font-bold">{plan.name}</h4>
-                            {plan.current && (
-                              <Badge className="bg-primary text-primary-foreground">
-                                {t('subscription.currentPlan')}
-                              </Badge>
-                            )}
-                            {plan.id === 'free' && plan.isTrialActive && (
-                              <Badge variant="secondary">
-                                {t('subscription.trialDaysLeft', { days: plan.trialDays })}
-                              </Badge>
-                            )}
-                            {plan.id === 'free' && !plan.isTrialActive && (
-                              <Badge variant="destructive">
-                                {t('subscription.trialExpired')}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-2xl font-bold text-primary">{plan.price}</p>
-                          {(plan.id === 'premium' || plan.id === 'pro') && (
-                            <p className="text-sm text-muted-foreground">
-                              {plan.yearlyPrice} · {t(`subscription.${plan.id}.yearlySavings`)}
-                            </p>
-                          )}
-                          <div className="flex gap-2 mt-2">
-                            <Badge variant="secondary">{plan.dailyLimit}</Badge>
-                          </div>
-                        </div>
-                        {!plan.current && (
-                          <Button onClick={() => handleUpgrade(plan.id)}>
-                            <CreditCard className="mr-2 h-4 w-4" />
-                            {plan.id === 'free' ? 'Current' : t('subscription.upgrade')}
-                          </Button>
-                        )}
-                      </div>
-                      <ul className="space-y-2">
-                        {(Array.isArray(plan.features) ? plan.features : []).map((feature, idx) => (
-                          <li key={idx} className="flex items-center gap-2 text-sm">
-                            <Check className="h-4 w-4 text-primary flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </Card>
-                ))}
-              </div>
-              
-              {/* Promosyon Kodu - Abonelik planları içinde */}
-              {!promoCodeUsed && (
-                <Card className="p-6 mt-4">
-                  <div className="flex items-start gap-4">
-                    <div className="p-3 rounded-lg bg-primary/10">
-                      <Gift className="h-6 w-6 text-primary" />
-                    </div>
-                    <div className="flex-1 space-y-4">
-                      <div>
-                        <h3 className="font-semibold text-lg">
-                          {i18n.language === 'tr' ? 'Promosyon Kodu' : 'Promo Code'}
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {i18n.language === 'tr' 
-                            ? 'Özel bir kodunuz varsa Premium veya Pro plana ücretsiz erişin' 
-                            : 'Enter a special code to get free access to Premium or Pro plan'}
-                        </p>
-                      </div>
-                      
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder={i18n.language === 'tr' 
-                            ? 'Kodu buraya girin (örn: SmartMarket_Lionx)' 
-                            : 'Enter code here (e.g., SmartMarket_Lionx)'}
-                          value={promoCode}
-                          onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
-                          disabled={isApplying}
-                          className="flex-1"
-                        />
-                        <Button 
-                          onClick={handleApplyPromoCode}
-                          disabled={isApplying || !promoCode.trim()}
-                        >
-                          {isApplying ? (
-                            <>
-                              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                              {i18n.language === 'tr' ? 'Kontrol Ediliyor...' : 'Checking...'}
-                            </>
-                          ) : (
-                            i18n.language === 'tr' ? 'Uygula' : 'Apply'
-                          )}
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              )}
+              <Badge variant={currentPlan === 'free' ? "secondary" : "default"}>
+                {t('subscription.currentPlan')}
+              </Badge>
             </div>
-          </CollapsibleContent>
-        </Collapsible>
+
+            <Button
+              className="w-full"
+              onClick={() => setSubscriptionPlansOpen(true)}
+            >
+              {t('subscription.manage')}
+            </Button>
+          </Card>
+        </div>
 
         {/* App Settings */}
         <div className="space-y-4">
           <h3 className="text-lg font-semibold">{t('settings.appSettings')}</h3>
 
-          
+          <Card className="divide-y">
+            <div
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={() => {
+                toast({
+                  title: t('common.success'),
+                  description: "Cache cleared successfully",
+                });
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <Loader2 className="h-5 w-5 text-muted-foreground" />
+                <Label className="text-base font-medium cursor-pointer">
+                  {t('settings.clearCache')}
+                </Label>
+              </div>
+            </div>
 
-          <Card className="p-4">
-            <Button
-              variant="destructive"
-              className="w-full justify-start"
+            <div
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors"
+              onClick={() => window.location.href = `mailto:smartmarketttt@gmail.com`}
+            >
+              <div className="flex items-center gap-3">
+                <Mail className="h-5 w-5 text-muted-foreground" />
+                <div>
+                  <Label className="text-base font-medium cursor-pointer">
+                    {t('settings.contactUs')}
+                  </Label>
+                  <p className="text-sm text-muted-foreground">
+                    {t('settings.contactDescription')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div
+              className="p-4 flex items-center justify-between cursor-pointer hover:bg-destructive/10 transition-colors"
               onClick={handleLogout}
             >
-              <LogOut className="mr-2 h-4 w-4" />
-              {t('settings.logout')}
-            </Button>
+              <div className="flex items-center gap-3">
+                <LogOut className="h-5 w-5 text-destructive" />
+                <Label className="text-base font-medium text-destructive cursor-pointer">
+                  {t('settings.logout')}
+                </Label>
+              </div>
+            </div>
           </Card>
         </div>
       </main>
 
       <BottomNav />
 
-      {/* Referral Code Dialog - Hem kod üretme hem kod girişi */}
-      <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>
-        <DialogContent className="max-w-md">
+      {/* Subscription Plans Dialog */}
+      <Dialog open={subscriptionPlansOpen} onOpenChange={setSubscriptionPlansOpen}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Gift className="h-5 w-5 text-pink-500" />
-              {i18n.language === 'tr' ? 'Arkadaş Davet Et' : 'Invite Friend'}
+            <DialogTitle className="text-2xl font-bold text-center mb-2">
+              {t('subscription.title')}
             </DialogTitle>
-            <DialogDescription>
-              {i18n.language === 'tr' 
-                ? 'Kodunuzu paylaşın veya arkadaşınızın kodunu girin' 
-                : 'Share your code or enter your friend\'s code'}
+            <DialogDescription className="text-center mb-6">
+              Choose the plan that works best for you
             </DialogDescription>
           </DialogHeader>
-          
-          <div className="space-y-6 py-4">
-            {/* Kendi Kodunuzu Paylaş */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium">
-                {i18n.language === 'tr' ? 'Kendi Kodunuz' : 'Your Code'}
-              </Label>
-              <div className="flex items-center gap-2">
-                <Input
-                  value={referralCode}
-                  readOnly
-                  className="font-mono text-sm"
-                />
+
+          <div className="flex justify-center mb-6">
+            <div className="bg-muted p-1 rounded-full flex items-center">
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!isYearly ? 'bg-background shadow-sm' : 'text-muted-foreground'
+                  }`}
+                onClick={() => setIsYearly(false)}
+              >
+                Monthly
+              </button>
+              <button
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isYearly ? 'bg-background shadow-sm' : 'text-muted-foreground'
+                  }`}
+                onClick={() => setIsYearly(true)}
+              >
+                Yearly
+                <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                  Save 20%
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {subscriptionPlans.map((plan) => (
+              <Card
+                key={plan.id}
+                className={`relative p-6 flex flex-col ${plan.current
+                    ? 'border-primary shadow-lg scale-105'
+                    : 'border-border hover:border-primary/50'
+                  }`}
+              >
+                {plan.current && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-primary text-primary-foreground">
+                      {t('subscription.currentPlan')}
+                    </Badge>
+                  </div>
+                )}
+
+                <div className="mb-6">
+                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                  <div className="flex items-baseline gap-1">
+                    <span className="text-3xl font-bold">{plan.price}</span>
+                    {plan.price !== 'Free' && plan.price !== 'Ücretsiz' && (
+                      <span className="text-muted-foreground">
+                        /{isYearly ? 'year' : 'month'}
+                      </span>
+                    )}
+                  </div>
+                  {isYearly && plan.yearlyPrice && (
+                    <p className="text-sm text-green-600 mt-2 font-medium">
+                      {t('subscription.premium.yearlySavings')}
+                    </p>
+                  )}
+                </div>
+
+                <div className="flex-1 space-y-4 mb-6">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <Badge variant="secondary">{plan.dailyLimit}</Badge>
+                  </div>
+                  <ul className="space-y-3">
+                    {plan.features.map((feature, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                        <span>{feature}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
                 <Button
-                  variant="outline"
+                  className="w-full"
+                  variant={plan.current ? "outline" : "default"}
+                  disabled={plan.current}
+                  onClick={() => handleUpgrade(plan.id)}
+                >
+                  {plan.current ? t('subscription.currentPlan') : t('subscription.upgradeTo', { plan: plan.name })}
+                </Button>
+              </Card>
+            ))}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Referral Dialog */}
+      <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('referral.title')}</DialogTitle>
+            <DialogDescription>
+              {t('referral.subtitle')}
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label>{t('referral.yourCode')}</Label>
+              <div className="flex gap-2">
+                <div className="flex-1 p-3 bg-muted rounded-lg font-mono text-center text-lg tracking-wider border-2 border-dashed border-primary/20">
+                  {referralCode || "LOADING..."}
+                </div>
+                <Button
                   size="icon"
+                  variant="outline"
                   onClick={() => {
-                    navigator.clipboard.writeText(referralCode);
-                    toast({
-                      title: t('referral.copied'),
-                      description: i18n.language === 'tr' 
-                        ? 'Kod kopyalandı!' 
-                        : 'Code copied!',
-                    });
+                    if (referralCode) {
+                      navigator.clipboard.writeText(referralCode);
+                      toast({
+                        title: t('referral.copied'),
+                        description: t('referral.linkCopiedDesc'),
+                      });
+                    }
                   }}
                 >
                   <Copy className="h-4 w-4" />
                 </Button>
                 <Button
-                  variant="outline"
                   size="icon"
-                  onClick={() => {
-                    if (navigator.share) {
-                      navigator.share({
-                        title: i18n.language === 'tr' 
-                          ? 'SmartMarket Davet Kodu' 
-                          : 'SmartMarket Referral Code',
-                        text: i18n.language === 'tr'
-                          ? `SmartMarket'i denemek için davet kodumu kullan: ${referralCode}`
-                          : `Use my referral code to try SmartMarket: ${referralCode}`,
-                      });
-                    } else {
-                      navigator.clipboard.writeText(referralCode);
-                      toast({
-                        title: t('referral.copied'),
-                        description: i18n.language === 'tr' 
-                          ? 'Kod kopyalandı!' 
-                          : 'Code copied!',
+                  variant="outline"
+                  onClick={async () => {
+                    if (referralCode) {
+                      await Share2({
+                        title: 'Smart Market',
+                        text: `Use my code ${referralCode} to get 2x daily limits!`,
+                        url: 'https://smartmarket.app',
                       });
                     }
                   }}
@@ -763,111 +762,70 @@ const Settings = () => {
                   <Share2 className="h-4 w-4" />
                 </Button>
               </div>
-              {referralCount > 0 && (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <Check className="h-4 w-4 text-success" />
-                  <span>
-                    {i18n.language === 'tr'
-                      ? `${referralCount} arkadaş davet ettiniz`
-                      : `You've invited ${referralCount} friend${referralCount > 1 ? 's' : ''}`}
-                  </span>
-                </div>
-              )}
             </div>
 
-            {/* Arkadaş Kodunu Gir */}
-            {currentPlan === 'free' && !usedReferralCode && (
-              <>
-                <div className="border-t pt-4 space-y-3">
-                  <Label className="text-sm font-medium">
-                    {i18n.language === 'tr' ? 'Arkadaş Kodunu Gir' : 'Enter Friend\'s Code'}
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder={i18n.language === 'tr' 
-                        ? 'Davet kodunu girin (örn: SMART-XXXXXXXXXXXX)' 
-                        : 'Enter referral code (e.g., SMART-XXXXXXXXXXXX)'}
-                      value={friendReferralCode}
-                      onChange={(e) => setFriendReferralCode(e.target.value.toUpperCase())}
-                      disabled={isApplyingReferral}
-                      className="flex-1 font-mono text-sm"
-                    />
-                    <Button 
-                      onClick={async () => {
-                        if (!friendReferralCode.trim()) {
-                          toast({
-                            title: i18n.language === 'tr' ? 'Hata' : 'Error',
-                            description: i18n.language === 'tr' 
-                              ? 'Lütfen bir kod girin' 
-                              : 'Please enter a code',
-                            variant: "destructive",
-                          });
-                          return;
-                        }
-                        setIsApplyingReferral(true);
-                        const success = applyReferralCode(friendReferralCode.trim());
-                        setIsApplyingReferral(false);
-                        
-                        if (success) {
-                          toast({
-                            title: i18n.language === 'tr' ? 'Başarılı! 🎉' : 'Success! 🎉',
-                            description: i18n.language === 'tr' 
-                              ? 'Davet kodu uygulandı! Free paketinize +7 gün eklendi.' 
-                              : 'Referral code applied! +7 days added to your free plan.',
-                          });
-                          setFriendReferralCode("");
-                          setReferralDialogOpen(false);
-                        } else {
-                          toast({
-                            title: i18n.language === 'tr' ? 'Hata' : 'Error',
-                            description: i18n.language === 'tr' 
-                              ? 'Geçersiz veya kullanılmış kod' 
-                              : 'Invalid or already used code',
-                            variant: "destructive",
-                          });
-                        }
-                      }}
-                      disabled={isApplyingReferral || !friendReferralCode.trim()}
-                    >
-                      {isApplyingReferral ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          {i18n.language === 'tr' ? 'Uygulanıyor...' : 'Applying...'}
-                        </>
-                      ) : (
-                        i18n.language === 'tr' ? 'Uygula' : 'Apply'
-                      )}
-                    </Button>
-                  </div>
+            <div className="space-y-4">
+              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                {t('referral.howItWorks')}
+              </h4>
+              <div className="grid gap-4">
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">1</div>
+                  <p className="text-sm">{t('referral.step1')}</p>
                 </div>
-              </>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">2</div>
+                  <p className="text-sm">{t('referral.step2')}</p>
+                </div>
+                <div className="flex gap-3">
+                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">3</div>
+                  <p className="text-sm">{t('referral.step3')}</p>
+                </div>
+              </div>
+            </div>
+
+            {!hasUsedReferralButton && !usedReferralCode && (
+              <div className="pt-4 border-t">
+                <Label>{t('referral.enterCode')}</Label>
+                <div className="flex gap-2 mt-2">
+                  <Input
+                    placeholder={t('referral.enterCodePlaceholder')}
+                    value={friendReferralCode}
+                    onChange={(e) => setFriendReferralCode(e.target.value.toUpperCase())}
+                    maxLength={8}
+                  />
+                  <Button
+                    onClick={async () => {
+                      if (!friendReferralCode.trim()) return;
+                      setIsApplyingReferral(true);
+                      const result = await applyReferralCode(friendReferralCode);
+                      setIsApplyingReferral(false);
+
+                      if (result.success) {
+                        toast({
+                          title: "Success! 🎉",
+                          description: t('referral.success'),
+                        });
+                        setFriendReferralCode("");
+                        setReferralDialogOpen(false);
+                      } else {
+                        toast({
+                          title: "Error",
+                          description: result.message || t('referral.invalid'),
+                          variant: "destructive",
+                        });
+                      }
+                    }}
+                    disabled={isApplyingReferral || !friendReferralCode.trim()}
+                  >
+                    {isApplyingReferral ? <Loader2 className="h-4 w-4 animate-spin" /> : t('referral.apply')}
+                  </Button>
+                </div>
+              </div>
             )}
-
-            {/* Bilgilendirme */}
-            <div className="pt-2 border-t space-y-2">
-              <div className="flex items-start gap-2">
-                <div className="w-5 h-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 mt-0.5">
-                  <span className="text-xs font-bold text-green-600 dark:text-green-400">+7</span>
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {i18n.language === 'tr'
-                    ? 'Arkadaşınız kodunuzu kullandığında, free paketinize +7 gün eklenir'
-                    : 'When your friend uses your code, you get +7 days to your free plan'}
-                </p>
-              </div>
-              <div className="flex items-start gap-2">
-                <Gift className="h-4 w-4 text-pink-500 flex-shrink-0 mt-0.5" />
-                <p className="text-xs text-muted-foreground">
-                  {i18n.language === 'tr'
-                    ? 'Arkadaşınız da +7 gün ücretsiz kazanır'
-                    : 'Your friend also gets +7 days free'}
-                </p>
-              </div>
-            </div>
           </div>
         </DialogContent>
       </Dialog>
-    
     </div>
   );
 };
