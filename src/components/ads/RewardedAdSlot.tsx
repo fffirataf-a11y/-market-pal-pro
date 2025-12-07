@@ -3,10 +3,10 @@ import { useTranslation } from "react-i18next";
 import { PlayCircle, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import type { PlanType } from "@/hooks/useSubscription";
+import type { PlanType } from "@/types/subscription";
 import {
   isAdSupportedForPlan,
-  showRewardedAdPlaceholder,
+  showRewardedAd,
 } from "@/lib/adManager";
 
 type RewardedStatus = "idle" | "loading" | "completed";
@@ -37,7 +37,7 @@ const RewardedAdSlot = ({
 
     try {
       setStatus("loading");
-      await showRewardedAdPlaceholder(plan, {
+      await showRewardedAd(plan, {
         placement,
         onComplete: () => {
           setStatus("completed");

@@ -29,7 +29,7 @@ const Scanner = () => {
   const { toast } = useToast();
   const { canPerformAction, incrementAction } = useSubscription();
   const { lists, addItem } = useShoppingLists();
-  
+
   const [scanning, setScanning] = useState(false);
   const [scannedProduct, setScannedProduct] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -38,35 +38,36 @@ const Scanner = () => {
 
   const analyzeProductWithAI = async (productName: string, barcode: string, brandInfo?: string) => {
     console.log("🔍 Starting AI analysis for:", productName, barcode);
-    
+
     try {
       const isTurkish = i18n.language === 'tr';
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
+
       console.log("🔑 API Key exists:", !!apiKey);
-      
+
       if (!apiKey) {
         throw new Error('API key not found');
       }
 
       // ✅ DÜZELTME: Daha kesin ve açık prompt
       const prompt = isTurkish
-      ? `🔍 ÜRÜN ANALİZİ - TÜRKÇE
+        ? `🔍 ÜRÜN ANALİZİ - TÜRKÇE
 
 BARKOD: ${barcode}
 ÜRÜN ADI: ${productName}
 ${brandInfo ? `MARKA: ${brandInfo}` : ''}
 
 📋 TALİMATLAR:
-1. SADECE bu barkoda ait ürünü analiz et
-2. Eğer "${productName}" "Bilinmeyen Ürün" içeriyorsa, "Ürün bilgisi bulunamadı" yaz
-3. TAM 5 İNSİGHT VER (sırayla):
- a) 1 olumlu özellik (positive)
- b) 1 başka olumlu özellik (positive)  
- c) 1 dikkat edilmesi gereken (warning)
- d) 1 genel bilgi (neutral)
- e) 1 ekstra bilgi/alerji (neutral veya warning)
-4. Her insight KISA ve ÖZ olmalı (maksimum 2-3 cümle, 40-50 kelime)
+1. SADECE bu barkoda ait ürünü analiz et.
+2. Obyektif ve gerçekçi ol. Markayı kötülemeden sadece besin/içerik gerçeklerine odaklan.
+3. Eğer "${productName}" "Bilinmeyen Ürün" içeriyorsa, "Ürün bilgisi bulunamadı" yaz.
+4. TAM 5 İNSİGHT VER (sırayla):
+ a) 1 öne çıkan olumlu özellik (positive)
+ b) 1 başka faydalı özellik (positive)  
+ c) 1 önemli not veya besin uyarısı (örn: şeker/tuz oranı veya "Dengeli tüketiniz") (warning/neutral)
+ d) 1 genel kullanım bilgisi (neutral)
+ e) 1 alerjen veya saklama bilgisi (neutral)
+5. Her insight KISA ve ÖZ olmalı (maksimum 2 cümle).
 
 JSON FORMATINDA YANIT VER (markdown YOK):
 
@@ -75,33 +76,34 @@ JSON FORMATINDA YANIT VER (markdown YOK):
 "category": "Kategori",
 "brand": "Marka veya Bilinmiyor",
 "insights": [
-  {"type": "positive", "text": "✓ Olumlu özellik 1: Kısa açıklama (2-3 cümle max)"},
-  {"type": "positive", "text": "✓ Olumlu özellik 2: Başka avantaj (2-3 cümle max)"},
-  {"type": "warning", "text": "⚠️ Dikkat: Uyarı veya kısıtlama (2-3 cümle max)"},
-  {"type": "neutral", "text": "ℹ️ Bilgi: Genel bilgi veya kullanım (2-3 cümle max)"},
-  {"type": "neutral", "text": "ℹ️ Ekstra: Alerji/saklama/fiyat bilgisi (2-3 cümle max)"}
+  {"type": "positive", "text": "✓ Olumlu: [Özellik] (Kısa ve net ol)"},
+  {"type": "positive", "text": "✓ Fayda: [Özellik] (Kısa ve net ol)"},
+  {"type": "warning", "text": "⚠️ Not: [Besin değeri/Uyarı] (Obyektif dille yaz)"},
+  {"type": "neutral", "text": "ℹ️ Bilgi: [Kullanım/İçerik]"},
+  {"type": "neutral", "text": "ℹ️ Ekstra: [Saklama/Alerjen]"}
 ]
 }
 
-Kategori: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, Cleaning, Personal Care, Baby Care, Pet Care, Household, Frozen, Canned, Grains, Condiments, Other
+Kategori Listesi: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, Cleaning, Personal Care, Baby Care, Pet Care, Household, Frozen, Canned, Grains, Condiments, Other
 
-✅ TÜRKÇE, KISA VE ÖZ!`
-      : `🔍 PRODUCT ANALYSIS - ENGLISH
+✅ TÜRKÇE, KISA, TARAFSIZ VE PROFESYONEL!`
+        : `🔍 PRODUCT ANALYSIS - ENGLISH
 
 BARCODE: ${barcode}
 PRODUCT NAME: ${productName}
 ${brandInfo ? `BRAND: ${brandInfo}` : ''}
 
 📋 INSTRUCTIONS:
-1. Analyze ONLY this barcode product
-2. If "${productName}" contains "Bilinmeyen Ürün", write "Product info not found"
-3. PROVIDE EXACTLY 5 INSIGHTS (in order):
- a) 1 positive feature (positive)
- b) 1 another positive feature (positive)
- c) 1 caution point (warning)
- d) 1 general information (neutral)
- e) 1 extra info/allergy (neutral or warning)
-4. Each insight SHORT and CONCISE (max 2-3 sentences, 40-50 words)
+1. Analyze ONLY this barcode product.
+2. Be objective and factual. Focus on nutritional facts, do NOT criticize the brand subjectively.
+3. If "${productName}" contains "Bilinmeyen Ürün", write "Product info not found".
+4. PROVIDE EXACTLY 5 INSIGHTS (in order):
+ a) 1 highlight positive feature (positive)
+ b) 1 another useful feature (positive)
+ c) 1 important note or nutritional caution (e.g. sugar/salt level or "Consume moderately") (warning/neutral)
+ d) 1 general usage info (neutral)
+ e) 1 allergen or storage info (neutral)
+5. Each insight SHORT and CONCISE (max 2 sentences).
 
 RETURN JSON FORMAT (NO markdown):
 
@@ -110,17 +112,17 @@ RETURN JSON FORMAT (NO markdown):
 "category": "Category",
 "brand": "Brand or Unknown",
 "insights": [
-  {"type": "positive", "text": "✓ Positive feature 1: Brief explanation (2-3 sentences max)"},
-  {"type": "positive", "text": "✓ Positive feature 2: Another advantage (2-3 sentences max)"},
-  {"type": "warning", "text": "⚠️ Caution: Warning or restriction (2-3 sentences max)"},
-  {"type": "neutral", "text": "ℹ️ Info: General info or usage (2-3 sentences max)"},
-  {"type": "neutral", "text": "ℹ️ Extra: Allergy/storage/value info (2-3 sentences max)"}
+  {"type": "positive", "text": "✓ Positive: [Feature] (Short & clear)"},
+  {"type": "positive", "text": "✓ Benefit: [Feature] (Short & clear)"},
+  {"type": "warning", "text": "⚠️ Note: [Nutritional Fact/Caution] (Objective tone)"},
+  {"type": "neutral", "text": "ℹ️ Info: [Usage/Content]"},
+  {"type": "neutral", "text": "ℹ️ Extra: [Storage/Allergy]"}
 ]
 }
 
-Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, Cleaning, Personal Care, Baby Care, Pet Care, Household, Frozen, Canned, Grains, Condiments, Other
+Category List: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, Cleaning, Personal Care, Baby Care, Pet Care, Household, Frozen, Canned, Grains, Condiments, Other
 
-✅ ENGLISH, SHORT & CONCISE!`;
+✅ ENGLISH, SHORT, OBJECTIVE & PROFESSIONAL!`;
 
       console.log("📤 Sending request to Gemini API...");
 
@@ -138,8 +140,8 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
               }]
             }],
             generationConfig: {
-              temperature: 0.3, // ✅ Daha düşük = daha tutarlı
-              maxOutputTokens: 1200,
+              temperature: 0.1, // ✅ Daha da düşürdüm (0.1) ki yorum katmasın, sadece bilgi versin
+              maxOutputTokens: 1000,
             }
           })
         }
@@ -163,26 +165,26 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
       if (!data.candidates?.[0]?.content?.parts?.[0]?.text) {
         throw new Error('Invalid API response structure');
       }
-      
+
       let analysisText = data.candidates[0].content.parts[0].text.trim();
       console.log("📝 Raw AI text:", analysisText.substring(0, 200) + "...");
-      
+
       // ✅ DÜZELTME: Markdown/kod bloklarını temizle
       analysisText = analysisText
         .replace(/```json\n?/g, '')
         .replace(/```\n?/g, '')
         .replace(/`/g, '')
         .trim();
-      
+
       // ✅ DÜZELTME: JSON'u bul ve çıkar
       const jsonMatch = analysisText.match(/\{[\s\S]*\}/);
       if (!jsonMatch) {
         console.error("❌ No JSON found in:", analysisText);
         throw new Error('No valid JSON in AI response');
       }
-      
+
       analysisText = jsonMatch[0];
-      
+
       // ✅ DÜZELTME: JSON parse
       let analysis;
       try {
@@ -193,7 +195,7 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
         console.error('📄 Attempted to parse:', analysisText.substring(0, 300));
         throw new Error('Invalid JSON format from AI');
       }
-      
+
       return {
         ...analysis,
         barcode: barcode,
@@ -206,7 +208,7 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
 
   const lookupAndAnalyzeProduct = async (barcode: string) => {
     console.log("🔎 Looking up barcode:", barcode);
-    
+
     if (!canPerformAction()) {
       toast({
         title: t('common.error'),
@@ -215,7 +217,7 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
       });
       return;
     }
-    
+
     setLoading(true);
 
     try {
@@ -229,21 +231,21 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
 
       let productName = "";
       let brandInfo = "";
-      
+
       if (foodData.status === 1 && foodData.product) {
         // ✅ Ürün bulundu
         const product = foodData.product;
-        
+
         // Ürün adını bul (Türkçe öncelikli)
-        productName = product.product_name_tr || 
-                     product.product_name || 
-                     product.generic_name ||
-                     product.product_name_en || 
-                     "";
-        
+        productName = product.product_name_tr ||
+          product.product_name ||
+          product.generic_name ||
+          product.product_name_en ||
+          "";
+
         // Marka bilgisi
         brandInfo = product.brands || "";
-        
+
         console.log("✅ Product found:", {
           name: productName,
           brand: brandInfo,
@@ -258,17 +260,17 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
       // ✅ ADIM 2: AI ile analiz
       console.log("🤖 Starting AI analysis...");
       const analysis = await analyzeProductWithAI(productName, barcode, brandInfo);
-      
+
       if (analysis) {
         setScannedProduct(analysis);
         incrementAction();
-        
+
         // Ses efekti
         try {
           const audio = new Audio('/sounds/success.mp3');
           audio.volume = 0.3;
-          audio.play().catch(() => {});
-        } catch {}
+          audio.play().catch(() => { });
+        } catch { }
 
         toast({
           title: t('common.success'),
@@ -278,9 +280,9 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
       }
     } catch (error: any) {
       console.error('❌ Product lookup error:', error);
-      
+
       let errorMessage = "Failed to analyze product";
-      
+
       if (error.message.includes('rate limit')) {
         errorMessage = "Too many requests. Please wait and try again.";
       } else if (error.message.includes('Invalid JSON')) {
@@ -288,7 +290,7 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
       } else if (error.message.includes('API key')) {
         errorMessage = "Configuration error. Please contact support.";
       }
-      
+
       toast({
         title: t('common.error'),
         description: errorMessage,
@@ -308,18 +310,18 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
   const handleManualSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log("⌨️ Manual barcode submitted:", manualBarcode);
-    
+
     if (!manualBarcode.trim()) {
       toast({
         title: t('common.error'),
-        description: i18n.language === 'tr' 
-          ? "Lütfen bir barkod numarası girin" 
+        description: i18n.language === 'tr'
+          ? "Lütfen bir barkod numarası girin"
           : "Please enter a barcode number",
         variant: "destructive",
       });
       return;
     }
-    
+
     await lookupAndAnalyzeProduct(manualBarcode.trim());
     setManualBarcode("");
   };
@@ -334,8 +336,8 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
       console.log('❌ No list found');
       toast({
         title: t('common.error'),
-        description: i18n.language === 'tr' 
-          ? "Liste bulunamadı. Lütfen önce bir liste oluşturun." 
+        description: i18n.language === 'tr'
+          ? "Liste bulunamadı. Lütfen önce bir liste oluşturun."
           : "No shopping list found. Please create one first.",
         variant: "destructive",
       });
@@ -369,8 +371,8 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
       console.error('❌ Error adding item:', error);
       toast({
         title: t('common.error'),
-        description: i18n.language === 'tr' 
-          ? "Ürün listeye eklenirken bir hata oluştu" 
+        description: i18n.language === 'tr'
+          ? "Ürün listeye eklenirken bir hata oluştu"
           : "Failed to add item to list",
         variant: "destructive",
       });
@@ -456,10 +458,10 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
                           <div className="absolute inset-0 rounded-2xl border-4 border-primary/30 animate-scan-pulse" />
                           <div className="absolute inset-2 rounded-xl border-2 border-primary/50 animate-pulse" style={{ animationDelay: '0.2s' }} />
                           <div className="absolute inset-4 rounded-lg border border-primary/70 animate-pulse" style={{ animationDelay: '0.4s' }} />
-                          
+
                           {/* Tarama çizgisi animasyonu */}
                           <div className="absolute inset-x-0 h-2 bg-gradient-to-r from-transparent via-primary/80 to-transparent animate-scan-line shadow-lg shadow-primary/50" />
-                          
+
                           {/* Merkez ikon */}
                           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
                             <div className="relative">
@@ -467,14 +469,14 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
                               <ScanBarcode className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 text-primary-foreground" />
                             </div>
                           </div>
-                          
+
                           {/* Nokta animasyonları */}
                           <div className="absolute top-4 left-4 w-3 h-3 bg-primary rounded-full animate-ping" style={{ animationDelay: '0s' }} />
                           <div className="absolute top-4 right-4 w-3 h-3 bg-primary rounded-full animate-ping" style={{ animationDelay: '0.5s' }} />
                           <div className="absolute bottom-4 left-4 w-3 h-3 bg-primary rounded-full animate-ping" style={{ animationDelay: '1s' }} />
                           <div className="absolute bottom-4 right-4 w-3 h-3 bg-primary rounded-full animate-ping" style={{ animationDelay: '1.5s' }} />
                         </div>
-                        
+
                         <div className="mt-6 space-y-2">
                           <p className="text-base font-semibold text-center animate-pulse">
                             {isTurkish ? "Ürün analiz ediliyor..." : "Analyzing product..."}
@@ -593,8 +595,8 @@ Category: Fruits, Vegetables, Dairy, Bakery, Meat, Seafood, Beverages, Snacks, C
             </Card>
 
             <div className="space-y-3">
-              <Button 
-                className="w-full h-12 font-semibold" 
+              <Button
+                className="w-full h-12 font-semibold"
                 size="lg"
                 onClick={handleAddToList}
               >

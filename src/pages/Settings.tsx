@@ -53,6 +53,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { usePurchases } from "@/hooks/usePurchases";
 import { Capacitor } from "@capacitor/core";
 import { UsageCard } from "@/components/UsageCard";
+import RewardedAdSlot from "@/components/ads/RewardedAdSlot";
 
 const Settings = () => {
   const navigate = useNavigate();
@@ -74,6 +75,7 @@ const Settings = () => {
     hasUsedReferralButton,
     applyReferralCode,
     usedReferralCode,
+    rewardAdWatched,
   } = useSubscription();
   const {
     purchasePremium,
@@ -398,7 +400,7 @@ const Settings = () => {
             className="flex items-center gap-4 w-full cursor-pointer"
             onClick={() => {
               if (currentPlan === 'free') {
-                regenerateReferralCode();
+                // regenerateReferralCode(); // KALDIRILDI - Sabit kod
                 setReferralDialogOpen(true);
               } else {
                 toast({
@@ -427,8 +429,8 @@ const Settings = () => {
               <p className="text-sm text-muted-foreground">
                 {currentPlan === 'free'
                   ? (i18n.language === 'tr'
-                    ? 'Arkadaşınız kodu kullandığında free paketinize +7 gün eklenir!'
-                    : 'Get +7 days to your free plan when your friend uses your code!')
+                    ? 'Arkadaşınız kodu kullandığında deneme süreniz +7 GÜN uzar!'
+                    : 'Get +7 DAYS extension to your trial when your friend uses your code!')
                   : (i18n.language === 'tr'
                     ? 'Sadece free pakette kullanılabilir'
                     : 'Only available for free plan')}
@@ -567,22 +569,7 @@ const Settings = () => {
           <h3 className="text-lg font-semibold">{t('settings.appSettings')}</h3>
 
           <Card className="divide-y">
-            <div
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => {
-                toast({
-                  title: t('common.success'),
-                  description: "Cache cleared successfully",
-                });
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <Loader2 className="h-5 w-5 text-muted-foreground" />
-                <Label className="text-base font-medium cursor-pointer">
-                  {t('settings.clearCache')}
-                </Label>
-              </div>
-            </div>
+
 
             <div
               className="p-4 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors"
@@ -600,6 +587,30 @@ const Settings = () => {
                 </div>
               </div>
             </div>
+
+            {/* Rewarded Ad Slot */}
+            <div className="p-4">
+              <RewardedAdSlot
+                plan={currentPlan}
+                placement="settings_reward"
+                onReward={() => {
+                  const result = rewardAdWatched();
+                  if (result.success) {
+                    toast({
+                      title: t('common.success'),
+                      description: result.message,
+                    });
+                  } else {
+                    toast({
+                      title: "Bilgi",
+                      description: result.message,
+                    });
+                  }
+                }}
+              />
+            </div>
+
+
 
             <div
               className="p-4 flex items-center justify-between cursor-pointer hover:bg-destructive/10 transition-colors"
@@ -657,8 +668,8 @@ const Settings = () => {
               <Card
                 key={plan.id}
                 className={`relative p-6 flex flex-col ${plan.current
-                    ? 'border-primary shadow-lg scale-105'
-                    : 'border-border hover:border-primary/50'
+                  ? 'border-primary shadow-lg scale-105'
+                  : 'border-border hover:border-primary/50'
                   }`}
               >
                 {plan.current && (

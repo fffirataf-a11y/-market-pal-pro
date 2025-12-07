@@ -5,7 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserPlus, Search, Check, Loader2 } from "lucide-react";
 import { useFriends } from "@/hooks/useFriends";
-import { useDebounce } from "@/hooks/use-debounce"; // Assuming this exists or I'll implement a simple one
+import { showInterstitialAd } from "@/lib/adManager";
+import { useSubscription } from "@/hooks/useSubscription";
 
 // Simple debounce hook implementation if not exists
 function useDebounceValue<T>(value: T, delay: number): T {
@@ -27,6 +28,7 @@ export function AddFriendDialog() {
     const debouncedSearch = useDebounceValue(searchTerm, 500);
     const [searchResults, setSearchResults] = useState<any[]>([]);
     const { searchUserByName, sendFriendRequest, loading } = useFriends();
+    const { plan } = useSubscription();
     const [sentRequests, setSentRequests] = useState<string[]>([]);
 
     useEffect(() => {
@@ -44,6 +46,8 @@ export function AddFriendDialog() {
     const handleSendRequest = async (user: any) => {
         await sendFriendRequest(user);
         setSentRequests((prev) => [...prev, user.uid]);
+        // Show interstitial ad after sending friend request
+        await showInterstitialAd(plan);
     };
 
     return (

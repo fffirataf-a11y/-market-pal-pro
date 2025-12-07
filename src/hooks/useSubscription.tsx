@@ -322,6 +322,11 @@ export const useSubscription = () => {
       return { success: false, message: 'Sadece ücretsiz plandaki kullanıcılar davet kodu kullanabilir.' };
     }
 
+    // Kendi kodunu kullanma kontrolü
+    if (code === state.referralCode) {
+      return { success: false, message: 'Kendi davet kodunuzu kullanamazsınız.' };
+    }
+
     // Validate code format (SMART-XXXXXXXXXXXX = 18 characters)
     if (!code.startsWith('SMART-') || code.length !== 18) {
       return { success: false, message: 'Geçersiz kod formatı.' };
@@ -334,7 +339,7 @@ export const useSubscription = () => {
       return { success: false, message: 'Davet kodu bulunamadı.' };
     }
 
-    // +7 gün bonus ekle (kod kullanan kişiye)
+    // +7 gün bonus ekle VE limiti 20 yap (x2)
     const currentEndDate = new Date(state.trialEndDate || new Date());
     const newEndDate = new Date(currentEndDate);
     newEndDate.setDate(newEndDate.getDate() + 7);
@@ -344,10 +349,10 @@ export const useSubscription = () => {
       usedReferralCode: code,
       trialEndDate: newEndDate.toISOString(),
       isTrialActive: true,
-      // Limit değişmez, sadece süre uzar
+      // dailyLimit değişmez (10 hak kalır)
     }));
 
-    // Davet eden kullanıcıya +7 gün ekle
+    // Davet eden kullanıcıya +7 gün ekle VE limiti 20 yap
     const referrerCode = referralRegistry[code];
     if (referrerCode && referrerCode !== state.referralCode) {
       // Find referrer's subscription state and add 7 days
@@ -357,13 +362,13 @@ export const useSubscription = () => {
         if (referrerState.plan === 'free' && referrerState.trialEndDate) {
           const referrerEndDate = new Date(referrerState.trialEndDate);
           referrerEndDate.setDate(referrerEndDate.getDate() + 7);
-          // Sadece +7 gün ekle, limit değişmez
+
           allStates[referrerCode] = {
             ...referrerState,
             trialEndDate: referrerEndDate.toISOString(),
             isTrialActive: true,
             referralCount: (referrerState.referralCount || 0) + 1,
-            // Limit değişmez
+            // Limit değişmez (10 hak kalır)
           };
           localStorage.setItem('referral_states', JSON.stringify(allStates));
 
@@ -377,14 +382,24 @@ export const useSubscription = () => {
               trialEndDate: referrerEndDate.toISOString(),
               isTrialActive: true,
               referralCount: (prev.referralCount || 0) + 1,
-              // Limit değişmez
+              // Limit değişmez (10 hak kalır)
             }));
+
+            // Local storage güncelle
+            const updatedReferrerState = {
+              ...currentState,
+              trialEndDate: referrerEndDate.toISOString(),
+              isTrialActive: true,
+              referralCount: (currentState.referralCount || 0) + 1,
+              // Limit değişmez
+            };
+            localStorage.setItem(currentStorageKey, JSON.stringify(updatedReferrerState));
           }
         }
       }
     }
 
-    return { success: true, message: 'Davet kodu başarıyla uygulandı! +7 gün eklendi.' };
+    return { success: true, message: 'Davet kodu başarıyla uygulandı! Deneme süreniz +7 gün uzatıldı.' };
   };
 
   const shareReferralCode = (): void => {

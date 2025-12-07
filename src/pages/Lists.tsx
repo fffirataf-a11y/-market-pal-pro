@@ -26,9 +26,9 @@ import {
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import ShareList from "@/components/ShareList";
-import RewardedAdSlot from "@/components/ads/RewardedAdSlot";
+
 import { ADS_ENABLED } from "@/config/featureFlags";
-import { maybeAutoplayOnStart } from "@/lib/adManager";
+import { showInterstitialAd } from "@/lib/adManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { LimitReachedDialog } from "@/components/LimitReachedDialog";
 import { useShoppingLists } from "@/hooks/useShoppingLists";
@@ -80,11 +80,7 @@ const Lists = () => {
     return () => clearTimeout(timer);
   }, [listsLoading, lists.length, t]);
 
-  // If ads are enabled later, auto-play once on app start for free users
-  useEffect(() => {
-    if (!ADS_ENABLED) return;
-    maybeAutoplayOnStart(plan, "autoplay_lists");
-  }, [plan]);
+
 
   // ✅ İlk listeyi seç
   const selectedList = lists.length > 0 ? lists[0] : null;
@@ -400,6 +396,12 @@ const Lists = () => {
 
     try {
       await deleteAllItems(selectedList.id);
+
+      // Show Interstitial Ad
+      if (ADS_ENABLED) {
+        await showInterstitialAd(plan);
+      }
+
       toast({
         title: t('common.success'),
         description: `${totalCount} ${i18n.language === 'tr' ? 'ürün silindi' : 'items deleted'}`,
@@ -485,7 +487,7 @@ const Lists = () => {
         </div>
       </header>
 
-      <main className="container max-w-4xl py-6">
+      <main className="container max-w-4xl py-6 pb-24">
         <Tabs defaultValue="my-lists" value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-2 mb-6">
             <TabsTrigger value="my-lists">{t('lists.myLists')}</TabsTrigger>
@@ -493,12 +495,7 @@ const Lists = () => {
           </TabsList>
 
           <TabsContent value="my-lists" className="space-y-4">
-            {/* ✅ Rewarded Ad Slot - Listelerin üstünde gösterilir */}
-            {ADS_ENABLED && plan === 'free' && (
-              <div className="mb-4">
-                <RewardedAdSlot onReward={rewardAdWatched} plan={plan} />
-              </div>
-            )}
+
 
             {items.length === 0 ? (
               <Card className="p-8 text-center">

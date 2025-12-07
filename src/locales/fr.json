@@ -171,7 +171,7 @@
         "Scanner de codes-barres",
         "Listes de courses",
         "Partage avec 2 personnes",
-        "Bonus de parrainage"
+        "Bonus de parrainage : +7 jours par invitation"
       ]
     },
     "premium": {
@@ -214,22 +214,22 @@
     }
   },
   "referral": {
-    "inviteFriend": "Invite Friend",
-    "earn2x": "+2x usage",
-    "title": "Invite Friends",
-    "subtitle": "Share your code and earn 2x daily limits",
-    "yourCode": "Your Referral Code",
-    "copy": "Copy Code",
-    "copied": "Copied!",
-    "howItWorks": "How It Works",
-    "step1": "Share your unique code",
-    "step2": "Friend signs up with your code",
-    "step3": "Both get 2x daily limits (5→10)",
-    "enterCode": "Have a referral code?",
-    "enterCodePlaceholder": "Enter code (optional)",
-    "apply": "Apply Code",
-    "success": "Referral code applied! You now have 2x daily limits!",
-    "invalid": "Invalid referral code",
-    "alreadyUsed": "You've already used a referral code"
+    "inviteFriend": "Inviter un ami",
+    "earn2x": "+7 jours d'extension",
+    "title": "Inviter des amis",
+    "subtitle": "Partagez votre code, prolongez l'essai de 7 jours",
+    "yourCode": "Votre code de parrainage",
+    "copy": "Copier le code",
+    "copied": "Copié !",
+    "howItWorks": "Comment ça marche",
+    "step1": "Partagez votre code unique",
+    "step2": "Un ami s'inscrit avec votre code",
+    "step3": "Tous deux recevez +7 jours d'extension d'essai gratuit",
+    "enterCode": "Avez-vous un code de parrainage ?",
+    "enterCodePlaceholder": "Entrer le code (optionnel)",
+    "apply": "Appliquer le code",
+    "success": "Code de parrainage appliqué ! Essai prolongé de 7 jours !",
+    "invalid": "Code de parrainage invalide",
+    "alreadyUsed": "Vous avez déjà utilisé un code de parrainage"
   }
 }

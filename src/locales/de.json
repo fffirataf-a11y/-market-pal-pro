@@ -171,7 +171,7 @@
         "Barcode-Scanner",
         "Einkaufslisten",
         "Teilen mit 2 Personen",
-        "Bonus durch Einladungen"
+        "Empfehlungsbonus: +7 Tage pro Einladung"
       ]
     },
     "premium": {
@@ -214,22 +214,22 @@
     }
   },
   "referral": {
-    "inviteFriend": "Invite Friend",
-    "earn2x": "+2x usage",
-    "title": "Invite Friends",
-    "subtitle": "Share your code and earn 2x daily limits",
-    "yourCode": "Your Referral Code",
-    "copy": "Copy Code",
-    "copied": "Copied!",
-    "howItWorks": "How It Works",
-    "step1": "Share your unique code",
-    "step2": "Friend signs up with your code",
-    "step3": "Both get 2x daily limits (5→10)",
-    "enterCode": "Have a referral code?",
-    "enterCodePlaceholder": "Enter code (optional)",
-    "apply": "Apply Code",
-    "success": "Referral code applied! You now have 2x daily limits!",
-    "invalid": "Invalid referral code",
-    "alreadyUsed": "You've already used a referral code"
+    "inviteFriend": "Freunde einladen",
+    "earn2x": "+7 Tage Verlängerung",
+    "title": "Freunde einladen",
+    "subtitle": "Teile deinen Code und verlängere die Testphase um 7 Tage",
+    "yourCode": "Dein Einladungscode",
+    "copy": "Code kopieren",
+    "copied": "Kopiert!",
+    "howItWorks": "So funktioniert's",
+    "step1": "Teile deinen einzigartigen Code",
+    "step2": "Freund meldet sich mit deinem Code an",
+    "step3": "Beide erhalten +7 Tage kostenlose Testverlängerung",
+    "enterCode": "Hast du einen Einladungscode?",
+    "enterCodePlaceholder": "Code eingeben (optional)",
+    "apply": "Code anwenden",
+    "success": "Einladungscode angewendet! Testphase um 7 Tage verlängert!",
+    "invalid": "Ungültiger Einladungscode",
+    "alreadyUsed": "Du hast bereits einen Einladungscode verwendet"
   }
 }

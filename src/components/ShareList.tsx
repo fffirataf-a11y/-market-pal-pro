@@ -7,7 +7,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription, 
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { UserPlus, Check, Users, Trash2, Eye, Edit3 } from "lucide-react";
@@ -23,6 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
+import { showInterstitialAd } from "@/lib/adManager";
+import { useSubscription } from "@/hooks/useSubscription";
 
 interface ShareListProps {
   open: boolean;
@@ -60,14 +62,14 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
       try {
         const listRef = doc(db, 'shoppingLists', listId);
         const listDoc = await getDoc(listRef);
-        
+
         if (listDoc.exists()) {
           const data = listDoc.data();
           setListOwner(data.ownerId);
-          
+
           const sharedWith = data.sharedWith || [];
           const permissions = data.permissions || {};
-          
+
           // Paylaşılan kullanıcıların detaylarını al
           // Önce mevcut friends listesinden eşle, bulunamazsa Firestore'dan getir
           const usersData: SharedUser[] = [];
@@ -93,7 +95,7 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
               });
             }
           }
-          
+
           setSharedUsers(usersData);
         }
       } catch (error) {
@@ -120,7 +122,7 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
     setLoading(true);
     try {
       const listRef = doc(db, 'shoppingLists', listId);
-      
+
       await updateDoc(listRef, {
         sharedWith: arrayUnion(friendId),
         [`permissions.${friendId}`]: 'edit' // Varsayılan edit izni
@@ -155,15 +157,15 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
     try {
       const listRef = doc(db, 'shoppingLists', listId);
       const listDoc = await getDoc(listRef);
-      
+
       if (listDoc.exists()) {
         const currentShared = listDoc.data().sharedWith || [];
         const currentPermissions = listDoc.data().permissions || {};
-        
+
         const updatedShared = currentShared.filter((id: string) => id !== friendId);
         const updatedPermissions = { ...currentPermissions };
         delete updatedPermissions[friendId];
-        
+
         await updateDoc(listRef, {
           sharedWith: updatedShared,
           permissions: updatedPermissions
@@ -195,12 +197,12 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
     setLoading(true);
     try {
       const listRef = doc(db, 'shoppingLists', listId);
-      
+
       await updateDoc(listRef, {
         [`permissions.${friendId}`]: newPermission
       });
 
-      setSharedUsers(prev => 
+      setSharedUsers(prev =>
         prev.map(u => u.uid === friendId ? { ...u, permission: newPermission } : u)
       );
 
@@ -234,7 +236,7 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
             Liste Paylaşımı
           </DialogTitle>
           <DialogDescription>
-            {isOwner 
+            {isOwner
               ? `Liste arkadaşlarınızla paylaşın (${sharedUsers.length}/${MAX_SHARES})`
               : "Bu listeye erişimi olan kişiler"
             }
@@ -250,8 +252,8 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
               </Label>
               <div className="space-y-2">
                 {sharedUsers.map((user) => (
-                  <div 
-                    key={user.uid} 
+                  <div
+                    key={user.uid}
                     className="flex items-center gap-3 p-3 rounded-lg border bg-card"
                   >
                     <Avatar className="h-10 w-10">
@@ -266,11 +268,11 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
                         {user.email}
                       </p>
                     </div>
-                    
+
                     {isOwner ? (
                       <div className="flex items-center gap-2">
-                        <Select 
-                          value={user.permission} 
+                        <Select
+                          value={user.permission}
                           onValueChange={(value: 'view' | 'edit') => handlePermissionChange(user.uid, value)}
                           disabled={loading}
                         >
@@ -319,8 +321,8 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
               <Label className="text-sm font-semibold">Arkadaş Ekle</Label>
               <div className="space-y-2 max-h-[200px] overflow-y-auto">
                 {availableFriends.map((friend) => (
-                  <div 
-                    key={friend.uid} 
+                  <div
+                    key={friend.uid}
                     className="flex items-center gap-3 p-3 rounded-lg border bg-card hover:bg-accent/50 transition-colors"
                   >
                     <Avatar className="h-10 w-10">
@@ -354,7 +356,7 @@ const ShareList = ({ open, onOpenChange, listId }: ShareListProps) => {
             <div className="text-center py-8">
               <Users className="h-12 w-12 mx-auto text-muted-foreground mb-3" />
               <p className="text-muted-foreground text-sm">
-                {isOwner 
+                {isOwner
                   ? "Henüz kimseyle paylaşılmadı. Arkadaşlarınızı ekleyin!"
                   : "Bu liste henüz kimseyle paylaşılmamış"
                 }

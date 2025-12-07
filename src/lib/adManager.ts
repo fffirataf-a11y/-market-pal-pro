@@ -21,20 +21,36 @@ const ADMOB_APP_IDS = {
   android: "ca-app-pub-3272601063768123~7349673296", // Android App ID (güncellendi)
 };
 
-// iOS Ad Unit ID'leri (gerçek ID'ler - güncellendi)
+// // iOS Ad Unit ID'leri (gerçek ID'ler - güncellendi)
+// const IOS_AD_UNIT_IDS = {
+//   banner: "ca-app-pub-3272601063768123/9864866432", // Banner_AnaEkran
+//   interstitial: "ca-app-pub-3272601063768123/6092431943", // Interstital_Gecis
+//   appOpen: "ca-app-pub-3272601063768123/4016932944", // Interstital_AppAcik (App Open)
+//   rewarded: "ca-app-pub-3272601063768123/4531938264", // Rewarded_Odullu (güncellendi)
+// };
+
+// // Android Ad Unit ID'leri (gerçek ID'ler - güncellendi)
+// const ANDROID_AD_UNIT_IDS = {
+//   banner: "ca-app-pub-3272601063768123/9864866432", // Banner_AnaEkran
+//   interstitial: "ca-app-pub-3272601063768123/6092431943", // Interstital_Gecis
+//   appOpen: "ca-app-pub-3272601063768123/4016932944", // Interstital_AppAcik (App Open)
+//   rewarded: "ca-app-pub-3272601063768123/5285233841", // Rewarded_Odullu (güncellendi)
+// };
+
+// iOS Ad Unit ID'leri (GERÇEK PRODUCTION ID'LER)
 const IOS_AD_UNIT_IDS = {
-  banner: "ca-app-pub-3272601063768123/9864866432", // Banner_AnaEkran
-  interstitial: "ca-app-pub-3272601063768123/6092431943", // Interstital_Gecis
-  appOpen: "ca-app-pub-3272601063768123/4016932944", // Interstital_AppAcik (App Open)
-  rewarded: "ca-app-pub-3272601063768123/4531938264", // Rewarded_Odullu (güncellendi)
+  banner: "ca-app-pub-3272601063768123/9864866432", // Banner (Kullanılmıyor ama placeholder kalsın)
+  interstitial: "ca-app-pub-3272601063768123/6643096287", // Interstitial_Gecis
+  appOpen: "ca-app-pub-3272601063768123/8718595284", // Interstital_GecisReklam (App Open)
+  rewarded: "ca-app-pub-3272601063768123/4531988264", // Rewarded_Odullu
 };
 
-// Android Ad Unit ID'leri (gerçek ID'ler - güncellendi)
+// Android Ad Unit ID'leri (GERÇEK PRODUCTION ID'LER)
 const ANDROID_AD_UNIT_IDS = {
-  banner: "ca-app-pub-3272601063768123/9864866432", // Banner_AnaEkran
+  banner: "ca-app-pub-3272601063768123/9864866432", // Banner (Kullanılmıyor)
   interstitial: "ca-app-pub-3272601063768123/6092431943", // Interstital_Gecis
-  appOpen: "ca-app-pub-3272601063768123/4016932944", // Interstital_AppAcik (App Open)
-  rewarded: "ca-app-pub-3272601063768123/5285233841", // Rewarded_Odullu (güncellendi)
+  appOpen: "ca-app-pub-3272601063768123/4016932944", // Interstital_AppAcik
+  rewarded: "ca-app-pub-3272601063768123/5285233841", // Rewarded_Odullu
 };
 
 // AdMob Mediation ile desteklenen ağlar
@@ -63,7 +79,7 @@ let adMobInitialized = false;
  */
 const initializeAdMob = async (): Promise<void> => {
   if (adMobInitialized) return;
-  
+
   // Sadece mobil platformlarda çalış
   if (!Capacitor.isNativePlatform()) {
     console.log("[Ads] Web platform - AdMob disabled");
@@ -118,7 +134,7 @@ const shouldShowAd = (plan: PlanType): boolean => {
  * Rewarded ad gösterir
  * AdMob Mediation, tüm yapılandırılmış ağlardan teklif alır ve en yüksek teklifi veren ağın reklamını gösterir
  */
-export const showRewardedAdPlaceholder = async (
+export const showRewardedAd = async (
   plan: PlanType,
   options: RewardedAdOptions = {}
 ): Promise<void> => {

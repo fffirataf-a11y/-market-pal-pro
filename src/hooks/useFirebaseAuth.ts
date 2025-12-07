@@ -42,9 +42,10 @@ export const useFirebaseAuth = () => {
         email: user.email,
         name: user.displayName || firestoreData.fullName || 'User',
         fullName: firestoreData.fullName || user.displayName || 'User',
+        searchKey: (firestoreData.fullName || user.displayName || 'User').toLowerCase(),
         avatar: user.photoURL || "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
       };
-      
+
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('userToken', user.uid);
       window.dispatchEvent(new Event('auth-change'));
@@ -58,7 +59,7 @@ export const useFirebaseAuth = () => {
     } catch (error: any) {
       console.error('Login error:', error);
       let errorMessage = "Login failed";
-      
+
       if (error.message === 'EMAIL_NOT_VERIFIED') {
         errorMessage = "Please verify your email address first. Check your inbox.";
       } else if (error.code === 'auth/user-not-found') {
@@ -100,6 +101,7 @@ export const useFirebaseAuth = () => {
         uid: user.uid,
         email: user.email,
         fullName: fullName,
+        searchKey: fullName.toLowerCase(),
         displayName: fullName,
         photoURL: "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
         createdAt: new Date().toISOString(),
@@ -125,7 +127,7 @@ export const useFirebaseAuth = () => {
     } catch (error: any) {
       console.error('Signup error:', error);
       let errorMessage = "Signup failed";
-      
+
       if (error.code === 'auth/email-already-in-use') {
         errorMessage = "Email already in use";
       } else if (error.code === 'auth/weak-password') {
@@ -148,7 +150,7 @@ export const useFirebaseAuth = () => {
     setLoading(true);
     try {
       const user = auth.currentUser;
-      
+
       if (!user) {
         throw new Error('No user logged in');
       }
@@ -240,7 +242,7 @@ export const useFirebaseAuth = () => {
         name: user.displayName || 'User',
         avatar: user.photoURL || "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
       };
-      
+
       localStorage.setItem('user', JSON.stringify(userData));
       localStorage.setItem('userToken', user.uid);
       window.dispatchEvent(new Event('auth-change'));
@@ -293,7 +295,7 @@ export const useFirebaseAuth = () => {
       localStorage.removeItem('user');
       localStorage.removeItem('userToken');
       window.dispatchEvent(new Event('auth-change'));
-      
+
       toast({
         title: "Success",
         description: "Logged out successfully",

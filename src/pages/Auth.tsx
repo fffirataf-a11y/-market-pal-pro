@@ -15,11 +15,11 @@ const Auth = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
-  const { 
-    loading, 
-    loginWithEmail, 
-    signupWithEmail, 
-    resetPassword 
+  const {
+    loading,
+    loginWithEmail,
+    signupWithEmail,
+    resetPassword
   } = useFirebaseAuth();
   const { applyReferralCode } = useSubscription();
 
@@ -52,7 +52,7 @@ const Auth = () => {
   // Email ile kayıt
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (password !== confirmPassword) {
       alert("Passwords don't match");
       return;
@@ -65,32 +65,32 @@ const Auth = () => {
 
     try {
       await signupWithEmail(email, password, fullName);
-      
+
       // Referral kodu varsa uygula
       if (referralCode.trim()) {
         const success = applyReferralCode(referralCode.trim().toUpperCase());
         if (success) {
           toast({
             title: t('common.success'),
-            description: i18n.language === 'tr' 
-              ? 'Davet kodu uygulandı! 7 gün ücretsiz kazandınız!' 
+            description: i18n.language === 'tr'
+              ? 'Davet kodu uygulandı! 7 gün ücretsiz kazandınız!'
               : 'Referral code applied! You got 7 days free!',
           });
         } else {
           toast({
             title: t('common.error'),
-            description: i18n.language === 'tr' 
-              ? 'Geçersiz davet kodu' 
+            description: i18n.language === 'tr'
+              ? 'Geçersiz davet kodu'
               : 'Invalid referral code',
             variant: "destructive",
           });
         }
       }
-      
+
       // Başarılı kayıt sonrası verification notice göster
       setVerificationEmail(email);
       setShowVerificationNotice(true);
-      
+
       // Form'u temizle
       setEmail("");
       setPassword("");
@@ -125,7 +125,7 @@ const Auth = () => {
                 <Mail className="w-10 h-10 text-success" />
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2">
                 <CheckCircle className="w-6 h-6 text-success" />
@@ -183,10 +183,13 @@ const Auth = () => {
       ) : (
         <Card className="w-full max-w-md p-8 shadow-2xl">
           {/* Logo */}
+          {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-8">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shadow-lg">
-              <ShoppingCart className="w-8 h-8 text-primary-foreground" />
-            </div>
+            <img
+              src="/logo.png"
+              alt="SmartMarket Logo"
+              className="w-16 h-16 rounded-2xl shadow-lg"
+            />
             <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               SmartMarket
             </h1>
@@ -357,8 +360,8 @@ const Auth = () => {
                       className="font-mono text-sm"
                     />
                     <p className="text-xs text-muted-foreground">
-                      {i18n.language === 'tr' 
-                        ? 'Arkadaşınızın davet kodunu girerek 7 gün ücretsiz kazanın' 
+                      {i18n.language === 'tr'
+                        ? 'Arkadaşınızın davet kodunu girerek 7 gün ücretsiz kazanın'
                         : 'Enter your friend\'s referral code to get 7 days free'}
                     </p>
                   </div>

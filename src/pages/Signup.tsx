@@ -71,9 +71,11 @@ const Signup = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/20 to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-md p-8">
         <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 rounded-full bg-primary flex items-center justify-center mb-4">
-            <ShoppingCart className="w-8 h-8 text-primary-foreground" />
-          </div>
+          <img
+            src="/logo.png"
+            alt="SmartMarket"
+            className="w-20 h-20 rounded-2xl shadow-lg mb-4"
+          />
           <h1 className="text-3xl font-bold">Create Account</h1>
           <p className="text-muted-foreground mt-2">Join SmartMarket today</p>
         </div>
