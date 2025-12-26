@@ -98,4 +98,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ios-app
-          path: ios/App/App.ipa
+          path: ${{ runner.temp }}/build/App.ipa
