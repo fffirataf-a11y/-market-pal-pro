@@ -81,7 +81,7 @@ jobs:
             -allowProvisioningUpdates
 
       - name: Upload IPA
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: SmartMarket-iOS-v1.0
-          path: ${{ runner.temp }}/build/*.ipa
+          name: ios-app
+          path: ios/App/App.ipa
