@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { 
+import {
   Activity, Calendar, TrendingUp, Clock, Zap
 } from "lucide-react";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -18,7 +18,7 @@ export const UsageCard = () => {
     getRemainingActions,
   } = useSubscription();
 
-  const usagePercent = getUsagePercentage();
+  const usagePercent = Math.round(getUsagePercentage());
   const trialDaysLeft = getTrialDaysRemaining();
   const remainingActions = getRemainingActions();
   const dailyRemaining = plan === 'pro' ? '∞' : remainingActions;
@@ -29,7 +29,7 @@ export const UsageCard = () => {
       <div className="relative">
         {/* Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 via-pink-500/10 to-orange-500/10 rounded-3xl blur-3xl" />
-        
+
         {/* Main Card */}
         <Card className="relative backdrop-blur-xl bg-white/70 dark:bg-black/70 border-white/20 p-6">
           <div className="space-y-6">
@@ -41,16 +41,16 @@ export const UsageCard = () => {
                 </div>
                 <div>
                   <Badge className="mb-1 bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0">
-                    {plan === 'pro' ? t('subscription.pro.name') : 
-                     plan === 'premium' ? t('subscription.premium.name') : 
-                     t('subscription.free.name')}
+                    {plan === 'pro' ? t('subscription.pro.name') :
+                      plan === 'premium' ? t('subscription.premium.name') :
+                        t('subscription.free.name')}
                   </Badge>
                   <h3 className="font-bold text-lg">
-                    {plan === 'free' && isTrialActive 
+                    {plan === 'free' && isTrialActive
                       ? t('subscription.trialDaysLeft', { days: trialDaysLeft })
-                      : plan === 'free' 
-                      ? t('subscription.trialExpired')
-                      : t('subscription.monthlyUsage')}
+                      : plan === 'free'
+                        ? t('subscription.trialExpired')
+                        : t('subscription.monthlyUsage')}
                   </h3>
                 </div>
               </div>
@@ -83,9 +83,9 @@ export const UsageCard = () => {
                   </span>
                 </div>
                 <div className="relative h-3 bg-muted rounded-full overflow-hidden">
-                  <div 
+                  <div
                     className="absolute inset-0 bg-gradient-to-r from-violet-500 via-purple-500 to-pink-500 rounded-full transition-all duration-500"
-                    style={{ width: `${usagePercent}%` }} 
+                    style={{ width: `${usagePercent}%` }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-r from-white/20 to-transparent rounded-full" />
                 </div>
@@ -99,20 +99,20 @@ export const UsageCard = () => {
                 <p className="text-xl font-bold">{dailyUsed}</p>
                 <p className="text-xs text-muted-foreground">{t('subscription.today')}</p>
               </div>
-              
+
               <div className="text-center p-3 rounded-xl bg-gradient-to-br from-green-50 to-green-100/50 dark:from-green-950/30 dark:to-green-900/20 border border-green-200/50 dark:border-green-800/50">
                 <TrendingUp className="w-5 h-5 mx-auto mb-1 text-green-600 dark:text-green-400" />
                 <p className="text-xl font-bold">{dailyRemaining}</p>
                 <p className="text-xs text-muted-foreground">{t('subscription.dailyLeft')}</p>
               </div>
-              
+
               <div className="text-center p-3 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 border border-purple-200/50 dark:border-purple-800/50">
                 <Clock className="w-5 h-5 mx-auto mb-1 text-purple-600 dark:text-purple-400" />
                 <p className="text-xl font-bold">
-                  {plan === 'free' && isTrialActive ? trialDaysLeft : '∞'}
+                  {isTrialActive ? trialDaysLeft : '∞'}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {plan === 'free' && isTrialActive ? t('subscription.daysLeft') : t('subscription.unlimited')}
+                  {isTrialActive ? t('subscription.daysLeft') : t('subscription.unlimited')}
                 </p>
               </div>
             </div>

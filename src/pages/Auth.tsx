@@ -41,6 +41,16 @@ const Auth = () => {
   // Email ile giriş
   const handleEmailLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!navigator.onLine) {
+      toast({
+        title: t('common.error'),
+        description: "No internet connection. Please check your network.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       await loginWithEmail(email, password);
       navigate("/lists");
@@ -52,6 +62,15 @@ const Auth = () => {
   // Email ile kayıt
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!navigator.onLine) {
+      toast({
+        title: t('common.error'),
+        description: "No internet connection. Please check your network.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (password !== confirmPassword) {
       alert("Passwords don't match");

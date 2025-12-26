@@ -13,6 +13,7 @@ import {
   DialogDescription,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { auth } from "@/config/firebase";
 import {
   Plus,
   Search,
@@ -22,25 +23,39 @@ import {
   Trash2,
   Share2,
   Loader2,
+  Lock, // ✅ EKLE
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import ShareList from "@/components/ShareList";
 
 import { ADS_ENABLED } from "@/config/featureFlags";
 import { showInterstitialAd } from "@/lib/adManager";
+
 import { useSubscription } from "@/hooks/useSubscription";
 import { LimitReachedDialog } from "@/components/LimitReachedDialog";
 import { useShoppingLists } from "@/hooks/useShoppingLists";
 import i18n from "@/i18n";
 import { AddFriendDialog } from "@/components/friends/AddFriendDialog";
 import { FriendRequests } from "@/components/friends/FriendRequests";
+import { detectCategory } from "@/lib/categoryDetector";
 
 const Lists = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
-  const { canPerformAction, incrementAction, plan, rewardAdWatched } = useSubscription();
+  const { canPerformAction, incrementAction, plan, rewardAdWatched, getRemainingActions } = useSubscription();
+  const currentUserId = auth.currentUser?.uid; // ✅ ID eklendi
 
   // ✅ Firestore hook
   const {
@@ -60,6 +75,8 @@ const Lists = () => {
   const [isShareDialogOpen, setIsShareDialogOpen] = useState<boolean>(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState<boolean>(false);
   const [isDeletingAll, setIsDeletingAll] = useState<boolean>(false);
+  const [isDeleteAlertOpen, setIsDeleteAlertOpen] = useState<boolean>(false);
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [newItem, setNewItem] = useState({
     name: "",
     quantity: "",
@@ -92,134 +109,9 @@ const Lists = () => {
     console.log('📋 Items:', items.map(i => ({ id: i.id, name: i.name })));
   }, [items]);
 
-  const detectCategory = (itemName: string): string => {
-    const name = itemName.toLowerCase().trim();
 
-    const categoryKeywords: Record<string, string[]> = {
-      Cleaning: [
-        "bleach", "detergent", "soap", "cleaner", "disinfectant", "wipes",
-        "mop", "broom", "sponge", "scrub", "polish", "spray", "toilet cleaner",
-        "floor cleaner", "glass cleaner", "dishwashing", "laundry",
-        "çamaşır suyu", "deterjan", "sabun", "temizleyici", "dezenfektan",
-        "mendil", "islak mendil", "paspas", "sünger", "ovma", "parlatıcı",
-        "sprey", "tuvalet temizleyici", "yer temizleyici", "cam temizleyici",
-        "bulaşık", "çamaşır", "yumuşatıcı", "kir sökücu"
-      ],
-      "Personal Care": [
-        "shampoo", "conditioner", "toothpaste", "toothbrush", "deodorant",
-        "perfume", "cologne", "razor", "shaving", "cream", "lotion",
-        "tissue", "toilet paper", "soap", "body wash", "face wash",
-        "makeup", "cosmetic", "skincare", "moisturizer",
-        "şampuan", "saç kremi", "diş macunu", "diş fırçası", "deodorant",
-        "parfüm", "kolonya", "tıraş", "krem", "losyon", "peçete",
-        "tuvalet kağıdı", "duş jeli", "yüz yıkama", "makyaj", "kozmetik",
-        "cilt bakım", "nemlendirici"
-      ],
-      "Baby Care": [
-        "diaper", "baby food", "formula", "wipes", "baby oil", "powder",
-        "pacifier", "bottle", "baby shampoo", "baby soap",
-        "bebek bezi", "mama", "bebek maması", "ıslak mendil", "bebek yağı",
-        "pudra", "emzik", "biberon", "bebek şampuanı", "bebek sabunu"
-      ],
-      "Pet Care": [
-        "pet food", "dog food", "cat food", "litter", "pet toy",
-        "kedi maması", "köpek maması", "kedi kumu", "mama", "oyuncak"
-      ],
-      Household: [
-        "battery", "light bulb", "candle", "matches", "foil", "wrap",
-        "bag", "trash bag", "ziplock", "container", "tape",
-        "pil", "ampul", "mum", "kibrit", "folyo", "streç film",
-        "poşet", "çöp torbası", "kilitli poşet", "saklama kabı", "bant"
-      ],
-      Frozen: [
-        "frozen", "ice cream", "popsicle", "frozen pizza", "frozen vegetable",
-        "dondurulmuş", "donmuş", "dondurma", "buz", "donmuş pizza", "donmuş sebze"
-      ],
-      Canned: [
-        "canned", "jar", "pickle", "olive", "tomato paste", "tomato sauce",
-        "konserve", "turşu", "zeytin", "salça", "domates salçası", "biber salçası",
-        "reçel", "bal", "kavanoz"
-      ],
-      Grains: [
-        "rice", "pasta", "noodle", "spaghetti", "macaroni", "flour", "bulgur",
-        "couscous", "quinoa", "oats", "cereal", "bread", "wheat",
-        "pirinç", "makarna", "erişte", "spagetti", "un", "bulgur",
-        "kuskus", "kinoa", "yulaf", "tahıl", "gevrek", "buğday"
-      ],
-      Condiments: [
-        "salt", "pepper", "spice", "sauce", "ketchup", "mayonnaise", "mustard",
-        "vinegar", "oil", "olive oil", "soy sauce", "hot sauce",
-        "tuz", "karabiber", "baharat", "sos", "ketçap", "mayonez", "hardal",
-        "sirke", "yağ", "zeytinyağı", "soya sosu", "acı sos"
-      ],
-      Fruits: [
-        "apple", "banana", "orange", "grape", "strawberry", "watermelon",
-        "melon", "peach", "cherry", "pear", "plum", "avocado", "lemon",
-        "lime", "kiwi", "mango", "pineapple", "apricot", "fig", "pomegranate",
-        "tangerine", "grapefruit", "blueberry", "raspberry", "blackberry",
-        "elma", "muz", "portakal", "üzüm", "çilek", "karpuz", "kavun",
-        "şeftali", "kiraz", "armut", "erik", "avokado", "limon", "mandalina",
-        "greyfurt", "kayısı", "incir", "nar", "meyve"
-      ],
-      Vegetables: [
-        "tomato", "potato", "onion", "carrot", "pepper", "cucumber",
-        "lettuce", "spinach", "broccoli", "cauliflower", "cabbage", "eggplant",
-        "zucchini", "pumpkin", "garlic", "celery", "leek", "radish",
-        "corn", "mushroom", "bean", "peas", "okra", "artichoke", "asparagus",
-        "domates", "patates", "soğan", "havuç", "biber", "salatalık",
-        "marul", "ıspanak", "brokoli", "karnabahar", "lahana", "patlıcan",
-        "kabak", "balkabağı", "sarımsak", "kereviz", "pırasa", "turp",
-        "mısır", "mantar", "fasulye", "bezelye", "bamya", "enginar", "sebze"
-      ],
-      Dairy: [
-        "milk", "cheese", "yogurt", "butter", "cream", "kefir",
-        "ice cream", "cottage cheese", "cheddar", "mozzarella", "feta",
-        "süt", "peynir", "yoğurt", "tereyağı", "krema", "ayran",
-        "dondurma", "lor", "kaşar", "beyaz peynir", "tulum"
-      ],
-      Bakery: [
-        "bread", "baguette", "roll", "croissant", "cake", "pastry",
-        "cookie", "muffin", "donut", "bagel", "biscuit", "cracker",
-        "ekmek", "poğaça", "simit", "kruvasan", "kek", "pasta",
-        "kurabiye", "börek", "açma", "francala", "somun"
-      ],
-      Meat: [
-        "chicken", "beef", "meat", "pork", "lamb", "turkey",
-        "sausage", "salami", "steak", "bacon", "ham", "meatball",
-        "tavuk", "dana", "et", "kuzu", "hindi", "sosis",
-        "sucuk", "pastırma", "köfte", "jambon", "kangal"
-      ],
-      Seafood: [
-        "fish", "salmon", "tuna", "shrimp", "crab", "lobster",
-        "mussel", "squid", "octopus", "anchovy", "sea bass", "trout",
-        "balık", "som balığı", "ton balığı", "karides", "yengeç",
-        "ıstakoz", "midye", "kalamar", "ahtapot", "hamsi", "levrek", "alabalık"
-      ],
-      Beverages: [
-        "water", "juice", "soda", "tea", "coffee", "wine", "beer",
-        "cola", "lemonade", "drink", "milk shake", "smoothie",
-        "su", "meyve suyu", "kola", "çay", "kahve", "şarap", "bira",
-        "limonata", "içecek", "gazoz", "şalgam", "ayran"
-      ],
-      Snacks: [
-        "chips", "chocolate", "candy", "nuts", "popcorn",
-        "cracker", "pretzel", "biscuit", "wafer", "bar",
-        "cips", "çikolata", "şeker", "fındık", "ceviz", "badem",
-        "patlamış mısır", "kraker", "bisküvi", "gofret"
-      ]
-    };
 
-    for (const [category, keywords] of Object.entries(categoryKeywords)) {
-      for (const keyword of keywords) {
-        if (name.includes(keyword)) {
-          return category;
-        }
-      }
-    }
-    return "Other";
-  };
-
-  const getCategoryEmoji = (itemName: string) => {
+  const getCategoryEmoji = (itemName: string, category: string) => {
     const specificIcons: Record<string, string> = {
       // EKMEK & UNLU MAMÜLLER
       "ekmek": "🍞",
@@ -339,7 +231,30 @@ const Lists = () => {
         return specificIcons[key];
       }
     }
-    return "🛒";
+
+    // 2. Fallback to Category Icon
+    const categoryIcons: Record<string, string> = {
+      Fruits: "🍎",
+      Vegetables: "🥦",
+      Dairy: "🥛",
+      Bakery: "🍞",
+      Meat: "🥩",
+      Seafood: "🐟",
+      Beverages: "🥤",
+      Snacks: "🍪",
+      Condiments: "🧂",
+      Grains: "🌾",
+      Canned: "🥫",
+      Frozen: "❄️",
+      Cleaning: "🧹",
+      "Personal Care": "🧴",
+      "Baby Care": "👶",
+      "Pet Care": "🐾",
+      Household: "🏠",
+      Other: "🛒"
+    };
+
+    return categoryIcons[category] || "🛒";
   };
 
   const getCategoryColor = (category: string) => {
@@ -353,10 +268,15 @@ const Lists = () => {
       Beverages: "bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300",
       Snacks: "bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300",
       Cleaning: "bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300",
+      Groceries: "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300",
       "Personal Care": "bg-pink-100 text-pink-800 dark:bg-pink-900/30 dark:text-pink-300",
       Other: "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300",
     };
     return colors[category] || colors.Other;
+  };
+
+  const getLocalizedCategory = (category: string) => {
+    return t(`lists.categories.${category}`, category);
   };
 
   // ✅ Ürün tamamla/geri al
@@ -377,22 +297,19 @@ const Lists = () => {
     await deleteItemFromList(selectedList.id, itemId);
   };
 
-  // ✅ Tümünü sil
-  const handleDeleteAllItems = async () => {
+  // ✅ Tümünü sil onayı
+  const handleDeleteAllItems = () => {
     if (!selectedList || items.length === 0 || isDeletingAll) return;
+    setIsDeleteAlertOpen(true);
+  };
 
-    const itemsToDelete = [...items];
-    const totalCount = itemsToDelete.length;
-
-    const confirmMessage = i18n.language === 'tr'
-      ? `${totalCount} ürünü silmek istediğinize emin misiniz?`
-      : `Are you sure you want to delete ${totalCount} items?`;
-
-    const confirmed = window.confirm(confirmMessage);
-
-    if (!confirmed) return;
+  // ✅ Tümünü silme işlemi (Dialog onayı sonrası)
+  const confirmDeleteAll = async () => {
+    if (!selectedList) return;
+    setIsDeleteAlertOpen(false);
 
     setIsDeletingAll(true);
+    const totalCount = items.length;
 
     try {
       await deleteAllItems(selectedList.id);
@@ -405,7 +322,7 @@ const Lists = () => {
       toast({
         title: t('common.success'),
         description: `${totalCount} ${i18n.language === 'tr' ? 'ürün silindi' : 'items deleted'}`,
-        duration: 1500,
+        duration: 2000,
       });
     } catch (error) {
       console.error('❌ Error deleting items:', error);
@@ -413,6 +330,7 @@ const Lists = () => {
         title: t('common.error'),
         description: i18n.language === 'tr' ? 'Silme işlemi başarısız' : 'Failed to delete items',
         variant: 'destructive',
+        duration: 2000,
       });
     } finally {
       setIsDeletingAll(false);
@@ -422,7 +340,7 @@ const Lists = () => {
   // ✅ Ürün ekle
   const handleAddItem = async () => {
     if (!newItem.name || !newItem.quantity) return;
-    if (!selectedList) return;
+    if (!selectedList || isSubmitting) return;
 
     if (!canPerformAction()) {
       setLimitDialogOpen(true);
@@ -430,24 +348,29 @@ const Lists = () => {
       return;
     }
 
-    const detectedCategory = detectCategory(newItem.name);
+    try {
+      setIsSubmitting(true);
+      const detectedCategory = detectCategory(newItem.name);
 
-    await addItem(selectedList.id, {
-      name: newItem.name,
-      quantity: newItem.quantity,
-      category: detectedCategory,
-      completed: false,
-    });
+      await addItem(selectedList.id, {
+        name: newItem.name,
+        quantity: newItem.quantity,
+        category: detectedCategory,
+        completed: false,
+      });
 
-    await incrementAction();
-    setNewItem({ name: "", quantity: "", category: "Fruits" });
-    setIsAddDialogOpen(false);
+      await incrementAction();
+      setNewItem({ name: "", quantity: "", category: "Fruits" });
+      setIsAddDialogOpen(false);
 
-    toast({
-      title: t('common.success'),
-      description: t('lists.itemAdded'),
-      duration: 1500,
-    });
+      toast({
+        title: t('common.success'),
+        description: t('lists.itemAdded'),
+        duration: 2000,
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Loading durumu
@@ -476,13 +399,16 @@ const Lists = () => {
             </div>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder={t('lists.searchPlaceholder')}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12"
-            />
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              {/* Using standard input to avoid character mapping issues (ü -> st) */}
+              <input
+                placeholder={t('lists.searchPlaceholder')}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+            </div>
           </div>
         </div>
       </header>
@@ -517,52 +443,90 @@ const Lists = () => {
               </Card>
             ) : (
               <Card className="divide-y">
-                {items.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`flex items-center justify-between p-4 transition-colors ${item.completed ? "bg-muted/50" : "hover:bg-muted/50"
-                      }`}
-                  >
-                    <div className="flex items-center gap-4 flex-1">
+                {items.map((item, index) => {
+                  // ✅ Görünürlük Kontrolü (Sadece listenin sahibi değilsek)
+                  // Eğer liste bizim değilse (paylaşılan) ve index > kalan kredi limiti ise blurla
+                  const isSharedList = selectedList?.ownerId !== currentUserId;
+                  const isLocked = isSharedList && index >= (plan === 'pro' ? 999 : (plan === 'free' ? 10 : 30)); // Plan limitlerine göre
+                  // NOT: Kullanıcı "kredi eklendikçe görebilelim" dediği için kalan kredi değil, günlük limit mantığı daha oturaklı.
+                  // Ama isteği "kredimiz kadar görelim" idi. Şimdilik plan limitini baz alalım, çünkü krediler harcanan bir şey.
+
+                  return (
+                    <div
+                      key={item.id}
+                      className={`relative flex items-center justify-between p-4 transition-colors ${item.completed ? "bg-muted/50" : "hover:bg-muted/50"} ${isLocked ? "blur-sm select-none pointer-events-none opacity-50" : ""}`}
+                      onClick={(e) => {
+                        if (isLocked) {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          // Burada premium dialog açılabilir
+                          return;
+                        }
+                      }}
+                    >
+                      {isLocked && (
+                        <div className="absolute inset-0 z-10 flex items-center justify-center pointer-events-auto cursor-pointer" onClick={(e) => {
+                          e.stopPropagation();
+                          // setShowUpgradeDialog(true); // Basit bir toast ile başlayalım
+                          toast({
+                            title: t('common.limitReached'),
+                            description: "Upgrade to see more items!",
+                            variant: "destructive"
+                          });
+                        }}>
+                          <div className="bg-background/80 p-2 rounded-full shadow-lg border">
+                            <Lock className="h-5 w-5 text-primary" />
+                          </div>
+                        </div>
+                      )}
+                      <div className="flex items-center gap-4 flex-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className={`h-6 w-6 rounded-full border ${item.completed
+                            ? "bg-primary border-primary text-primary-foreground"
+                            : "border-muted-foreground"
+                            }`}
+                          onClick={() => toggleItem(item.id)}
+                        >
+                          {item.completed && <Check className="h-4 w-4" />}
+                        </Button>
+
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className={`font-medium ${item.completed ? "line-through text-muted-foreground" : ""}`}>
+                              {item.name}
+                            </span>
+                            <Badge variant="outline" className={getCategoryColor(item.category)}>
+                              {getCategoryEmoji(item.name, item.category)} {getLocalizedCategory(item.category)}
+                            </Badge>
+                          </div>
+                        </div>
+                        <div className="flex flex-col mt-1 space-y-0.5">
+                          {item.quantity && (
+                            <p className="text-sm text-muted-foreground">
+                              {item.quantity}
+                            </p>
+                          )}
+                          {item.addedByName && (
+                            <p className="text-[10px] text-muted-foreground/70 italic">
+                              {i18n.language === 'tr' ? 'Ekleyen:' : 'Added by:'} {item.addedByName}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+
                       <Button
                         variant="ghost"
                         size="icon"
-                        className={`h-6 w-6 rounded-full border ${item.completed
-                          ? "bg-primary border-primary text-primary-foreground"
-                          : "border-muted-foreground"
-                          }`}
-                        onClick={() => toggleItem(item.id)}
+                        className="text-muted-foreground hover:text-destructive"
+                        onClick={() => deleteItem(item.id)}
                       >
-                        {item.completed && <Check className="h-4 w-4" />}
+                        <Trash2 className="h-4 w-4" />
                       </Button>
-
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className={`font-medium ${item.completed ? "line-through text-muted-foreground" : ""}`}>
-                            {item.name}
-                          </span>
-                          <Badge variant="outline" className={getCategoryColor(item.category)}>
-                            {getCategoryEmoji(item.name)} {item.category}
-                          </Badge>
-                        </div>
-                        {item.quantity && (
-                          <p className="text-sm text-muted-foreground mt-1">
-                            {item.quantity}
-                          </p>
-                        )}
-                      </div>
                     </div>
-
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteItem(item.id)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ))}
+                  );
+                })}
               </Card>
             )}
 
@@ -628,6 +592,41 @@ const Lists = () => {
         rewardAdWatched={rewardAdWatched}
       />
 
+      <AlertDialog open={isDeleteAlertOpen} onOpenChange={setIsDeleteAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle i18n-key="lists.deleteAllTitle">
+              {i18n.language === 'tr' ? 'Tümünü Sil?' : 'Delete All Items?'}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
+              {i18n.language === 'tr'
+                ? `Listenizdeki ${items.length} ürünü silmek istediğinize emin misiniz? Bu işlem geri alınamaz.`
+                : `Are you sure you want to delete ${items.length} items from your list? This action cannot be undone.`}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={isDeletingAll}>{t('common.cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                confirmDeleteAll();
+              }}
+              className="bg-destructive hover:bg-destructive/90 text-destructive-foreground"
+              disabled={isDeletingAll}
+            >
+              {isDeletingAll ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  {i18n.language === 'tr' ? 'Siliniyor...' : 'Deleting...'}
+                </>
+              ) : (
+                i18n.language === 'tr' ? 'Evet, Sil' : 'Yes, Delete'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Add Item Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
         <DialogContent>
@@ -640,27 +639,30 @@ const Lists = () => {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('lists.itemName')}</label>
-              <Input
+              <input
                 placeholder={t('lists.itemNamePlaceholder')}
                 value={newItem.name}
                 onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">{t('lists.quantity')}</label>
-              <Input
+              <input
                 placeholder="1 kg, 2 pcs..."
                 value={newItem.quantity}
                 onChange={(e) => setNewItem({ ...newItem, quantity: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
-            <Button className="w-full" onClick={handleAddItem}>
+            <Button className="w-full" onClick={handleAddItem} disabled={isSubmitting}>
+              {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('common.add')}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-    </div>
+    </div >
   );
 };
 

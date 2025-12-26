@@ -37,11 +37,15 @@ export const LimitReachedDialog = ({
     setShowPaywall(true);
   };
 
+  const [cooldownMessage, setCooldownMessage] = useState<string | null>(null);
+
   const handleWatchAd = () => {
     if (rewardAdWatched) {
       const result = rewardAdWatched();
       if (result.success) {
         onOpenChange(false);
+      } else {
+        setCooldownMessage(result.message);
       }
     }
   };
@@ -68,9 +72,14 @@ export const LimitReachedDialog = ({
             </Button>
 
             {rewardAdWatched && currentPlan === 'free' && (
-              <Button variant="outline" onClick={handleWatchAd} className="w-full">
+              <Button
+                variant="outline"
+                onClick={handleWatchAd}
+                className="w-full"
+                disabled={!!cooldownMessage}
+              >
                 <PlayCircle className="mr-2 h-4 w-4" />
-                {t('common.watchAd') || "Watch Ad (+3 Actions)"}
+                {cooldownMessage ? cooldownMessage : (t('common.watchAd') || "Watch Ad (+3 Actions)")}
               </Button>
             )}
 

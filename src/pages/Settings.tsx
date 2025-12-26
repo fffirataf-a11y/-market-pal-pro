@@ -47,6 +47,7 @@ import {
   Share2,
   ChevronDown,
 } from "lucide-react";
+import { Share } from "@capacitor/share";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -65,6 +66,7 @@ const Settings = () => {
     plan: currentPlan,
     upgradeToPremium,
     upgradeToPro,
+    downgradeToFree,
     getTrialDaysRemaining,
     isTrialActive,
     applyPromoCode,
@@ -94,7 +96,8 @@ const Settings = () => {
   const [subscriptionPlansOpen, setSubscriptionPlansOpen] = useState(false);
   const [friendReferralCode, setFriendReferralCode] = useState("");
   const [isApplyingReferral, setIsApplyingReferral] = useState(false);
-  const [isYearly, setIsYearly] = useState(true);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+  const isYearly = billingCycle === 'yearly';
 
   // User data state
   const [userData, setUserData] = useState(() => {
@@ -102,7 +105,7 @@ const Settings = () => {
     if (saved) {
       const parsed = JSON.parse(saved);
       if (!parsed.avatar || parsed.avatar === "") {
-        parsed.avatar = "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton"
+        parsed.avatar = "https://api.dicebear.com/9.x/micah/svg?seed=Easton&radius=50&backgroundColor=b6e3f4"
       }
       return parsed;
     }
@@ -110,7 +113,7 @@ const Settings = () => {
     return {
       name: "Guest User",
       email: "guest@smartmarket.app",
-      avatar: "https://api.dicebear.com/9.x/lorelei/svg?seed=SmartMarket&backgroundColor=b6e3f4,c0aede,ffd5dc"
+      avatar: "https://api.dicebear.com/9.x/micah/svg?seed=SmartMarket&backgroundColor=b6e3f4,c0aede,ffd5dc&radius=50"
     };
   });
 
@@ -138,14 +141,29 @@ const Settings = () => {
     }
   }, [purchaseError, toast]);
 
-  // Sync RevenueCat state with local state
+  // Sync RevenueCat state with local state (Upgrades & Downgrades)
   useEffect(() => {
-    if (customerInfo?.entitlements.active['premium'] && currentPlan !== 'premium') {
+    if (!customerInfo) return;
+
+    const isPremiumActive = typeof customerInfo.entitlements.active['premium'] !== 'undefined';
+    const isProActive = typeof customerInfo.entitlements.active['pro'] !== 'undefined';
+
+    // 1. Handle Upgrades
+    if (isPremiumActive && currentPlan !== 'premium') {
+      console.log("🔄 Sync: Upgrading to Premium from RevenueCat");
       upgradeToPremium();
-    } else if (customerInfo?.entitlements.active['pro'] && currentPlan !== 'pro') {
+    } else if (isProActive && currentPlan !== 'pro') {
+      console.log("🔄 Sync: Upgrading to Pro from RevenueCat");
       upgradeToPro();
     }
-  }, [customerInfo, currentPlan, upgradeToPremium, upgradeToPro]);
+
+    // 2. Handle Expiration/Downgrades
+    // If we are on a paid plan LOCALLY, but RevenueCat says NO active entitlements -> Downgrade
+    if ((currentPlan === 'premium' || currentPlan === 'pro') && !isPremiumActive && !isProActive) {
+      console.log("⚠️ Sync: Subscription Expired. Downgrading to Free.");
+      downgradeToFree();
+    }
+  }, [customerInfo, currentPlan, upgradeToPremium, upgradeToPro, downgradeToFree]);
 
   const handleRestore = async () => {
     try {
@@ -214,14 +232,49 @@ const Settings = () => {
 
   // RevenueCat paketlerini bul
   const currentOffering = offerings?.current;
-  const premiumMonthly = currentOffering?.availablePackages.find(p => p.identifier === 'premium_monthly');
-  const premiumYearly = currentOffering?.availablePackages.find(p => p.identifier === 'premium_yearly');
-  const proMonthly = currentOffering?.availablePackages.find(p => p.identifier === 'pro_monthly');
-  const proYearly = currentOffering?.availablePackages.find(p => p.identifier === 'pro_yearly');
+
+  // Debug log for available packages
+  console.log('📦 Available Packages:', currentOffering?.availablePackages.map(p => p.identifier));
 
   // Determine active product ID from RevenueCat
   const activeProductId = customerInfo?.entitlements.active['premium']?.productIdentifier
     || customerInfo?.entitlements.active['pro']?.productIdentifier;
+
+  // Helper to find yearly package regardless of exact ID
+  const findYearlyPackage = (baseId: string) => {
+    // 1. Exact matches (Standard RevenueCat IDs)
+    const exactMatch = currentOffering?.availablePackages.find(p =>
+      p.identifier === `${baseId}_yearly` ||
+      p.identifier === `${baseId}_annual`
+    );
+    if (exactMatch) return exactMatch;
+
+    // 2. Loose match: Find ANY package with 'year' or 'annual' that also contains the baseId
+    const looseMatch = currentOffering?.availablePackages.find(p =>
+      p.identifier.includes(baseId) && (p.identifier.includes('year') || p.identifier.includes('annual'))
+    );
+
+    if (looseMatch) {
+      console.log(`✅ Fuzzy found yearly package for ${baseId}:`, looseMatch.identifier);
+      return looseMatch;
+    }
+
+    // 3. Last resort: If there are only 2 packages for this product, pick the one that ISN'T monthly
+    const productPackages = currentOffering?.availablePackages.filter(p => p.identifier.includes(baseId)) || [];
+    if (productPackages.length === 2) {
+      return productPackages.find(p => !p.identifier.includes('month'));
+    }
+
+    return null;
+  };
+
+  const premiumMonthly = currentOffering?.availablePackages.find(p => p.identifier === 'premium_monthly');
+  const premiumYearly = findYearlyPackage('premium');
+
+  const proMonthly = currentOffering?.availablePackages.find(p => p.identifier === 'pro_monthly');
+  const proYearly = findYearlyPackage('pro');
+
+
 
   const subscriptionPlans = [
     {
@@ -535,95 +588,127 @@ const Settings = () => {
 
         {/* Subscription */}
         <div className="space-y-4">
-          <h3 className="text-lg font-semibold">{t('subscription.title')}</h3>
-          <Card className="p-6 border-primary/20 bg-primary/5">
-            <div className="flex items-center justify-between mb-4">
-              <div>
-                <h4 className="text-lg font-semibold capitalize">
-                  {currentPlan === 'free' ? t('subscription.free.name') : currentPlan}
-                </h4>
-                <p className="text-sm text-muted-foreground">
-                  {currentPlan === 'free'
-                    ? t('subscription.free.dailyLimit')
-                    : currentPlan === 'premium'
-                      ? t('subscription.premium.dailyLimit')
-                      : t('subscription.pro.dailyLimit')}
-                </p>
-              </div>
-              <Badge variant={currentPlan === 'free' ? "secondary" : "default"}>
-                {t('subscription.currentPlan')}
-              </Badge>
-            </div>
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t('subscription.title')}</h3>
 
-            <Button
-              className="w-full"
-              onClick={() => setSubscriptionPlansOpen(true)}
-            >
-              {t('subscription.manage')}
-            </Button>
-          </Card>
-        </div>
+            {/* Main Subscription Card with Inline Toggle */}
+            <Card className="p-6 border-primary/20 bg-primary/5">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                  <h4 className="text-lg font-semibold capitalize">
+                    {currentPlan === 'free' ? t('subscription.free.name') : currentPlan}
+                  </h4>
+                  <Badge variant={currentPlan === 'free' ? "secondary" : "default"}>
+                    {t('subscription.currentPlan')}
+                  </Badge>
+                </div>
 
-        {/* App Settings */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold">{t('settings.appSettings')}</h3>
-
-          <Card className="divide-y">
-
-
-            <div
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors"
-              onClick={() => window.location.href = `mailto:smartmarketttt@gmail.com`}
-            >
-              <div className="flex items-center gap-3">
-                <Mail className="h-5 w-5 text-muted-foreground" />
-                <div>
-                  <Label className="text-base font-medium cursor-pointer">
-                    {t('settings.contactUs')}
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    {t('settings.contactDescription')}
-                  </p>
+                {/* Inline Billing Toggle */}
+                <div className="bg-background/50 p-1 rounded-lg border flex text-xs font-medium">
+                  <button
+                    onClick={() => setBillingCycle('monthly')}
+                    className={`px-3 py-1.5 rounded-md transition-all ${billingCycle === 'monthly'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-background/80'
+                      }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setBillingCycle('yearly')}
+                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1 ${billingCycle === 'yearly'
+                      ? 'bg-primary text-primary-foreground shadow-sm'
+                      : 'text-muted-foreground hover:bg-background/80'
+                      }`}
+                  >
+                    Yearly
+                    <span className="text-[10px] bg-green-500/20 text-green-700 dark:text-green-300 px-1 rounded">
+                      -8.5%
+                    </span>
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* Rewarded Ad Slot */}
-            <div className="p-4">
-              <RewardedAdSlot
-                plan={currentPlan}
-                placement="settings_reward"
-                onReward={() => {
-                  const result = rewardAdWatched();
-                  if (result.success) {
-                    toast({
-                      title: t('common.success'),
-                      description: result.message,
-                    });
-                  } else {
-                    toast({
-                      title: "Bilgi",
-                      description: result.message,
-                    });
-                  }
-                }}
-              />
-            </div>
-
-
-
-            <div
-              className="p-4 flex items-center justify-between cursor-pointer hover:bg-destructive/10 transition-colors"
-              onClick={handleLogout}
-            >
-              <div className="flex items-center gap-3">
-                <LogOut className="h-5 w-5 text-destructive" />
-                <Label className="text-base font-medium text-destructive cursor-pointer">
-                  {t('settings.logout')}
-                </Label>
+              <div className="mb-6">
+                <p className="text-sm text-muted-foreground mb-1">
+                  {currentPlan === 'free' ? t('subscription.free.dailyLimit') : (
+                    currentPlan === 'premium' ? t('subscription.premium.dailyLimit') : t('subscription.pro.dailyLimit')
+                  )}
+                </p>
               </div>
-            </div>
-          </Card>
+
+              <Button
+                className="w-full"
+                onClick={() => setSubscriptionPlansOpen(true)}
+              >
+                {t('subscription.manage')}
+              </Button>
+            </Card>
+          </div>
+
+          {/* App Settings */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold">{t('settings.appSettings')}</h3>
+
+            <Card className="divide-y">
+
+
+              <div
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors"
+                onClick={() => window.location.href = `mailto:smartmarketttt@gmail.com`}
+              >
+                <div className="flex items-center gap-3">
+                  <Mail className="h-5 w-5 text-muted-foreground" />
+                  <div>
+                    <Label className="text-base font-medium cursor-pointer">
+                      {t('settings.contactUs')}
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      {t('settings.contactDescription')}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Rewarded Ad Slot */}
+              <div className="p-4">
+                <RewardedAdSlot
+                  plan={currentPlan}
+                  placement="settings_reward"
+                  onReward={() => {
+                    const result = rewardAdWatched();
+                    if (result.success) {
+                      toast({
+                        title: t('common.success'),
+                        description: result.message,
+                      });
+                    } else {
+                      toast({
+                        title: "Bilgi",
+                        description: result.message,
+                      });
+                    }
+                  }}
+                />
+              </div>
+
+
+
+              <div
+                className="p-4 flex items-center justify-between cursor-pointer hover:bg-destructive/10 transition-colors"
+                onClick={handleLogout}
+              >
+                <div className="flex items-center gap-3">
+                  <LogOut className="h-5 w-5 text-destructive" />
+                  <Label className="text-base font-medium text-destructive cursor-pointer">
+                    {t('settings.logout')}
+                  </Label>
+                </div>
+              </div>
+            </Card>
+
+
+          </div>
         </div>
       </main>
 
@@ -641,27 +726,37 @@ const Settings = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex justify-center mb-6">
-            <div className="bg-muted p-1 rounded-full flex items-center">
+          <div className="flex justify-center mb-8">
+            <div className="relative flex items-center bg-muted p-1.5 rounded-full border w-fit shadow-inner">
+              {/* Active Pill Indicator */}
+              <div
+                className={`absolute inset-y-1.5 rounded-full bg-background shadow-md transition-all duration-300 ease-out`}
+                style={{
+                  left: isYearly ? 'calc(50% + 1px)' : '4px',
+                  width: 'calc(50% - 5px)',
+                }}
+              />
+
               <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${!isYearly ? 'bg-background shadow-sm' : 'text-muted-foreground'
+                onClick={() => setBillingCycle('monthly')}
+                className={`relative z-10 px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full ${!isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
-                onClick={() => setIsYearly(false)}
               >
                 Monthly
               </button>
               <button
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${isYearly ? 'bg-background shadow-sm' : 'text-muted-foreground'
+                onClick={() => setBillingCycle('yearly')}
+                className={`relative z-10 px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full flex items-center gap-2 ${isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
-                onClick={() => setIsYearly(true)}
               >
                 Yearly
-                <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
-                  Save 20%
+                <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-pulse-slow">
+                  -8.5%
                 </span>
               </button>
             </div>
           </div>
+
 
           <div className="grid md:grid-cols-3 gap-6">
             {subscriptionPlans.map((plan) => (
@@ -722,11 +817,11 @@ const Settings = () => {
               </Card>
             ))}
           </div>
-        </DialogContent>
-      </Dialog>
+        </DialogContent >
+      </Dialog >
 
       {/* Referral Dialog */}
-      <Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen}>
+      < Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen} >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('referral.title')}</DialogTitle>
@@ -762,7 +857,7 @@ const Settings = () => {
                   variant="outline"
                   onClick={async () => {
                     if (referralCode) {
-                      await Share2({
+                      await Share.share({
                         title: 'Smart Market',
                         text: `Use my code ${referralCode} to get 2x daily limits!`,
                         url: 'https://smartmarket.app',
@@ -803,7 +898,6 @@ const Settings = () => {
                     placeholder={t('referral.enterCodePlaceholder')}
                     value={friendReferralCode}
                     onChange={(e) => setFriendReferralCode(e.target.value.toUpperCase())}
-                    maxLength={8}
                   />
                   <Button
                     onClick={async () => {
@@ -836,8 +930,8 @@ const Settings = () => {
             )}
           </div>
         </DialogContent>
-      </Dialog>
-    </div>
+      </Dialog >
+    </div >
   );
 };
 

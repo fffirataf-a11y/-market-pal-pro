@@ -61,24 +61,25 @@
     "canView": "Kann ansehen",
     "done": "Fertig",
     "categories": {
-      "Fruits": "Obst",
-      "Vegetables": "Gemüse",
+      "Fruits": "Obst & Gemüse",
+      "Vegetables": "Obst & Gemüse",
       "Dairy": "Milchprodukte",
       "Bakery": "Bäckerei",
-      "Meat": "Fleisch",
-      "Seafood": "Meeresfrüchte",
+      "Meat": "Metzgerei",
+      "Seafood": "Fischtheke",
       "Beverages": "Getränke",
-      "Snacks": "Snacks",
+      "Snacks": "Süßwaren & Snacks",
       "Cleaning": "Reinigungsmittel",
-      "Personal Care": "Körperpflege",
-      "Baby Care": "Babypflege",
+      "Personal Care": "Drogerie",
+      "Baby Care": "Babybedarf",
       "Pet Care": "Tierbedarf",
       "Household": "Haushaltswaren",
       "Frozen": "Tiefkühlkost",
-      "Canned": "Konserven",
+      "Canned": "Konserven & Vorrat",
       "Grains": "Getreide & Pasta",
       "Condiments": "Gewürze & Soßen",
-      "Other": "Andere"
+      "Groceries": "Lebensmittel",
+      "Other": "Sonstiges"
     }
   },
   "auth": {
@@ -167,10 +168,10 @@
       "features": [
         "7 Tage kostenlose Testphase",
         "10 Aktionen pro Tag",
-        "KI-Kochrezepte",
-        "Barcode-Scanner",
-        "Einkaufslisten",
-        "Teilen mit 2 Personen",
+        "KI-Koch Rezeptgenerator",
+        "KI-Koch Kochideen",
+        "Einkaufslisten bearbeiten",
+        "Freunde hinzufügen",
         "Empfehlungsbonus: +7 Tage pro Einladung"
       ]
     },
@@ -182,15 +183,12 @@
       "dailyLimit": "30 Aktionen/Tag",
       "features": [
         "30 Aktionen pro Tag",
-        "Keine Testzeitbegrenzung",
-        "KI-Kochrezepte",
-        "Barcode-Scanner",
-        "Einkaufslisten",
-        "Teilen",
-        "Werbefreie Erfahrung",
-        "Prioritäts-Support",
-        "Erweiterte KI-Empfehlungen",
-        "Wöchentliche Ernährungsberichte"
+        "Unbegrenzte Dauer",
+        "Erweiterte KI-Koch-Funktionen",
+        "Unbegrenztes Teilen von Listen",
+        "Werbefreies Erlebnis",
+        "Priorisierter Support",
+        "Wöchentliche Ernährungstipps"
       ]
     },
     "pro": {
@@ -200,16 +198,13 @@
       "yearlySavings": "Spare $8.89 mit dem Jahresplan",
       "dailyLimit": "Unbegrenzte Aktionen",
       "features": [
-        "Unbegrenzte Aktionen",
-        "Keine Testzeitbegrenzung",
-        "Unbegrenzte KI-Rezepte",
-        "Unbegrenztes Scannen",
-        "Unbegrenzte Listen",
-        "Unbegrenztes Teilen",
-        "Werbefrei",
-        "Prioritäts-Support",
-        "Erweiterte KI-Empfehlungen",
-        "Früher Zugriff auf neue Funktionen"
+        "Unbegrenzte tägliche Aktionen",
+        "Unbegrenzte KI-Koch-Nutzung",
+        "Unbegrenzt Freunde & Teilen",
+        "Voller Zugriff auf alle Funktionen",
+        "Vorabzugriff auf neue Funktionen",
+        "Werbefreies Erlebnis",
+        "VIP-Support"
       ]
     }
   },

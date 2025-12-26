@@ -4,6 +4,7 @@ import path from "path";
 import { componentTagger } from "lovable-tagger";
 
 export default defineConfig(({ mode }) => ({
+  base: "./",
   server: {
     host: "::",
     port: 8080,
@@ -14,6 +15,7 @@ export default defineConfig(({ mode }) => ({
   },
   // Static assets için cache ayarları
   build: {
+    target: "es2015",
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {

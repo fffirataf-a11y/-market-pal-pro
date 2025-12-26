@@ -105,7 +105,31 @@
     "emptyList": "Listeniz Boş",
     "emptyListDesc": "Ürün ekleyerek başlayın veya AI Şef'ten öneri alın.",
     "searchPlaceholder": "Listede ara...",
-    "itemAdded": "Ürün listeye eklendi"
+    "itemAdded": "Ürün listeye eklendi",
+    "itemRemoved": "Ürün silindi",
+    "loginRequired": "Giriş yapmalısınız",
+    "addItemDesc": "Listenize yeni bir ürün ekleyin.",
+    "categories": {
+      "Fruits": "Manav Reyonu",
+      "Vegetables": "Manav Reyonu",
+      "Dairy": "Süt & Kahvaltılık",
+      "Bakery": "Fırın Reyonu",
+      "Meat": "Kasap Reyonu",
+      "Seafood": "Deniz Ürünleri",
+      "Beverages": "İçecek Reyonu",
+      "Snacks": "Atıştırmalık Reyonu",
+      "Cleaning": "Temizlik Reyonu",
+      "Personal Care": "Kişisel Bakım",
+      "Baby Care": "Bebek Reyonu",
+      "Pet Care": "Evcil Hayvan Reyonu",
+      "Household": "Ev Gereçleri",
+      "Frozen": "Donmuş Gıda",
+      "Canned": "Konserve & Salça",
+      "Grains": "Bakliyat & Tahıl",
+      "Condiments": "Baharat & Sos",
+      "Groceries": "Market Alışverişi",
+      "Other": "Diğer Reyon"
+    }
   },
   "scanner": {
     "title": "Barkod Tarayıcı",
@@ -118,10 +142,14 @@
     "stopScanning": "Taramayı Durdur",
     "scanning": "Taranıyor...",
     "scanAnother": "Başka Ürün Tara",
-    "barcode": "Barkod",
+    "analyzing": "Analiz ediliyor...",
+    "pleaseWait": "Lütfen bekleyin, içerik belirleniyor...",
+    "aiBusyFallback": "Yapay zeka yoğun. Temel bilgiler gösteriliyor.",
+    "rateLimitError": "Çok fazla istek. Lütfen biraz bekleyin.",
+    "notFoundError": "Ürün bulunamadı.",
     "barcodeNumber": "Barkod Numarası",
     "barcodePlaceholder": "örn., 8690504326218",
-    "healthInsights": "Sağlık Değerlendirmesi",
+    "healthInsights": "İçindekiler Özet",
     "addToList": "Listeye Ekle",
     "searchProduct": "Ürün Ara",
     "howItWorks": "Nasıl Çalışır",
@@ -132,7 +160,7 @@
   "aichef": {
     "title": "AI Şef",
     "recipeGenerator": "Tarif Oluşturucu",
-    "recipeSubtitle": "Yemek adını girerek eksiksiz tarif alın",
+    "recipeSubtitle": "Yemek adını girerek eksiksiz malzeme listesi alın",
     "cookingIdeas": "Yemek Fikirleri",
     "ideasSubtitle": "Elinizdeki malzemeleri girerek tarif önerileri alın",
     "dishPlaceholder": "örn., Spagetti Bolonez",
@@ -146,17 +174,19 @@
     "cookingUp": "Pişiriliyor",
     "ingredients": "Malzemeler",
     "servings": "porsiyon",
-    "recipeSuggestions": "Tarif Önerileri"
+    "recipeSuggestions": "Tarif Önerileri",
+    "addAllToList": "Tümünü Listeye Ekle",
+    "addAllItems": "Tümünü Listeye Ekle"
   },
   "ads": {
     "rewardedTitle": "Ek Özellikler için Reklam İzle",
-    "rewardedDescription": "Ücretsiz plan kullanıcıları yakında kısa bir reklam izleyerek bonus kazanacak. Bu placeholder reklam alanını hazır tutar.",
-    "watch": "Reklam Alanını Önizle",
-    "loading": "Hazırlanıyor...",
-    "completed": "Önizleme tamamlandı. Gerçek reklamlar için üretim SDK'sını entegre edin.",
-    "lastPlayed": "Son simüle reklam: {{time}}",
-    "rewardToastTitle": "Reklam Alanı Hazır",
-    "rewardToastDescription": "Bu yalnızca bir önizleme. Gerçek reklamlar için reklam ortağı SDK'sını bağlayın."
+    "rewardedDescription": "Ücretsiz plan kullanıcıları kısa bir reklam izleyerek ek işlem hakkı kazanabilir.",
+    "watch": "Reklam İzle",
+    "loading": "Yükleniyor...",
+    "completed": "Reklam izlendi, ödülünüz eklendi! 🎉",
+    "lastPlayed": "Son izlenen: {{time}}",
+    "rewardToastTitle": "Tebrikler!",
+    "rewardToastDescription": "Ekstra işlem hakkı kazandınız."
   },
   "settings": {
     "title": "Ayarlar",
@@ -203,48 +233,43 @@
       "features": [
         "7 gün ücretsiz deneme",
         "Günde 10 işlem",
-        "AI Şef tarifleri",
-        "Barkod tarama",
-        "Alışveriş listeleri",
-        "2 kişiyle paylaşım",
-        "Davet bonusu: davet başına +7 gün"
+        "AI Şef Tarif Oluşturucu",
+        "AI Şef Yemek Fikirleri",
+        "Alışveriş Listesi Düzenleme",
+        "Arkadaş Ekleme",
+        "Davet Bonusu: davet başına +7 gün"
       ]
     },
     "premium": {
       "name": "Premium",
       "price": "$4.99/ay",
       "yearlyPrice": "$54.99/yıl",
-      "yearlySavings": "Yıllık planda %17 tasarruf",
+      "yearlySavings": "Yıllık planda %8,5 tasarruf",
       "dailyLimit": "30 işlem/gün",
       "features": [
         "Günde 30 işlem",
-        "Deneme süresi sınırı yok",
-        "AI Şef tarifleri",
-        "Barkod tarama",
-        "Alışveriş listeleri",
-        "Paylaşım",
-        "Reklamsız deneyim",
-        "Öncelikli destek",
-        "Gelişmiş AI önerileri",
-        "Haftalık beslenme raporları"
+        "Sınırsız Kullanım Süresi",
+        "Gelişmiş AI Şef Özellikleri",
+        "Sınırsız Liste Paylaşımı",
+        "Reklamsız Deneyim",
+        "Öncelikli Destek",
+        "Haftalık Beslenme İpuçları"
       ]
     },
     "pro": {
       "name": "Pro",
       "price": "$8.99/ay",
       "yearlyPrice": "$98.99/yıl",
-      "yearlySavings": "Yıllık planda %17 tasarruf",
+      "yearlySavings": "Yıllık planda %8,5 tasarruf",
       "dailyLimit": "Sınırsız işlem",
       "features": [
-        "Sınırsız günlük işlem",
-        "Deneme süresi sınırı yok",
-        "Sınırsız AI Şef tarifleri",
-        "Sınırsız barkod tarama",
-        "Sınırsız alışveriş listesi",
-        "Sınırsız paylaşım",
-        "Reklamsız deneyim",
-        "Öncelikli destek",
-        "Yeni özelliklere erken erişim"
+        "Sınırsız Günlük İşlem",
+        "Sınırsız AI Şef Kullanımı",
+        "Sınırsız Arkadaş & Paylaşım",
+        "Tüm Özelliklere Tam Erişim",
+        "Yeni Özelliklere Erken Erişim",
+        "Reklamsız Deneyim",
+        "VIP Destek"
       ]
     }
   },

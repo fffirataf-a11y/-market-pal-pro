@@ -15,7 +15,9 @@ import {
 } from 'firebase/firestore';
 import { db, auth } from '@/config/firebase';
 import { useToast } from '@/hooks/use-toast';
-import { onAuthStateChanged } from 'firebase/auth'; // ✅ EKLE
+import { onAuthStateChanged } from 'firebase/auth';
+import { useTranslation } from 'react-i18next';
+import { useSubscription } from '@/hooks/useSubscription';
 
 export interface ShoppingItem {
   id: string;
@@ -42,11 +44,13 @@ export interface ShoppingList {
 
 export const useShoppingLists = () => {
   const { toast } = useToast();
+  const { t } = useTranslation();
+  const { canPerformAction, incrementAction, plan } = useSubscription();
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
-  const [currentUser, setCurrentUser] = useState(auth.currentUser); // ✅ State'e al
+  const [currentUser, setCurrentUser] = useState(auth.currentUser);
 
-  // ✅ Auth durumunu dinle
+  // Auth durumunu dinle
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       setCurrentUser(user);
@@ -59,93 +63,94 @@ export const useShoppingLists = () => {
     return () => unsubscribe();
   }, []);
 
- // Listeleri gerçek zamanlı dinle
-useEffect(() => {
-  if (!currentUser) {
-    setLists([]);
-    setLoading(false);
-    return;
-  }
-
-  setLoading(true);
-
-  // ✅ QUERY 1: Kendi listeleri
-  const ownListsQuery = query(
-    collection(db, 'shoppingLists'),
-    where('ownerId', '==', currentUser.uid)
-  );
-
-  // ✅ QUERY 2: Paylaşılan listeler
-  const sharedListsQuery = query(
-    collection(db, 'shoppingLists'),
-    where('sharedWith', 'array-contains', currentUser.uid)
-  );
-
-  const allLists = new Map<string, ShoppingList>();
-
-  // Listener 1: Kendi listeleri dinle
-  const unsubscribe1 = onSnapshot(
-    ownListsQuery,
-    (snapshot) => {
-      snapshot.forEach((docSnapshot) => {
-        allLists.set(docSnapshot.id, {
-          id: docSnapshot.id,
-          ...docSnapshot.data(),
-        } as ShoppingList);
-      });
-      updateLists();
-    },
-    (error) => {
-      console.error('Own lists listener error:', error);
+  // Listeleri gerçek zamanlı dinle
+  useEffect(() => {
+    if (!currentUser) {
+      setLists([]);
+      setLoading(false);
+      return;
     }
-  );
 
-  // Listener 2: Paylaşılan listeleri dinle
-  const unsubscribe2 = onSnapshot(
-    sharedListsQuery,
-    (snapshot) => {
-      snapshot.forEach((docSnapshot) => {
-        allLists.set(docSnapshot.id, {
-          id: docSnapshot.id,
-          ...docSnapshot.data(),
-        } as ShoppingList);
+    setLoading(true);
+
+    // QUERY 1: Kendi listeleri
+    const ownListsQuery = query(
+      collection(db, 'shoppingLists'),
+      where('ownerId', '==', currentUser.uid)
+    );
+
+    // QUERY 2: Paylaşılan listeler
+    const sharedListsQuery = query(
+      collection(db, 'shoppingLists'),
+      where('sharedWith', 'array-contains', currentUser.uid)
+    );
+
+    const allLists = new Map<string, ShoppingList>();
+
+    // Listener 1: Kendi listeleri dinle
+    const unsubscribe1 = onSnapshot(
+      ownListsQuery,
+      (snapshot) => {
+        snapshot.forEach((docSnapshot) => {
+          allLists.set(docSnapshot.id, {
+            id: docSnapshot.id,
+            ...docSnapshot.data(),
+          } as ShoppingList);
+        });
+        updateLists();
+      },
+      (error) => {
+        console.error('Own lists listener error:', error);
+      }
+    );
+
+    // Listener 2: Paylaşılan listeleri dinle
+    const unsubscribe2 = onSnapshot(
+      sharedListsQuery,
+      (snapshot) => {
+        snapshot.forEach((docSnapshot) => {
+          allLists.set(docSnapshot.id, {
+            id: docSnapshot.id,
+            ...docSnapshot.data(),
+          } as ShoppingList);
+        });
+        updateLists();
+      },
+      (error) => {
+        console.error('Shared lists listener error:', error);
+      }
+    );
+
+    // Listeleri güncelle ve sırala
+    const updateLists = () => {
+      const userLists = Array.from(allLists.values());
+
+      // Client-side sıralama
+      userLists.sort((a, b) => {
+        const aTime = a.updatedAt?.toMillis?.() || 0;
+        const bTime = b.updatedAt?.toMillis?.() || 0;
+        return bTime - aTime;
       });
-      updateLists();
-    },
-    (error) => {
-      console.error('Shared lists listener error:', error);
-    }
-  );
 
-  // Listeleri güncelle ve sırala
-  const updateLists = () => {
-    const userLists = Array.from(allLists.values());
-    
-    // Client-side sıralama
-    userLists.sort((a, b) => {
-      const aTime = a.updatedAt?.toMillis?.() || 0;
-      const bTime = b.updatedAt?.toMillis?.() || 0;
-      return bTime - aTime;
-    });
-    
-    setLists(userLists);
-    setLoading(false);
-  };
+      setLists(userLists);
+      setLoading(false);
+    };
 
-  return () => {
-    unsubscribe1();
-    unsubscribe2();
-  };
-}, [currentUser]);
+    return () => {
+      unsubscribe1();
+      unsubscribe2();
+    };
+  }, [currentUser]);
 
 
   // Yeni liste oluştur
   const createList = async (name: string) => {
     if (!currentUser) {
       toast({
-        title: "Error",
-        description: "You must be logged in",
+        title: t('common.error') || "Error",
+        description: t('lists.loginRequired') || "You must be logged in",
         variant: "destructive",
+        duration: 2000,
       });
       return null;
     }
@@ -165,17 +170,19 @@ useEffect(() => {
       const docRef = await addDoc(collection(db, 'shoppingLists'), newList);
 
       toast({
-        title: "Success",
+        title: t('common.success'),
         description: `List "${name}" created`,
+        duration: 2000,
       });
 
       return docRef.id;
     } catch (error) {
       console.error('Create list error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to create list",
         variant: "destructive",
+        duration: 2000,
       });
       return null;
     }
@@ -191,9 +198,10 @@ useEffect(() => {
     } catch (error) {
       console.error('Update list error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to update list",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
@@ -204,15 +212,17 @@ useEffect(() => {
       await deleteDoc(doc(db, 'shoppingLists', listId));
 
       toast({
-        title: "Success",
+        title: t('common.success'),
         description: "List deleted",
+        duration: 2000,
       });
     } catch (error) {
       console.error('Delete list error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to delete list",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
@@ -220,6 +230,17 @@ useEffect(() => {
   // Listeye ürün ekle
   const addItem = async (listId: string, item: Omit<ShoppingItem, 'id' | 'addedBy' | 'addedByName' | 'addedAt'>) => {
     if (!currentUser) return;
+
+    // ABONELİK KONTROLÜ
+    if (plan !== 'pro' && !canPerformAction()) {
+      toast({
+        title: t('common.error'),
+        description: t('subscription.limitReached') || "Günlük limit doldu.",
+        variant: "destructive",
+        duration: 2000,
+      });
+      return;
+    }
 
     try {
       const list = lists.find(l => l.id === listId);
@@ -238,16 +259,21 @@ useEffect(() => {
         updatedAt: Timestamp.now(),
       });
 
+      // Kredi Düşme işlemi UI tarafında (Lists.tsx) yapılacak
+      // incrementAction();
+
       toast({
-        title: "Success",
-        description: `${item.name} added to list`,
+        title: t('common.success'),
+        description: t('lists.itemAdded') || `${item.name} added to list`,
+        duration: 2000,
       });
     } catch (error) {
       console.error('Add item error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to add item",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
@@ -269,9 +295,10 @@ useEffect(() => {
     } catch (error) {
       console.error('Update item error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to update item",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
@@ -290,77 +317,84 @@ useEffect(() => {
       });
 
       toast({
-        title: "Success",
-        description: "Item removed",
+        title: t('common.success'),
+        description: t('lists.itemRemoved') || "Item removed",
+        duration: 2000,
       });
     } catch (error) {
       console.error('Delete item error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to delete item",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
+
   // Tüm itemleri sil (Toplu silme)
   const deleteAllItems = async (listId: string) => {
     try {
       await updateDoc(doc(db, 'shoppingLists', listId), {
-        items: [], // ← Direkt boş array gönder
+        items: [],
         updatedAt: Timestamp.now(),
       });
 
       toast({
-        title: "Success",
+        title: t('common.success'),
         description: "All items removed",
+        duration: 2000,
       });
     } catch (error) {
       console.error('Delete all items error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to delete items",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
 
- // Listeyi arkadaşla paylaş
-const shareList = async (listId: string, friendId: string, permission: 'view' | 'edit' = 'view') => {
-  try {
-    const list = lists.find(l => l.id === listId);
-    if (!list) return;
-
-    await updateDoc(doc(db, 'shoppingLists', listId), {
-      sharedWith: arrayUnion(friendId),
-      [`permissions.${friendId}`]: permission,
-      updatedAt: Timestamp.now(),
-    });
-
-    // ✅ YENİ: Local notification göster
+  // Listeyi arkadaşla paylaş
+  const shareList = async (listId: string, friendId: string, permission: 'view' | 'edit' = 'view') => {
     try {
-      if (Notification.permission === 'granted') {
-        new Notification('📋 List Shared', {
-          body: `You shared "${list.name}" successfully`,
-          icon: '/logo.png',
-        });
-      }
-    } catch (err) {
-      console.log('Notification error:', err);
-    }
+      const list = lists.find(l => l.id === listId);
+      if (!list) return;
 
-    toast({
-      title: "Success",
-      description: "List shared successfully",
-    });
-  } catch (error) {
-    console.error('Share list error:', error);
-    toast({
-      title: "Error",
-      description: "Failed to share list",
-      variant: "destructive",
-    });
-  }
-};
+      await updateDoc(doc(db, 'shoppingLists', listId), {
+        sharedWith: arrayUnion(friendId),
+        [`permissions.${friendId}`]: permission,
+        updatedAt: Timestamp.now(),
+      });
+
+      // Local notification göster
+      try {
+        if (Notification.permission === 'granted') {
+          new Notification('📋 List Shared', {
+            body: `You shared "${list.name}" successfully`,
+            icon: '/logo.png',
+          });
+        }
+      } catch (err) {
+        console.log('Notification error:', err);
+      }
+
+      toast({
+        title: t('common.success'),
+        description: "List shared successfully",
+        duration: 2000,
+      });
+    } catch (error) {
+      console.error('Share list error:', error);
+      toast({
+        title: t('common.error'),
+        description: "Failed to share list",
+        variant: "destructive",
+        duration: 2000,
+      });
+    }
+  };
 
   // Paylaşımı kaldır
   const unshareList = async (listId: string, friendId: string) => {
@@ -378,15 +412,17 @@ const shareList = async (listId: string, friendId: string, permission: 'view' | 
       });
 
       toast({
-        title: "Success",
+        title: t('common.success'),
         description: "Sharing removed",
+        duration: 2000,
       });
     } catch (error) {
       console.error('Unshare list error:', error);
       toast({
-        title: "Error",
+        title: t('common.error'),
         description: "Failed to remove sharing",
         variant: "destructive",
+        duration: 2000,
       });
     }
   };
@@ -401,7 +437,7 @@ const shareList = async (listId: string, friendId: string, permission: 'view' | 
     updateItem,
     deleteItem,
     deleteAllItems,
-      shareList,
+    shareList,
     unshareList,
   };
 };

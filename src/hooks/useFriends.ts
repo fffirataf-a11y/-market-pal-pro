@@ -16,7 +16,7 @@ import {
 import { db, auth } from '@/config/firebase';
 import { useToast } from '@/hooks/use-toast';
 
-interface User {
+export interface User {
   uid: string;
   email: string;
   fullName: string;
@@ -65,7 +65,7 @@ export const useFriends = () => {
     return () => unsubscribe();
   }, [currentUser]);
 
-  // Arkadaş isteklerini gerçek zamanlı dinle
+  // Arkadaş isteklerini gerçek zamanlı dinle (Gelen)
   useEffect(() => {
     if (!currentUser) return;
 
@@ -91,6 +91,29 @@ export const useFriends = () => {
         console.error('Friend requests listener error:', error);
       }
     );
+
+    return () => unsubscribe();
+  }, [currentUser]);
+
+  // Giden arkadaşlık isteklerini dinle (Outgoing)
+  const [outgoingRequests, setOutgoingRequests] = useState<string[]>([]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+
+    const q = query(
+      collection(db, 'friendRequests'),
+      where('fromUserId', '==', currentUser.uid),
+      where('status', '==', 'pending')
+    );
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      const outgoings: string[] = [];
+      snapshot.forEach((doc) => {
+        outgoings.push(doc.data().toUserId);
+      });
+      setOutgoingRequests(outgoings);
+    });
 
     return () => unsubscribe();
   }, [currentUser]);
@@ -129,44 +152,36 @@ export const useFriends = () => {
 
     setLoading(true);
     try {
-      // Google Firstore "Prefix Search" mantığı
-      // İsim büyük/küçük harf duyarlı olabilir, bu yüzden 'searchKey' olsa daha iyi olurdu
-      // Ama şimdilik maliyeti korumak için sadece 'Starts With' yapıyoruz + Limit 20
-
-      const searchTerm = searchName.trim(); // Case sensitive aramalar için olduğu gibi bırakıyoruz şimdilik
-
-      // NOT: Bu yöntem sadece 'Ali' yazınca 'Ali Yılmaz'ı bulur.
-      // 'Yılmaz' yazınca 'Ali Yılmaz'ı BULMAZ (Full Text Search değil).
-      // Ama tamamen ücretsiz ve performanslıdır.
-
-      // Eğer veritabanında "searchKey" (küçük harf) alanı varsa onu kullanmak daha iyidir.
-      // Şimdilik direkt fullName üzerinden gidiyoruz.
+      // searchKey alanı küçük harf olarak kaydedilmiş, bu yüzden case-insensitive arama yapabiliriz
+      const searchTerm = searchName.trim().toLowerCase();
 
       const usersRef = collection(db, 'users');
       const q = query(
         usersRef,
-        where('fullName', '>=', searchTerm),
-        where('fullName', '<=', searchTerm + '\uf8ff'),
-        // limit(20) // Maksimum 20 sonuç getir
+        where('searchKey', '>=', searchTerm),
+        where('searchKey', '<=', searchTerm + '\uf8ff'),
       );
-
-      // Not: 'orderBy' ve 'where' farklı alanlarda olursa index gerekir. 
-      // where('fullName') kullandığımız için otomatik çalışır.
 
       const snapshot = await getDocs(q);
       const users: User[] = [];
+      const seenUids = new Set<string>(); // Duplicate kontrolü için
+      const seenEmails = new Set<string>(); // Email kontrolü için
 
       snapshot.forEach((docSnapshot) => {
         const userData = docSnapshot.data() as User;
 
-        // Kendisi değilse ve zaten arkadaşı değilse ekle
+        // Kendisi değilse, zaten arkadaşı değilse VE daha önce eklenmemişse
         if (userData.uid !== currentUser?.uid &&
-          !friends.find(f => f.uid === userData.uid)) {
+          !friends.find(f => f.uid === userData.uid) &&
+          !seenUids.has(userData.uid) &&
+          userData.email && !seenEmails.has(userData.email)) {
+
+          seenUids.add(userData.uid);
+          seenEmails.add(userData.email);
           users.push(userData);
         }
       });
 
-      // Limit 20'yi manuel array üzerinde de uygulayabiliriz (client-side filtering sonrası)
       return users.slice(0, 20);
     } catch (error) {
       console.error('Search user error:', error);
@@ -187,6 +202,16 @@ export const useFriends = () => {
       toast({
         title: "Error",
         description: "You must be logged in",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // ✅ Yeni Kural: Herkes için 1 arkadaş limiti
+    if (friends.length >= 1) {
+      toast({
+        title: "Limit Reached",
+        description: "You can only have 1 friend at a time.",
         variant: "destructive",
       });
       return;
@@ -392,5 +417,6 @@ export const useFriends = () => {
     acceptFriendRequest,
     rejectFriendRequest,
     removeFriend,
+    outgoingRequests,
   };
 };

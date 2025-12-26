@@ -23,7 +23,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { showInterstitialAd } from "@/lib/adManager";
+
 import { useSubscription } from "@/hooks/useSubscription";
 
 interface ShareListProps {

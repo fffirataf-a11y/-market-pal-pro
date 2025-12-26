@@ -105,7 +105,31 @@
     "emptyList": "Your List is Empty",
     "emptyListDesc": "Start by adding items or get suggestions from AI Chef.",
     "searchPlaceholder": "Search in list...",
-    "itemAdded": "Item added to list"
+    "itemAdded": "Item added to list",
+    "itemRemoved": "Item removed",
+    "loginRequired": "You must be logged in",
+    "addItemDesc": "Add a new item to your shopping list.",
+    "categories": {
+      "Fruits": "Produce Section",
+      "Vegetables": "Produce Section",
+      "Dairy": "Dairy & Breakfast",
+      "Bakery": "Bakery",
+      "Meat": "Butcher",
+      "Seafood": "Seafood",
+      "Beverages": "Beverages",
+      "Snacks": "Snacks Aisle",
+      "Cleaning": "Cleaning Aisle",
+      "Personal Care": "Personal Care",
+      "Baby Care": "Baby Aisle",
+      "Pet Care": "Pet Supplies",
+      "Household": "Household",
+      "Frozen": "Frozen Foods",
+      "Canned": "Pantry & Canned",
+      "Grains": "Grains & Pasta",
+      "Condiments": "Condiments & Sauces",
+      "Groceries": "Groceries",
+      "Other": "Other Aisle"
+    }
   },
   "scanner": {
     "title": "Barcode Scanner",
@@ -118,10 +142,14 @@
     "stopScanning": "Stop Scanning",
     "scanning": "Scanning...",
     "scanAnother": "Scan Another",
-    "barcode": "Barcode",
+    "analyzing": "Analyzing...",
+    "pleaseWait": "Please wait, identifying contents...",
+    "aiBusyFallback": "AI is busy. Showing basic product info.",
+    "rateLimitError": "Too many requests. Please try again later.",
+    "notFoundError": "Product not found.",
     "barcodeNumber": "Barcode Number",
     "barcodePlaceholder": "e.g., 8690504326218",
-    "healthInsights": "Health Insights",
+    "healthInsights": "Ingredients Summary",
     "addToList": "Add to List",
     "searchProduct": "Search Product",
     "howItWorks": "How It Works",
@@ -132,7 +160,7 @@
   "aichef": {
     "title": "AI Chef",
     "recipeGenerator": "Recipe Generator",
-    "recipeSubtitle": "Enter a dish name to get a complete recipe",
+    "recipeSubtitle": "Enter a dish name to get a complete list of ingredients",
     "cookingIdeas": "Cooking Ideas",
     "ideasSubtitle": "Enter ingredients you have for recipe suggestions",
     "dishPlaceholder": "e.g., Spaghetti Carbonara",
@@ -146,17 +174,19 @@
     "cookingUp": "Cooking up",
     "ingredients": "Ingredients",
     "servings": "servings",
-    "recipeSuggestions": "Recipe Suggestions"
+    "recipeSuggestions": "Recipe Suggestions",
+    "addAllToList": "Add All to List",
+    "addAllItems": "Add All to List"
   },
   "ads": {
-    "rewardedTitle": "Watch an Ad to Unlock Extras",
-    "rewardedDescription": "Free plan users will soon be able to watch a short video ad for bonuses. This placeholder keeps the slot ready once ad creatives arrive.",
-    "watch": "Preview Ad Slot",
-    "loading": "Preparing...",
-    "completed": "Preview completed. Replace this placeholder with your production ad SDK when available.",
-    "lastPlayed": "Last simulated ad: {{time}}",
-    "rewardToastTitle": "Ad Slot Ready",
-    "rewardToastDescription": "This is only a preview. Connect your ad partner SDK to deliver real ads."
+    "rewardedTitle": "Watch Ad for Extra Features",
+    "rewardedDescription": "Free plan users can watch a short ad to earn extra actions.",
+    "watch": "Watch Ad",
+    "loading": "Loading...",
+    "completed": "Ad watched, reward granted! 🎉",
+    "lastPlayed": "Last watched: {{time}}",
+    "rewardToastTitle": "Congratulations!",
+    "rewardToastDescription": "You have earned extra actions."
   },
   "settings": {
     "title": "Settings",
@@ -203,49 +233,43 @@
       "features": [
         "7 days free trial",
         "10 actions per day",
-        "AI Chef recipes",
-        "Barcode scanning",
-        "Shopping lists",
-        "Share with 2 people",
-        "Referral bonus: +7 days per invite"
+        "AI Chef Recipe Generator",
+        "AI Chef Cooking Ideas",
+        "Edit Shopping Lists",
+        "Add Friends",
+        "Referral Bonus: +7 days per invite"
       ]
     },
     "premium": {
       "name": "Premium",
       "price": "$4.99/month",
       "yearlyPrice": "$54.99/year",
-      "yearlySavings": "Save 17% with yearly plan",
+      "yearlySavings": "Save 8.5% with yearly plan",
       "dailyLimit": "30 actions/day",
       "features": [
         "30 actions per day",
-        "No trial period limit",
-        "AI Chef recipes",
-        "Barcode scanning",
-        "Shopping lists",
-        "Sharing",
-        "Ad-free experience",
-        "Priority support",
-        "Advanced AI recommendations",
-        "Weekly nutrition reports"
+        "Unlimited Duration",
+        "Advanced AI Chef Features",
+        "Unlimited List Sharing",
+        "Ad-Free Experience",
+        "Priority Support",
+        "Weekly Nutrition Tips"
       ]
     },
     "pro": {
       "name": "Pro",
       "price": "$8.99/month",
       "yearlyPrice": "$98.99/year",
-      "yearlySavings": "Save 17% with yearly plan",
+      "yearlySavings": "Save 8.5% with yearly plan",
       "dailyLimit": "Unlimited actions",
       "features": [
-        "Unlimited daily actions",
-        "No trial period limit",
-        "Unlimited AI Chef recipes",
-        "Unlimited barcode scanning",
-        "Unlimited shopping lists",
-        "Unlimited sharing",
-        "Ad-free experience",
-        "Priority support",
-        "Advanced AI recommendations",
-        "Early access to new features"
+        "Unlimited Daily Actions",
+        "Unlimited AI Chef Usage",
+        "Unlimited Friends & Sharing",
+        "Full Access to All Features",
+        "Early Access to New Features",
+        "Ad-Free Experience",
+        "VIP Support"
       ]
     }
   },

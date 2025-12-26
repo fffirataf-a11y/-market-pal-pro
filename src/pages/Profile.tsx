@@ -31,16 +31,11 @@ import { useToast } from "@/hooks/use-toast";
 import { useFriends } from "@/hooks/useFriends";
 
 // 20 sevimli cartoon avatar - Farklı stiller
+// 20 Awesome Cartoon Avatars (Adventurer Style)
 const AVATARS = [
-  // Big Smile style (10 tane)
-  ...Array.from({ length: 10 }, (_, i) => ({
+  ...Array.from({ length: 20 }, (_, i) => ({
     id: i + 1,
-    url: `https://api.dicebear.com/7.x/big-smile/svg?seed=avatar${i + 1}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&radius=50`,
-  })),
-  // Lorelei style (10 tane)
-  ...Array.from({ length: 10 }, (_, i) => ({
-    id: i + 11,
-    url: `https://api.dicebear.com/7.x/lorelei/svg?seed=avatar${i + 11}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&radius=50`,
+    url: `https://api.dicebear.com/9.x/micah/svg?seed=${i + 1}&backgroundColor=b6e3f4,c0aede,d1d4f9,ffd5dc,ffdfbf&radius=50`,
   })),
 ];
 
@@ -75,11 +70,11 @@ const Profile = () => {
     return saved
       ? JSON.parse(saved)
       : {
-          name: "Guest User",
-          username: "",
-          email: "guest@smartmarket.app",
-          avatar: AVATARS[0].url,
-        };
+        name: "Guest User",
+        username: "",
+        email: "guest@smartmarket.app",
+        avatar: AVATARS[0].url,
+      };
   });
 
   // Current editing data
@@ -107,31 +102,31 @@ const Profile = () => {
     setHasChanges(userChanged);
   }, [userData, originalUserData]);
 
- // ✅ Instagram tarzı anlık arama - OPTIMIZE EDİLMİŞ
-useEffect(() => {
-  const searchUsers = async () => {
-    // Çok kısa aramalar için durma
-    if (!searchQuery || searchQuery.length < 2) {
-      setSearchResults([]);
-      setSearching(false);
-      return;
-    }
+  // ✅ Instagram tarzı anlık arama - OPTIMIZE EDİLMİŞ
+  useEffect(() => {
+    const searchUsers = async () => {
+      // Çok kısa aramalar için durma
+      if (!searchQuery || searchQuery.length < 2) {
+        setSearchResults([]);
+        setSearching(false);
+        return;
+      }
 
-    setSearching(true);
-    try {
-      const results = await searchUserByName(searchQuery);
-      setSearchResults(results);
-    } catch (error) {
-      console.error('Search error:', error);
-    } finally {
-      setSearching(false);
-    }
-  };
+      setSearching(true);
+      try {
+        const results = await searchUserByName(searchQuery);
+        setSearchResults(results);
+      } catch (error) {
+        console.error('Search error:', error);
+      } finally {
+        setSearching(false);
+      }
+    };
 
-  // ✅ Debounce süresini artır: 300ms → 800ms
-  const timer = setTimeout(searchUsers, 800);
-  return () => clearTimeout(timer);
-}, [searchQuery]); // ✅ searchUserByName'i dependency'den çıkar
+    // ✅ Debounce süresini artır: 300ms → 800ms
+    const timer = setTimeout(searchUsers, 800);
+    return () => clearTimeout(timer);
+  }, [searchQuery]); // ✅ searchUserByName'i dependency'den çıkar
 
   // ✅ Send friend request
   const handleSendRequest = async (user: User) => {
@@ -330,8 +325,8 @@ useEffect(() => {
                     {friendRequests.length} New Friend Request{friendRequests.length > 1 ? 's' : ''}!
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    {friendRequests[0].fromUserName} 
-                    {friendRequests.length > 1 && ` and ${friendRequests.length - 1} other${friendRequests.length > 2 ? 's' : ''}`} 
+                    {friendRequests[0].fromUserName}
+                    {friendRequests.length > 1 && ` and ${friendRequests.length - 1} other${friendRequests.length > 2 ? 's' : ''}`}
                     {' '}wants to be your friend
                   </p>
                 </div>
@@ -441,11 +436,10 @@ useEffect(() => {
             {AVATARS.map((avatar) => (
               <button
                 key={avatar.id}
-                className={`relative rounded-full overflow-hidden border-4 transition-all hover:scale-110 ${
-                  userData.avatar === avatar.url
-                    ? "border-primary ring-4 ring-primary/20"
-                    : "border-transparent hover:border-primary/50"
-                }`}
+                className={`relative rounded-full overflow-hidden border-4 transition-all hover:scale-110 ${userData.avatar === avatar.url
+                  ? "border-primary ring-4 ring-primary/20"
+                  : "border-transparent hover:border-primary/50"
+                  }`}
                 onClick={() => handleSelectAvatar(avatar.url)}
               >
                 <img
@@ -482,7 +476,7 @@ useEffect(() => {
               Start typing to search for friends
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             {/* Arama Input - Sadece input, buton yok */}
             <div className="space-y-2">
@@ -587,7 +581,7 @@ useEffect(() => {
               Accept or reject pending friend requests
             </DialogDescription>
           </DialogHeader>
-          
+
           {friendRequests.length === 0 ? (
             <div className="py-12 text-center">
               <UserCheck className="h-12 w-12 mx-auto text-muted-foreground mb-3 opacity-50" />

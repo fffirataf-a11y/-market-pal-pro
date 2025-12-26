@@ -18,16 +18,46 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { detectCategory } from "@/lib/categoryDetector";
 import { LimitReachedDialog } from "@/components/LimitReachedDialog";
+
+import { Capacitor } from "@capacitor/core";
+
+interface RecipeIngredient {
+  name: string;
+  quantity: string;
+}
+
+const getApiConfig = () => {
+  const isIOS = Capacitor.getPlatform() === 'ios';
+
+  if (isIOS) {
+    return {
+      key: import.meta.env.VITE_IOS_API_KEY,
+      headers: {
+        'X-Ios-Bundle-Identifier': 'com.lionx.smartmarket'
+      }
+    };
+  }
+
+  // Android Configuration
+  return {
+    key: import.meta.env.VITE_GEMINI_API_KEY,
+    headers: {
+      'X-Android-Package': 'com.lionx.smartmarket',
+      'X-Android-Cert': 'C3B178ED4E381C2D2F7188D16B6A56BB60CB470D'
+    }
+  };
+}
 
 const AIChef = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation(); // i18n eklendi
   const { toast } = useToast();
   const { lists, addItem } = useShoppingLists();
-  
+
   const { canPerformAction, incrementAction, plan, getRemainingActions } = useSubscription();
-  
+
   const [activeTab, setActiveTab] = useState("recipe");
   const [dishName, setDishName] = useState("");
   const [ingredients, setIngredients] = useState("");
@@ -47,7 +77,7 @@ const AIChef = () => {
     console.log('📋 Ingredients:', generatedRecipe.ingredients);
 
     // ✅ İlk listeyi al (veya oluştur)
-    let targetList = lists.length > 0 ? lists[0] : null;
+    const targetList = lists.length > 0 ? lists[0] : null;
 
     if (!targetList) {
       console.log('❌ No list found');
@@ -61,15 +91,27 @@ const AIChef = () => {
 
     console.log('📦 Target list:', targetList.name);
 
+    // Limit kontrolü için local değişken
+    let remaining = plan === 'pro' ? 9999 : Math.max(0, remainingUses);
+
     // ✅ Her malzemeyi Firestore'a ekle
     try {
       for (const ingredient of generatedRecipe.ingredients) {
+        // Limit Kontrolü
+        if (remaining <= 0 && plan !== 'pro') {
+          console.log('⛔ Limit reached during bulk add');
+          setLimitDialogOpen(true);
+          break; // Döngüyü kır
+        }
+
         await addItem(targetList.id, {
           name: ingredient.name || ingredient,
           quantity: ingredient.quantity || "1 adet",
-          category: "Groceries",
+          category: detectCategory(ingredient.name || ingredient.toString()),
           completed: false,
         });
+        await incrementAction();
+        remaining--; // Local sayacı düş
       }
 
       console.log('✅ All items added to Firestore');
@@ -101,13 +143,13 @@ const AIChef = () => {
       setLimitDialogOpen(true);
       return;
     }
-    
+
     setLoading(true);
     setGeneratedRecipe(null);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
+      const { key: apiKey, headers: platformHeaders } = getApiConfig();
+
       if (!apiKey) {
         throw new Error('API key not found');
       }
@@ -117,7 +159,7 @@ const AIChef = () => {
 
       const prompt = isTurkish
         ? `"${dishName}" için kısa tarif oluştur. Sadece JSON döndür (başka hiçbir şey yazma):
-{"name":"yemek adı","servings":4,"time":"X dk","difficulty":"Kolay","ingredients":[{"name":"malzeme","quantity":"miktar"}]}
+{"name":" yemek adı","servings":4,"time":"X dk","difficulty":"Kolay","ingredients":[{"name":"malzeme","quantity":"miktar"}]}
 
 ÖNEMLI: Tüm metinler TÜRKÇE olmalı!`
         : `Create a short recipe for "${dishName}". Return ONLY this JSON (nothing else):
@@ -131,6 +173,7 @@ IMPORTANT: All text must be in ENGLISH!`;
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...platformHeaders
           },
           body: JSON.stringify({
             contents: [{
@@ -149,7 +192,9 @@ IMPORTANT: All text must be in ENGLISH!`;
       );
 
       if (!response.ok) {
-        throw new Error(`API failed: ${response.status}`);
+        const errorData = await response.json();
+        console.error('API Error Details:', errorData);
+        throw new Error(errorData.error?.message || `API failed: ${response.status}`);
       }
 
       const data = await response.json();
@@ -159,9 +204,9 @@ IMPORTANT: All text must be in ENGLISH!`;
       }
 
       const candidate = data.candidates[0];
-      
+
       let recipeText = '';
-      
+
       if (candidate.content?.parts?.[0]?.text) {
         recipeText = candidate.content.parts[0].text;
       } else if (candidate.text) {
@@ -169,14 +214,14 @@ IMPORTANT: All text must be in ENGLISH!`;
       } else {
         throw new Error('No text in response');
       }
-      
+
       recipeText = recipeText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      
+
       const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         recipeText = jsonMatch[0];
       }
-      
+
       const recipe = JSON.parse(recipeText);
       setGeneratedRecipe(recipe);
 
@@ -185,8 +230,8 @@ IMPORTANT: All text must be in ENGLISH!`;
       try {
         const audio = new Audio('/sounds/success.mp3');
         audio.volume = 0.5;
-        audio.play().catch(() => {});
-      } catch {}
+        audio.play().catch(() => { });
+      } catch { }
 
       toast({
         title: t('common.success'),
@@ -211,20 +256,20 @@ IMPORTANT: All text must be in ENGLISH!`;
       setLimitDialogOpen(true);
       return;
     }
-    
+
     setLoading(true);
     setGeneratedRecipe(null);
 
     try {
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
+      const { key: apiKey, headers: platformHeaders } = getApiConfig();
+
       if (!apiKey) {
         throw new Error('API key not found');
       }
 
       // ✅ DÜZELTME: Uygulama dilini kontrol et
       const isTurkish = i18n.language === 'tr';
-      
+
       const prompt = isTurkish
         ? `"${ingredients}" ile tarif yap. Sadece JSON döndür:
 {"name":"yemek","servings":2,"time":"X dk","difficulty":"Kolay","ingredients":[{"name":"x","quantity":"y"}],"suggestions":["Yemek 1","Yemek 2","Yemek 3"]}
@@ -241,6 +286,7 @@ IMPORTANT: All text must be in ENGLISH!`;
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            ...platformHeaders
           },
           body: JSON.stringify({
             contents: [{
@@ -259,7 +305,9 @@ IMPORTANT: All text must be in ENGLISH!`;
       );
 
       if (!response.ok) {
-        throw new Error(`API failed: ${response.status}`);
+        const errorData = await response.json();
+        console.error('API Error Details:', errorData);
+        throw new Error(errorData.error?.message || `API failed: ${response.status}`);
       }
 
       const data = await response.json();
@@ -269,9 +317,9 @@ IMPORTANT: All text must be in ENGLISH!`;
       }
 
       const candidate = data.candidates[0];
-      
+
       let recipeText = '';
-      
+
       if (candidate.content?.parts?.[0]?.text) {
         recipeText = candidate.content.parts[0].text;
       } else if (candidate.text) {
@@ -279,14 +327,14 @@ IMPORTANT: All text must be in ENGLISH!`;
       } else {
         throw new Error('No text in response');
       }
-      
+
       recipeText = recipeText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-      
+
       const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
       if (jsonMatch) {
         recipeText = jsonMatch[0];
       }
-      
+
       const recipe = JSON.parse(recipeText);
       setGeneratedRecipe(recipe);
 
@@ -295,8 +343,8 @@ IMPORTANT: All text must be in ENGLISH!`;
       try {
         const audio = new Audio('/sounds/success.mp3');
         audio.volume = 0.5;
-        audio.play().catch(() => {});
-      } catch {}
+        audio.play().catch(() => { });
+      } catch { }
 
       toast({
         title: t('common.success'),
@@ -537,7 +585,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                     <div>
                       <h4 className="font-semibold mb-3">{t('aichef.ingredients')}</h4>
                       <div className="space-y-2">
-                        {generatedRecipe.ingredients.map((item: any, index: number) => (
+                        {generatedRecipe.ingredients.map((item: RecipeIngredient, index: number) => (
                           <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
                             <span className="font-medium">{item.name}</span>
                             <span className="text-sm text-muted-foreground">{item.quantity}</span>
@@ -548,7 +596,7 @@ IMPORTANT: All text must be in ENGLISH!`;
 
                     <Button className="w-full h-12 font-semibold" onClick={handleAddToList}>
                       <Plus className="mr-2 h-5 w-5" />
-                      {t('aichef.addAllToList')}
+                      {t('aichef.addAllItems')}
                     </Button>
                   </div>
                 </Card>

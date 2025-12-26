@@ -1,28 +1,19 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Toaster } from "@/components/ui/toaster";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { AuthProvider } from "./contexts/AuthContext";
-import { ThemeProvider } from "./contexts/ThemeContext";
-import ErrorBoundary from "./components/ErrorBoundary";
-import Welcome from "./pages/Welcome";
-import Auth from "./pages/Auth";
-import Lists from "./pages/Lists";
-import Scanner from "./pages/Scanner";
-import AIChef from "./pages/AIChef";
-import Settings from "./pages/Settings";
-import Profile from "./pages/Profile";
-import IconPreview from "./pages/IconPreview";
-import Checkout from "./pages/Checkout";
-import { useState, useEffect, useRef } from "react";
 import { useRealtimeNotifications } from "@/hooks/useNotifications";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePurchases } from "@/hooks/usePurchases";
 import { showAppOpenAd } from "@/lib/adManager";
 import { Capacitor } from "@capacitor/core";
-
-const queryClient = new QueryClient();
+import { useState, useEffect, useRef } from "react";
+import ErrorBoundary from "./components/ErrorBoundary";
+import Welcome from "./pages/Welcome";
+import Auth from "./pages/Auth";
+import Lists from "./pages/Lists";
+import AIChef from "./pages/AIChef";
+import Settings from "./pages/Settings";
+import Profile from "./pages/Profile";
+import IconPreview from "./pages/IconPreview";
+import Checkout from "./pages/Checkout";
 
 const App = () => {
   // ✅ Gerçek zamanlı notification dinleyici
@@ -95,79 +86,66 @@ const App = () => {
 
   return (
     <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <AuthProvider>
-            <TooltipProvider>
-              <Toaster />
-              <Sonner />
-              <Routes>
-                {/* Onboarding - sadece ilk kez */}
-                <Route
-                  path="/"
-                  element={
-                    !hasCompletedOnboarding ? (
-                      <Welcome />
-                    ) : isAuthenticated ? (
-                      <Navigate to="/lists" replace />
-                    ) : (
-                      <Navigate to="/auth" replace />
-                    )
-                  }
-                />
+      <Routes>
+        {/* Onboarding - sadece ilk kez */}
+        <Route
+          path="/"
+          element={
+            !hasCompletedOnboarding ? (
+              <Welcome />
+            ) : isAuthenticated ? (
+              <Navigate to="/lists" replace />
+            ) : (
+              <Navigate to="/auth" replace />
+            )
+          }
+        />
 
-                {/* Auth sayfası */}
-                <Route
-                  path="/auth"
-                  element={
-                    isAuthenticated ? (
-                      <Navigate to="/lists" replace />
-                    ) : (
-                      <Auth />
-                    )
-                  }
-                />
+        {/* Auth sayfası */}
+        <Route
+          path="/auth"
+          element={
+            isAuthenticated ? (
+              <Navigate to="/lists" replace />
+            ) : (
+              <Auth />
+            )
+          }
+        />
 
-                {/* Korumalı sayfalar */}
-                <Route
-                  path="/lists"
-                  element={isAuthenticated ? <Lists /> : <Navigate to="/auth" replace />}
-                />
-                <Route
-                  path="/scanner"
-                  element={isAuthenticated ? <Scanner /> : <Navigate to="/auth" replace />}
-                />
-                <Route
-                  path="/ai-chef"
-                  element={isAuthenticated ? <AIChef /> : <Navigate to="/auth" replace />}
-                />
-                <Route
-                  path="/settings"
-                  element={isAuthenticated ? <Settings /> : <Navigate to="/auth" replace />}
-                />
-                <Route
-                  path="/profile"
-                  element={isAuthenticated ? <Profile /> : <Navigate to="/auth" replace />}
-                />
+        {/* Korumalı sayfalar */}
+        <Route
+          path="/lists"
+          element={isAuthenticated ? <Lists /> : <Navigate to="/auth" replace />}
+        />
 
-                {/* Icon Preview - Public */}
-                <Route
-                  path="/icon-preview"
-                  element={<IconPreview />}
-                />
+        <Route
+          path="/ai-chef"
+          element={isAuthenticated ? <AIChef /> : <Navigate to="/auth" replace />}
+        />
+        <Route
+          path="/settings"
+          element={isAuthenticated ? <Settings /> : <Navigate to="/auth" replace />}
+        />
+        <Route
+          path="/profile"
+          element={isAuthenticated ? <Profile /> : <Navigate to="/auth" replace />}
+        />
 
-                {/* Checkout - Protected */}
-                <Route
-                  path="/checkout"
-                  element={isAuthenticated ? <Checkout /> : <Navigate to="/auth" replace />}
-                />
+        {/* Icon Preview - Public */}
+        <Route
+          path="/icon-preview"
+          element={<IconPreview />}
+        />
 
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </TooltipProvider>
-          </AuthProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
+        {/* Checkout - Protected */}
+        <Route
+          path="/checkout"
+          element={isAuthenticated ? <Checkout /> : <Navigate to="/auth" replace />}
+        />
+
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </ErrorBoundary>
   );
 };

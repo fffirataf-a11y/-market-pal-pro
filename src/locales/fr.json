@@ -61,24 +61,25 @@
     "canView": "Peut voir",
     "done": "Terminé",
     "categories": {
-      "Fruits": "Fruits",
-      "Vegetables": "Légumes",
-      "Dairy": "Produits laitiers",
+      "Fruits": "Rayon Fruits & Légumes",
+      "Vegetables": "Rayon Fruits & Légumes",
+      "Dairy": "Produits Laitiers",
       "Bakery": "Boulangerie",
-      "Meat": "Viande",
-      "Seafood": "Produits de la mer",
+      "Meat": "Boucherie",
+      "Seafood": "Poissonnerie",
       "Beverages": "Boissons",
-      "Snacks": "Snacks",
-      "Cleaning": "Produits d'entretien",
-      "Personal Care": "Soin personnel",
-      "Baby Care": "Puériculture",
-      "Pet Care": "Animaux domestiques",
+      "Snacks": "Snacks & Confiserie",
+      "Cleaning": "Entretien",
+      "Personal Care": "Hygiène & Beauté",
+      "Baby Care": "Bébé",
+      "Pet Care": "Animalerie",
       "Household": "Maison",
       "Frozen": "Surgelés",
-      "Canned": "Conserves",
-      "Grains": "Céréales & pâtes",
-      "Condiments": "Condiments & sauces",
-      "Other": "Autre"
+      "Canned": "Épicerie Salée",
+      "Grains": "Céréales & Pâtes",
+      "Condiments": "Sauces & Condiments",
+      "Groceries": "Épicerie",
+      "Other": "Autre Rayon"
     }
   },
   "auth": {
@@ -167,10 +168,10 @@
       "features": [
         "Essai gratuit de 7 jours",
         "10 actions par jour",
-        "Recettes Chef IA",
-        "Scanner de codes-barres",
-        "Listes de courses",
-        "Partage avec 2 personnes",
+        "Générateur de recettes Chef IA",
+        "Idées de cuisine Chef IA",
+        "Modifier les listes de courses",
+        "Ajouter des amis",
         "Bonus de parrainage : +7 jours par invitation"
       ]
     },
@@ -182,15 +183,12 @@
       "dailyLimit": "30 actions/jour",
       "features": [
         "30 actions par jour",
-        "Pas de limite d'essai",
-        "Recettes Chef IA",
-        "Scanner de codes-barres",
-        "Listes de courses",
-        "Partage avancé",
+        "Durée illimitée",
+        "Fonctionnalités avancées Chef IA",
+        "Partage de listes illimité",
         "Expérience sans publicité",
         "Support prioritaire",
-        "Recommandations IA avancées",
-        "Rapports nutritionnels hebdomadaires"
+        "Conseils nutritionnels hebdomadaires"
       ]
     },
     "pro": {
@@ -200,16 +198,13 @@
       "yearlySavings": "Économisez 8,89 $ avec l'offre annuelle",
       "dailyLimit": "Actions illimitées",
       "features": [
-        "Actions illimitées",
-        "Pas de limite d'essai",
-        "Recettes IA illimitées",
-        "Scan illimité",
-        "Listes illimitées",
-        "Partage illimité",
-        "Sans publicité",
-        "Support prioritaire",
-        "Recommandations IA avancées",
-        "Accès anticipé aux nouvelles fonctionnalités"
+        "Actions quotidiennes illimitées",
+        "Utilisation illimitée de Chef IA",
+        "Amis et partage illimités",
+        "Accès complet à toutes les fonctionnalités",
+        "Accès anticipé aux nouvelles fonctionnalités",
+        "Expérience sans publicité",
+        "Support VIP"
       ]
     }
   },

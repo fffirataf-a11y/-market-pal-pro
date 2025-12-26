@@ -1,0 +1,121 @@
+
+> vite_react_shadcn_ts@0.0.0 lint
+> eslint .
+
+
+C:\Users\firat\market-pal-pro\android\app\build\intermediates\assets\debug\mergeDebugAssets\native-bridge.js
+  1003:13  error  Definition for rule '@typescript-eslint/no-unused-vars' was not found  @typescript-eslint/no-unused-vars
+
+C:\Users\firat\market-pal-pro\src\components\Paywall.tsx
+  71:25  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\components\ShareList.tsx
+  77:67  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\components\friends\AddFriendDialog.tsx
+  30:56  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  46:8   warning  React Hook useEffect has a missing dependency: 'searchUserByName'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+  48:44  error    Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\components\ui\badge.tsx
+  29:17  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\components\ui\button.tsx
+  47:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\components\ui\command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\firat\market-pal-pro\src\components\ui\form.tsx
+  129:10  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\components\ui\navigation-menu.tsx
+  111:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\components\ui\sidebar.tsx
+  636:3  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\components\ui\sonner.tsx
+  27:19  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\components\ui\textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+C:\Users\firat\market-pal-pro\src\components\ui\toggle.tsx
+  37:18  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\contexts\AuthContext.tsx
+  13:56  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  14:55  error    Unexpected any. Specify a different type                                                                                        @typescript-eslint/no-explicit-any
+  21:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\contexts\SubscriptionContext.tsx
+  607:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\contexts\ThemeContext.tsx
+  36:14  warning  Fast refresh only works when a file only exports components. Use a new file to share constants or functions between components  react-refresh/only-export-components
+
+C:\Users\firat\market-pal-pro\src\hooks\useFirebaseAuth.ts
+   59:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  127:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  171:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  215:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  256:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  278:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\hooks\useFriends.ts
+  400:0  error  Parsing error: Property assignment expected
+
+C:\Users\firat\market-pal-pro\src\hooks\usePurchases.tsx
+  118:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  173:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  194:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\hooks\useShoppingLists.ts
+  41:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  42:14  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\lib\adManager.ts
+   66:7    error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+   68:7    error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  144:122  error  Unexpected any. Specify a different type                                                                             @typescript-eslint/no-explicit-any
+  217:5    error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+  219:5    error  Use "@ts-expect-error" instead of "@ts-ignore", as "@ts-ignore" will do nothing if the following line is error-free  @typescript-eslint/ban-ts-comment
+
+C:\Users\firat\market-pal-pro\src\pages\AIChef.tsx
+   59:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  229:15  error  Empty block statement                     no-empty
+  235:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  342:15  error  Empty block statement                     no-empty
+  348:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  469:63  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  583:65  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\pages\Checkout.tsx
+  98:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\pages\IconPreview.tsx
+  127:20  warning  React Hook useEffect has an unnecessary dependency: 'icon.name'. Either exclude it or remove the dependency array. Outer scope values like 'icon.name' aren't valid dependencies because mutating them doesn't re-render the component  react-hooks/exhaustive-deps
+
+C:\Users\firat\market-pal-pro\src\pages\Lists.tsx
+   98:6  warning  React Hook useEffect has a missing dependency: 'createList'. Either include it or remove the dependency array                                                                                 react-hooks/exhaustive-deps
+  104:9  warning  The 'items' logical expression could make the dependencies of useEffect Hook (at line 110) change on every render. To fix this, wrap the initialization of 'items' in its own useMemo() Hook  react-hooks/exhaustive-deps
+
+C:\Users\firat\market-pal-pro\src\pages\Login.tsx
+  33:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\pages\Profile.tsx
+  129:6  warning  React Hook useEffect has a missing dependency: 'searchUserByName'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Users\firat\market-pal-pro\src\pages\Settings.tsx
+  170:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  346:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\src\pages\Signup.tsx
+  59:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Users\firat\market-pal-pro\tailwind.config.ts
+  101:13  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 54 problems (39 errors, 15 warnings)
+
