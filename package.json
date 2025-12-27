@@ -71,8 +71,6 @@
     "date-fns": "^3.6.0",
     "embla-carousel-react": "^8.6.0",
     "firebase": "^12.4.0",
-    "firebase-admin": "^13.5.0",
-    "firebase-auth": "^0.1.2",
     "framer-motion": "^12.23.26",
     "html5-qrcode": "^2.3.8",
     "i18next": "^25.5.3",
