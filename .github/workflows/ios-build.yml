@@ -21,6 +21,10 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Build Web Assets
+        env:
+          VITE_GEMINI_API_KEY: ${{ secrets.VITE_GEMINI_API_KEY }}
+          VITE_IOS_API_KEY: ${{ secrets.VITE_IOS_API_KEY }}
+          VITE_FIREBASE_VAPID_KEY: ${{ secrets.VITE_FIREBASE_VAPID_KEY }}
         run: npm run build
 
       - name: Install Apple Certificate and Provisioning Profile
