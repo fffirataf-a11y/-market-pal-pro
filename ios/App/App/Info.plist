@@ -4,6 +4,12 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>We need access to your photo library to allow you to upload profile photos or save receipts.</string>
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>We need access to save receipts to your photo library.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>We need access to your camera to scan receipts.</string>
 	<key>CFBundleDisplayName</key>
         <string>SmartMarket</string>
 	<key>CFBundleExecutable</key>
