@@ -36,9 +36,15 @@ export const useFirebaseAuth = () => {
         console.warn('Email not verified but allowing access for testing:', user.email);
       }
 
-      // ✅ Firestore'dan kullanıcı bilgilerini al
-      const userDoc = await getDoc(doc(db, 'users', user.uid));
-      const firestoreData = userDoc.exists() ? userDoc.data() : {};
+      // ✅ Firestore'dan kullanıcı bilgilerini al (Hata olursa devam et)
+      let firestoreData: any = {};
+      try {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        firestoreData = userDoc.exists() ? userDoc.data() : {};
+      } catch (firestoreError) {
+        console.warn('Firestore read failed during login, proceeding with auth data only:', firestoreError);
+        // Firestore hatası login'i engellememeli
+      }
 
       const userData = {
         uid: user.uid,
@@ -99,31 +105,43 @@ export const useFirebaseAuth = () => {
         photoURL: "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
       });
 
-      // ✅ Firestore'a kullanıcı bilgilerini kaydet
-      await setDoc(doc(db, 'users', user.uid), {
-        uid: user.uid,
-        email: user.email,
-        fullName: fullName,
-        searchKey: fullName.toLowerCase(),
-        displayName: fullName,
-        photoURL: "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
-        createdAt: new Date().toISOString(),
-        friends: [],
-      });
+      // ✅ Firestore'a kullanıcı bilgilerini kaydet (Hata olsa bile devam et)
+      try {
+        await setDoc(doc(db, 'users', user.uid), {
+          uid: user.uid,
+          email: user.email,
+          fullName: fullName,
+          searchKey: fullName.toLowerCase(),
+          displayName: fullName,
+          photoURL: "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
+          createdAt: new Date().toISOString(),
+          friends: [],
+        });
+      } catch (fsError) {
+        console.error('Firestore write failed during signup:', fsError);
+      }
 
       // Doğrulama emaili gönder
-      await sendEmailVerification(user, {
-        url: window.location.origin + '/auth',
-        handleCodeInApp: false,
-      });
+      try {
+        await sendEmailVerification(user, {
+          url: window.location.origin + '/auth',
+          handleCodeInApp: false,
+        });
+      } catch (emailError) {
+        console.warn('Verification email send failed:', emailError);
+      }
 
-      // Kullanıcıyı çıkar
-      await signOut(auth);
+      // OTOMATİK GİRİŞ İÇİN SIGNOUT YAPMIYORUZ
+      // await signOut(auth);
+
+      // Local storage güncelle (Auto login için)
+      localStorage.setItem('userToken', user.uid);
+      window.dispatchEvent(new Event('auth-change'));
 
       toast({
         title: "Success",
-        description: "Account created! Please check your email to verify your account.",
-        duration: 6000,
+        description: "Account created! You are logged in.",
+        duration: 3000,
       });
 
       return user;
