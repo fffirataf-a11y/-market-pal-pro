@@ -24,7 +24,13 @@ export const useFirebaseAuth = () => {
   const loginWithEmail = async (email: string, password: string) => {
     setLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // LOGIN TIMEOUT - 10 saniye içinde cevap gelmezse hata ver
+      const loginPromise = signInWithEmailAndPassword(auth, email, password);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 10000)
+      );
+
+      const userCredential: any = await Promise.race([loginPromise, timeoutPromise]);
       const user = userCredential.user;
 
       // Email doğrulama kontrolü
