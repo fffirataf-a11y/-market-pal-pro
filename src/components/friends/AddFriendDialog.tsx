@@ -9,7 +9,17 @@ import { showInterstitialAd } from "@/lib/adManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { LimitReachedDialog } from "@/components/LimitReachedDialog";
 
-// ... (debounce hook remains same)
+// Simple debounce hook implementation
+function useDebounceValue<T>(value: T, delay: number): T {
+    const [debouncedValue, setDebouncedValue] = useState<T>(value);
+
+    useEffect(() => {
+        const timer = setTimeout(() => setDebouncedValue(value), delay);
+        return () => clearTimeout(timer);
+    }, [value, delay]);
+
+    return debouncedValue;
+}
 
 export function AddFriendDialog() {
     const [open, setOpen] = useState(false);
@@ -127,7 +137,12 @@ export function AddFriendDialog() {
                     </div>
                 </div>
             </DialogContent>
-            <LimitReachedDialog open={limitDialogOpen} onOpenChange={setLimitDialogOpen} />
+            <LimitReachedDialog
+                open={limitDialogOpen}
+                onOpenChange={setLimitDialogOpen}
+                feature="Add Friend"
+                currentPlan={plan}
+            />
         </Dialog>
     );
 }

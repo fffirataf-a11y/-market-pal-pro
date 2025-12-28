@@ -5,6 +5,7 @@
   "showSpinner": false,
   "splashFullScreen": true,
   "splashImmersive": true,
+  "backgroundColor": "#14b8a6",
   "plugins": {
     "PushNotifications": {
       "presentationOptions": [

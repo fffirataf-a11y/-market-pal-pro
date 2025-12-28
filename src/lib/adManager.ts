@@ -57,7 +57,6 @@ const initializeAdMob = async (): Promise<void> => {
 
     await AdMob.initialize({
       // Production Configuration
-      requestTrackingAuthorization: true,
       testingDevices: [],
       initializeForTesting: false,
     });

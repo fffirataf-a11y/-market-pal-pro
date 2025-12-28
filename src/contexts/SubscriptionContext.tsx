@@ -524,6 +524,14 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         return { success: true, message: 'Reklam izlendi! +3 hak eklendi.' };
     };
 
+    const downgradeToFree = async () => {
+        setState(prev => ({ ...prev, plan: 'free' }));
+        if (currentUserId) {
+            const userRef = doc(db, 'users', currentUserId);
+            await updateDoc(userRef, { 'subscription.plan': 'free' });
+        }
+    };
+
     const value = {
         plan: state?.plan || 'free',
         dailyLimit: state?.dailyLimit ?? 10,
@@ -545,6 +553,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         regenerateReferralCode,
         upgradeToPremium,
         upgradeToPro,
+        downgradeToFree,
         applyPromoCode,
         rewardAdWatched,
     };
