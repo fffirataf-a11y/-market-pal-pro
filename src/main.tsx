@@ -1,59 +1,67 @@
-import { StrictMode, useState, useEffect } from 'react'
+import { StrictMode, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
+import { HashRouter } from 'react-router-dom'
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
+import { AuthProvider } from "./contexts/AuthContext"
+import { ThemeProvider } from "./contexts/ThemeContext"
+import { SubscriptionProvider } from "@/hooks/useSubscription"
+import { TooltipProvider } from "@/components/ui/tooltip"
+import { Toaster } from "@/components/ui/toaster"
+import { Toaster as Sonner } from "@/components/ui/sonner"
 import './index.css'
+import App from './App.tsx'
+import './i18n'
 
-// MINIMAL TEST APP - v19
-// Bu basit bir test. Eğer bu bile açılmazsa, sorun React/Capacitor seviyesinde.
-const MinimalTestApp = () => {
-  const [counter, setCounter] = useState(0);
+const queryClient = new QueryClient()
 
-  useEffect(() => {
-    console.log('[MinimalTestApp] Component mounted!');
-    // Hide web splash
-    const webSplash = document.getElementById('web-splash');
-    if (webSplash) webSplash.style.display = 'none';
-  }, []);
-
-  return (
-    <div style={{
-      backgroundColor: '#14b8a6',
-      minHeight: '100vh',
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '20px',
-      fontFamily: 'system-ui, sans-serif',
-    }}>
-      <h1 style={{ color: 'white', fontSize: '32px', marginBottom: '20px' }}>
-        🛒 SmartMarket v19 TEST
-      </h1>
-      <p style={{ color: 'white', fontSize: '18px', marginBottom: '30px' }}>
-        Bu ekranı görüyorsanız, React ÇALIŞIYOR!
-      </p>
-      <button
-        onClick={() => setCounter(c => c + 1)}
-        style={{
-          backgroundColor: 'white',
-          color: '#14b8a6',
-          fontSize: '18px',
-          padding: '15px 30px',
-          borderRadius: '12px',
-          border: 'none',
-          cursor: 'pointer',
-          fontWeight: 'bold',
-        }}
-      >
-        Tıkla: {counter}
-      </button>
-    </div>
-  );
+// Web splash'ı gizle (React yüklendiğinde)
+const hideWebSplash = () => {
+  const webSplash = document.getElementById('web-splash');
+  if (webSplash) {
+    webSplash.style.transition = 'opacity 0.3s';
+    webSplash.style.opacity = '0';
+    setTimeout(() => {
+      webSplash.style.display = 'none';
+    }, 300);
+  }
 };
 
-console.log('[DEBUG] main.tsx: Rendering MinimalTestApp...');
+// Loading component
+const LoadingFallback = () => (
+  <div style={{
+    backgroundColor: '#14b8a6',
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }}>
+    <p style={{ color: 'white', fontSize: '18px' }}>Yükleniyor...</p>
+  </div>
+);
+
+console.log('[DEBUG] main.tsx: Starting full app render...');
+
+// Hide splash after a short delay to ensure React has mounted
+setTimeout(hideWebSplash, 500);
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <MinimalTestApp />
+    <Suspense fallback={<LoadingFallback />}>
+      <HashRouter>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <AuthProvider>
+              <TooltipProvider>
+                <SubscriptionProvider>
+                  <Toaster />
+                  <Sonner />
+                  <App />
+                </SubscriptionProvider>
+              </TooltipProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </HashRouter>
+    </Suspense>
   </StrictMode>,
 );
