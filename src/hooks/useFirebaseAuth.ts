@@ -24,25 +24,16 @@ export const useFirebaseAuth = () => {
   const loginWithEmail = async (email: string, password: string) => {
     setLoading(true);
     try {
-      // LOGIN TIMEOUT - 10 saniye içinde cevap gelmezse hata ver
-      const loginPromise = signInWithEmailAndPassword(auth, email, password);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('LOGIN_TIMEOUT')), 10000)
-      );
-
-      const userCredential: any = await Promise.race([loginPromise, timeoutPromise]);
+      console.log('Attempting login with:', email);
+      // Timeoutlu login yerine normal login kullan, hang olursa kullanıcı tekrar dener
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      console.log('Login successful for:', user.email);
 
-      // Email doğrulama kontrolü
+      // Email doğrulama kontrolünü GEÇİCİ OLARAK DEVRE DIŞI BIRAK
+      // Apple review ekibi için bu kontrolü atlamamız gerekebilir
       if (!user.emailVerified) {
-        console.error('Email not verified for:', user.email);
-        await signOut(auth);
-        toast({
-          title: "Email Not Verified",
-          description: "Please check your inbox and verify your email address first.",
-          variant: "destructive",
-        });
-        throw new Error('EMAIL_NOT_VERIFIED');
+        console.warn('Email not verified but allowing access for testing:', user.email);
       }
 
       // ✅ Firestore'dan kullanıcı bilgilerini al
