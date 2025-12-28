@@ -1,42 +1,59 @@
-import { StrictMode } from 'react'
+import { StrictMode, useState, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
-import { HashRouter } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import { AuthProvider } from "./contexts/AuthContext"
-import { ThemeProvider } from "./contexts/ThemeContext"
-import { SubscriptionProvider } from "@/hooks/useSubscription"
-import { TooltipProvider } from "@/components/ui/tooltip"
-import { Toaster } from "@/components/ui/toaster"
-import { Toaster as Sonner } from "@/components/ui/sonner"
 import './index.css'
-import App from './App.tsx'
-import './i18n'
 
-const queryClient = new QueryClient()
+// MINIMAL TEST APP - v19
+// Bu basit bir test. Eğer bu bile açılmazsa, sorun React/Capacitor seviyesinde.
+const MinimalTestApp = () => {
+  const [counter, setCounter] = useState(0);
 
-console.log('[DEBUG] main.tsx: Starting React render...')
+  useEffect(() => {
+    console.log('[MinimalTestApp] Component mounted!');
+    // Hide web splash
+    const webSplash = document.getElementById('web-splash');
+    if (webSplash) webSplash.style.display = 'none';
+  }, []);
 
-try {
-  createRoot(document.getElementById('root')!).render(
-    <StrictMode>
-      <HashRouter>
-        <QueryClientProvider client={queryClient}>
-          <ThemeProvider>
-            <AuthProvider>
-              <TooltipProvider>
-                <SubscriptionProvider>
-                  <Toaster />
-                  <Sonner />
-                  <App />
-                </SubscriptionProvider>
-              </TooltipProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </QueryClientProvider>
-      </HashRouter>
-    </StrictMode>,
-  )
-} catch (error) {
-  console.error('[DEBUG] main.tsx: FATAL ERROR during render:', error);
-  document.body.innerHTML = '<h1 style="color:red;padding:20px">App Crash: ' + error + '</h1>';
-}
+  return (
+    <div style={{
+      backgroundColor: '#14b8a6',
+      minHeight: '100vh',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: '20px',
+      fontFamily: 'system-ui, sans-serif',
+    }}>
+      <h1 style={{ color: 'white', fontSize: '32px', marginBottom: '20px' }}>
+        🛒 SmartMarket v19 TEST
+      </h1>
+      <p style={{ color: 'white', fontSize: '18px', marginBottom: '30px' }}>
+        Bu ekranı görüyorsanız, React ÇALIŞIYOR!
+      </p>
+      <button
+        onClick={() => setCounter(c => c + 1)}
+        style={{
+          backgroundColor: 'white',
+          color: '#14b8a6',
+          fontSize: '18px',
+          padding: '15px 30px',
+          borderRadius: '12px',
+          border: 'none',
+          cursor: 'pointer',
+          fontWeight: 'bold',
+        }}
+      >
+        Tıkla: {counter}
+      </button>
+    </div>
+  );
+};
+
+console.log('[DEBUG] main.tsx: Rendering MinimalTestApp...');
+
+createRoot(document.getElementById('root')!).render(
+  <StrictMode>
+    <MinimalTestApp />
+  </StrictMode>,
+);
