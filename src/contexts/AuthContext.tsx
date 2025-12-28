@@ -37,11 +37,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   useEffect(() => {
-    // Loading timeout - 5 saniye içinde auth bilgisi gelmezse devam et
+    // Loading timeout - 3 saniye içinde auth bilgisi gelmezse devam et
     const timeout = setTimeout(() => {
       console.warn('[AuthContext] Timeout - forcing loading=false');
       setLoading(false);
-    }, 5000);
+    }, 3000);
 
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       clearTimeout(timeout);

@@ -25,6 +25,19 @@
         "ios": "ca-app-pub-3272601063768123~1569350116",
         "android": "ca-app-pub-3272601063768123~7349673296"
       }
+    },
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "launchAutoHide": true,
+      "launchFadeOutDuration": 500,
+      "backgroundColor": "#14b8a6",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#ffffff",
+      "splashFullScreen": false,
+      "splashImmersive": false
     }
   }
 }

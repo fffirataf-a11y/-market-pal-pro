@@ -29,7 +29,13 @@ export const useFirebaseAuth = () => {
 
       // Email doğrulama kontrolü
       if (!user.emailVerified) {
+        console.error('Email not verified for:', user.email);
         await signOut(auth);
+        toast({
+          title: "Email Not Verified",
+          description: "Please check your inbox and verify your email address first.",
+          variant: "destructive",
+        });
         throw new Error('EMAIL_NOT_VERIFIED');
       }
 

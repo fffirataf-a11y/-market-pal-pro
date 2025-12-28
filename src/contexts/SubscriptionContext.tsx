@@ -87,11 +87,11 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true); // Loading state ekledik
 
     useEffect(() => {
-        // Timeout - 5 saniye içinde auth bilgisi gelmezse devam et
+        // Timeout - 3 saniye içinde auth bilgisi gelmezse devam et
         const timeout = setTimeout(() => {
             console.warn('[SubscriptionContext] Auth timeout - forcing continue');
             setIsLoading(false);
-        }, 5000);
+        }, 3000);
 
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             clearTimeout(timeout);
