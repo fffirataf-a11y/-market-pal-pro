@@ -87,11 +87,21 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     const [isLoading, setIsLoading] = useState(true); // Loading state ekledik
 
     useEffect(() => {
+        // Timeout - 5 saniye içinde auth bilgisi gelmezse devam et
+        const timeout = setTimeout(() => {
+            console.warn('[SubscriptionContext] Auth timeout - forcing continue');
+            setIsLoading(false);
+        }, 5000);
+
         const unsubscribe = onAuthStateChanged(auth, (user) => {
+            clearTimeout(timeout);
             setCurrentUserId(user?.uid || null);
             if (!user) setIsLoading(false);
         });
-        return unsubscribe;
+        return () => {
+            clearTimeout(timeout);
+            unsubscribe();
+        };
     }, []);
 
     const [state, setState] = useState<SubscriptionState>(() => {
@@ -558,7 +568,8 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         rewardAdWatched,
     };
 
-    if (isLoading) return null; // Veya loading spinner
+    // REMOVED: Blocking return null - bu satır app'in açılmamasına neden oluyordu
+    // if (isLoading) return null; 
 
     return <SubscriptionContext.Provider value={value}>{children}</SubscriptionContext.Provider>;
 };
