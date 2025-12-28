@@ -8,7 +8,7 @@ const Index = () => {
 
   useEffect(() => {
     const hasSeenOnboarding = localStorage.getItem("hasSeenOnboarding");
-    
+
     if (hasSeenOnboarding === "true") {
       navigate("/login");
     }
@@ -20,7 +20,7 @@ const Index = () => {
         <ShoppingCart className="mx-auto h-20 w-20 text-primary" />
         <h1 className="text-4xl font-bold">SmartMarket</h1>
         <p className="text-xl text-muted-foreground max-w-md">
-          Organize all your shopping with collaborative lists, AI chef, and smart scanning
+          Organize all your shopping with collaborative lists and AI chef
         </p>
         <Button onClick={() => navigate("/welcome")} size="lg">
           Get Started
