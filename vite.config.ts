@@ -16,6 +16,8 @@ export default defineConfig(({ mode }) => ({
   // Static assets için cache ayarları
   build: {
     target: "es2015",
+    sourcemap: true,
+    minify: false,
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {

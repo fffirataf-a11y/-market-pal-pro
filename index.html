@@ -45,13 +45,21 @@
   </div>
   <script>
     window.onerror = function (msg, url, line, col, error) {
+      // Use alert to ensure visibility on mobile
+      alert('Error: ' + msg + '\n' + url + ':' + line + ':' + col + '\n' + (error ? error.stack : ''));
       var overlay = document.getElementById('error-overlay');
       if (overlay) {
         overlay.style.display = 'block';
         overlay.innerHTML += '<h3>Error:</h3>' + msg + '<br>' + url + ':' + line + ':' + col + '<br><pre>' + (error && error.stack) + '</pre><hr>';
       }
     };
+    window.addEventListener('error', function (event) {
+      if (event.target && (event.target.tagName === 'SCRIPT' || event.target.tagName === 'LINK')) {
+        alert('Resource Loading Error: ' + (event.target.src || event.target.href));
+      }
+    }, true);
     window.onunhandledrejection = function (event) {
+      alert('Promise Error: ' + event.reason);
       var overlay = document.getElementById('error-overlay');
       if (overlay) {
         overlay.style.display = 'block';
