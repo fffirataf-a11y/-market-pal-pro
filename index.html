@@ -36,10 +36,59 @@
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@lovable_dev" />
   <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  <style>
+    body {
+      background-color: #14b8a6;
+      /* Turquoise to match Native Splash */
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+      /* Prevent scrolling during load */
+    }
+
+    #root {
+      width: 100%;
+      height: 100%;
+    }
+
+    .web-splash {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 0;
+      /* Behind root, or removed by React */
+    }
+
+    .web-splash img {
+      width: 150px;
+      height: 150px;
+      object-fit: contain;
+    }
+  </style>
 </head>
 
 <body>
   <div id="root"></div>
+
+  <!-- Web Splash: Visible while React loads -->
+  <div id="web-splash" class="web-splash">
+    <img src="/splash.png" alt="Loading..." />
+  </div>
+
+  <script>
+    // Remove splash when app loads (optional, React usually covers it)
+    // But we can listen for a custom event if we want precise control
+    window.addEventListener('load', () => {
+      // Fallback: If React crashes, we stay here.
+      console.log('Window loaded');
+    });
+  </script>
 
   <script type="module" src="/src/main.tsx"></script>
 </body>
