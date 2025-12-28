@@ -61,8 +61,10 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      z-index: 0;
-      /* Behind root, or removed by React */
+      z-index: -1;
+      /* Behind root so React can cover it */
+      background-color: #14b8a6;
+      /* Match the turquoise */
     }
 
     .web-splash img {
