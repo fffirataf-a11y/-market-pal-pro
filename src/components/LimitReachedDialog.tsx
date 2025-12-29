@@ -9,6 +9,7 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { AlertTriangle, Sparkles, PlayCircle } from "lucide-react";
+import { showRewardedAd } from "@/lib/adManager";
 import { useNavigate } from "react-router-dom";
 import { Paywall } from "@/components/Paywall";
 import { useTranslation } from "react-i18next";
@@ -39,14 +40,33 @@ export const LimitReachedDialog = ({
 
   const [cooldownMessage, setCooldownMessage] = useState<string | null>(null);
 
-  const handleWatchAd = () => {
-    if (rewardAdWatched) {
-      const result = rewardAdWatched();
-      if (result.success) {
-        onOpenChange(false);
-      } else {
-        setCooldownMessage(result.message);
-      }
+  const handleWatchAd = async () => {
+    if (!rewardAdWatched) return;
+
+    // Show loading state if needed?
+    // Actually showing ad logic handles loading internally mostly
+
+    // We need to implement the callback based approach properly
+    // Ideally rewardAdWatched should ACCEPT a callback or Promise that revolves ONLY after ad is done.
+
+    // Current implementation of rewardAdWatched in SubscriptionContext is synchronous! 
+    // We need to call showInterstitialAd or showRewardedAd directly HERE or update the context to handle it.
+
+    // BETTER APPROACH: Call adManager directly here, then call rewardAdWatched on success.
+
+    try {
+      await showRewardedAd(currentPlan as any, {
+        onComplete: () => {
+          if (rewardAdWatched) {
+            const result = rewardAdWatched();
+            if (!result.success) {
+              setCooldownMessage(result.message);
+            }
+          }
+        }
+      });
+    } catch (e) {
+      console.error("Ad failed", e);
     }
   };
 
@@ -68,7 +88,7 @@ export const LimitReachedDialog = ({
           <DialogFooter className="flex flex-col gap-2 sm:flex-col">
             <Button onClick={handleUpgrade} className="w-full">
               <Sparkles className="mr-2 h-4 w-4" />
-              {t('subscription.viewPlans') || "View Plans"}
+              {t('common.viewPlans') || "View Plans"}
             </Button>
 
             {rewardAdWatched && currentPlan === 'free' && (

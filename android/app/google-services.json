@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "425083044183",
+    "project_id": "smartmarket-3a6bd",
+    "storage_bucket": "smartmarket-3a6bd.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:425083044183:android:b12dce1911eaf336b8be12",
+        "android_client_info": {
+          "package_name": "com.lionx.smartmarket"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCx9YDMABsCc3wzCfAPbKEOXzWRk7vi5ss"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

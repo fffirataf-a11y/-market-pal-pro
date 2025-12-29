@@ -10,7 +10,14 @@
     "add": "Ekle",
     "search": "Ara",
     "back": "Geri",
-    "and": "ve"
+    "and": "ve",
+    "year": "yıl",
+    "month": "ay",
+    "info": "Bilgi",
+    "limitReached": "Günlük Limit Doldu",
+    "limitReachedDesc": "{{feature}} için günlük limitinize ulaştınız.",
+    "watchAd": "Reklam İzle (+3 Hak)",
+    "viewPlans": "Planları İncele"
   },
   "nav": {
     "myLists": "Listelerim",

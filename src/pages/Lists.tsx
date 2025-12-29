@@ -54,7 +54,7 @@ const Lists = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
-  const { canPerformAction, incrementAction, plan, rewardAdWatched, getRemainingActions } = useSubscription();
+  const { canPerformAction, incrementAction, plan, rewardAdWatched, getRemainingActions, dailyLimit } = useSubscription();
   const currentUserId = auth.currentUser?.uid; // ✅ ID eklendi
 
   // ✅ Firestore hook
@@ -445,11 +445,14 @@ const Lists = () => {
               <Card className="divide-y">
                 {items.map((item, index) => {
                   // ✅ Görünürlük Kontrolü (Sadece listenin sahibi değilsek)
-                  // Eğer liste bizim değilse (paylaşılan) ve index > kalan kredi limiti ise blurla
+                  // Eğer liste bizim değilse (paylaşılan) ve index > GÜNLÜK LİMİT ise blurla
+                  // Bu sayede reklam izleyip limit artırınca, buğulanan ürünler açılır!
                   const isSharedList = selectedList?.ownerId !== currentUserId;
-                  const isLocked = isSharedList && index >= (plan === 'pro' ? 999 : (plan === 'free' ? 10 : 30)); // Plan limitlerine göre
-                  // NOT: Kullanıcı "kredi eklendikçe görebilelim" dediği için kalan kredi değil, günlük limit mantığı daha oturaklı.
-                  // Ama isteği "kredimiz kadar görelim" idi. Şimdilik plan limitini baz alalım, çünkü krediler harcanan bir şey.
+
+                  // Pro ise limit yok (9999), değilse dinamik dailyLimit'i kullan
+                  const effectiveLimit = plan === 'pro' ? 9999 : dailyLimit;
+
+                  const isLocked = isSharedList && index >= effectiveLimit;
 
                   return (
                     <div

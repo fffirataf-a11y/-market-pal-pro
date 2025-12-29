@@ -14,16 +14,18 @@ import './i18n'
 
 const queryClient = new QueryClient()
 
-// Web splash'ı gizle (React yüklendiğinde)
+// Web splash'ı gizle ve scroll'u aç
 const hideWebSplash = () => {
   const webSplash = document.getElementById('web-splash');
   if (webSplash) {
-    webSplash.style.transition = 'opacity 0.3s';
+    webSplash.style.transition = 'opacity 0.5s';
     webSplash.style.opacity = '0';
     setTimeout(() => {
-      webSplash.style.display = 'none';
-    }, 300);
+      webSplash.remove(); // DOM'dan tamamen sil
+    }, 500);
   }
+  // Scroll'u tekrar aktif et
+  document.body.style.overflow = 'auto';
 };
 
 // Loading component

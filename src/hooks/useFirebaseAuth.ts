@@ -25,8 +25,10 @@ export const useFirebaseAuth = () => {
     setLoading(true);
     try {
       console.log('Attempting login with:', email);
+      // DEBUG LOG
       // Timeoutlu login yerine normal login kullan, hang olursa kullanıcı tekrar dener
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
+
       const user = userCredential.user;
       console.log('Login successful for:', user.email);
 

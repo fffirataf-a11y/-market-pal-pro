@@ -10,7 +10,14 @@
     "add": "Add",
     "search": "Search",
     "back": "Back",
-    "and": "and"
+    "and": "and",
+    "year": "year",
+    "month": "month",
+    "info": "Info",
+    "limitReached": "Daily Limit Reached",
+    "limitReachedDesc": "You have reached your daily limit for {{feature}}.",
+    "watchAd": "Watch Ad (+3 Actions)",
+    "viewPlans": "View Plans"
   },
   "nav": {
     "myLists": "My Lists",

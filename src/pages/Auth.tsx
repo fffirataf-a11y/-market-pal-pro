@@ -45,7 +45,7 @@ const Auth = () => {
     if (!navigator.onLine) {
       toast({
         title: t('common.error'),
-        description: "No internet connection. Please check your network.",
+        description: "No internet connection!",
         variant: "destructive",
       });
       return;
@@ -53,9 +53,13 @@ const Auth = () => {
 
     try {
       await loginWithEmail(email, password);
+      // alert("Login function completed!"); // REMOVED
       navigate("/lists");
-    } catch (error) {
+    } catch (error: any) {
       console.error('Login failed:', error);
+      // alert(`LOGIN ERROR: ${error.message}`); // REMOVED
+      // Login hook already shows toast on error, so we might duplicate it if we add another one here.
+      // But adding a generic one is safe if the hook doesn't cover everything.
     }
   };
 
@@ -73,12 +77,20 @@ const Auth = () => {
     }
 
     if (password !== confirmPassword) {
-      alert("Passwords don't match");
+      toast({
+        title: t('common.error'),
+        description: "Passwords don't match",
+        variant: "destructive",
+      });
       return;
     }
 
     if (password.length < 6) {
-      alert("Password must be at least 6 characters");
+      toast({
+        title: t('common.error'),
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
       return;
     }
 
