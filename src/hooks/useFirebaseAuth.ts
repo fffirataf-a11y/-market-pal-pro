@@ -27,7 +27,13 @@ export const useFirebaseAuth = () => {
       console.log('Attempting login with:', email);
       // DEBUG LOG
       // Timeoutlu login yerine normal login kullan, hang olursa kullanıcı tekrar dener
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      // Timeout logic for login
+      const loginPromise = signInWithEmailAndPassword(auth, email, password);
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error('Login timed out - Check internet connection')), 15000)
+      );
+
+      const userCredential = await Promise.race([loginPromise, timeoutPromise]) as any;
 
       const user = userCredential.user;
       console.log('Login successful for:', user.email);
