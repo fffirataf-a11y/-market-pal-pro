@@ -44,13 +44,19 @@ export const useFirebaseAuth = () => {
         console.warn('Email not verified but allowing access for testing:', user.email);
       }
 
-      // ✅ Firestore'dan kullanıcı bilgilerini al (Hata olursa devam et)
+      // ✅ Firestore'dan kullanıcı bilgilerini al (Timeout ekli)
       let firestoreData: any = {};
       try {
-        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        const firestorePromise = getDoc(doc(db, 'users', user.uid));
+        const fsTimeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error('Firestore timeout')), 5000)
+        );
+
+        // Firestore isteği 5 saniyede bitmezse atla
+        const userDoc = await Promise.race([firestorePromise, fsTimeoutPromise]) as any;
         firestoreData = userDoc.exists() ? userDoc.data() : {};
       } catch (firestoreError) {
-        console.warn('Firestore read failed during login, proceeding with auth data only:', firestoreError);
+        console.warn('Firestore read failed or timed out, proceeding with auth data only:', firestoreError);
         // Firestore hatası login'i engellememeli
       }
 
@@ -75,7 +81,9 @@ export const useFirebaseAuth = () => {
       return user;
     } catch (error: any) {
       console.error('Login error:', error);
-      let errorMessage = "Login failed";
+
+      // Use the actual error message if available, otherwise default
+      let errorMessage = error.message || "Login failed";
 
       if (error.message === 'EMAIL_NOT_VERIFIED') {
         errorMessage = "Please verify your email address first. Check your inbox.";
@@ -87,6 +95,8 @@ export const useFirebaseAuth = () => {
         errorMessage = "Invalid email";
       } else if (error.code === 'auth/invalid-credential') {
         errorMessage = "Invalid email or password";
+      } else if (errorMessage.includes("timed out")) {
+        errorMessage = "Connection timed out. Please check your internet.";
       }
 
       toast({
