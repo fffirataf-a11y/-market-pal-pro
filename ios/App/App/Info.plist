@@ -11,7 +11,9 @@
 	<key>NSCameraUsageDescription</key>
 	<string>We need access to your camera to scan receipts.</string>
 	<key>CFBundleDisplayName</key>
-        <string>SmartMarket</string>
+	<string>SmartMarket</string>
+	<key>FirebaseAppDelegateProxyEnabled</key>
+	<false/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
