@@ -21,20 +21,27 @@ export const useFirebaseAuth = () => {
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
   // Email ile giriş - EMAIL VERIFICATION KONTROLÜ
+  // Email ile giriş - EMAIL VERIFICATION KONTROLÜ
   const loginWithEmail = async (email: string, password: string) => {
     setLoading(true);
     try {
       console.log('Attempting login with:', email);
-      // DEBUG LOG
-      // Timeoutlu login yerine normal login kullan, hang olursa kullanıcı tekrar dener
-      // Timeout logic for login
-      const loginPromise = signInWithEmailAndPassword(auth, email, password);
-      const timeoutPromise = new Promise((_, reject) =>
-        setTimeout(() => reject(new Error('Login timed out - Check internet connection')), 15000)
-      );
 
-      const userCredential = await Promise.race([loginPromise, timeoutPromise]) as any;
+      // 1. Connectivity Check
+      if (!navigator.onLine) {
+        throw new Error('No internet connection (navigator.onLine is false)');
+      }
 
+      // 2. Debug Info for TestFlight
+      console.log('Environment Debug:', {
+        origin: window.location.origin,
+        host: window.location.host,
+        protocol: window.location.protocol,
+        userAgent: navigator.userAgent
+      });
+
+      // 3. Login Attempt (No artificial timeout, let Firebase handle it)
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
       console.log('Login successful for:', user.email);
 
@@ -48,6 +55,7 @@ export const useFirebaseAuth = () => {
       let firestoreData: any = {};
       try {
         const firestorePromise = getDoc(doc(db, 'users', user.uid));
+        // Keep Firestore timeout short to avoid UI hanging if DB rules fail
         const fsTimeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error('Firestore timeout')), 5000)
         );
@@ -85,6 +93,7 @@ export const useFirebaseAuth = () => {
       // Use the actual error message if available, otherwise default
       let errorMessage = error.message || "Login failed";
 
+      // Enhanced Error Mapping
       if (error.message === 'EMAIL_NOT_VERIFIED') {
         errorMessage = "Please verify your email address first. Check your inbox.";
       } else if (error.code === 'auth/user-not-found') {
@@ -95,14 +104,17 @@ export const useFirebaseAuth = () => {
         errorMessage = "Invalid email";
       } else if (error.code === 'auth/invalid-credential') {
         errorMessage = "Invalid email or password";
+      } else if (error.code === 'auth/network-request-failed') {
+        errorMessage = `Network Error. Origin: ${window.location.origin}. Check Firebase Authorized Domains.`;
       } else if (errorMessage.includes("timed out")) {
         errorMessage = "Connection timed out. Please check your internet.";
       }
 
       toast({
-        title: "Error",
+        title: "Login Error",
         description: errorMessage,
         variant: "destructive",
+        duration: 5000,
       });
       throw error;
     } finally {
