@@ -33,7 +33,7 @@ const getApiConfig = () => {
 
   if (isIOS) {
     return {
-      key: import.meta.env.VITE_IOS_API_KEY,
+      key: import.meta.env.VITE_IOS_API_KEY || import.meta.env.VITE_GEMINI_API_KEY,
       headers: {
         'X-Ios-Bundle-Identifier': 'com.lionx.smartmarket'
       }
