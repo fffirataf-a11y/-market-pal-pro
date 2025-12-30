@@ -6,7 +6,7 @@ import { getMessaging, isSupported } from 'firebase/messaging';
 import { Capacitor } from '@capacitor/core';
 
 const firebaseConfig = {
-  apiKey: "AIzaSyCMnNJgknRgDpd16bW-J1xC3ba5rqOb0ys",
+  apiKey: "AIzaSyAdWPVZiX5PPPFHyXnf2_3aFg6v4frE0oM",
   authDomain: "smartmarket-3a6bd.firebaseapp.com",
   projectId: "smartmarket-3a6bd",
   storageBucket: "smartmarket-3a6bd.firebasestorage.app",
