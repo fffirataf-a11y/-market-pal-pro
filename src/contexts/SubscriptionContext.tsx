@@ -44,6 +44,7 @@ interface SubscriptionContextType {
     getRemainingActions: () => number;
     getUsagePercentage: () => number;
     getDaysRemaining: () => number;
+    getTrialDaysRemaining: () => number;
     applyReferralCode: (code: string) => Promise<{ success: boolean; message: string }>;
     shareReferralCode: () => void;
     regenerateReferralCode: () => void;
@@ -611,6 +612,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         getRemainingActions,
         getUsagePercentage,
         getDaysRemaining,
+        getTrialDaysRemaining: getDaysRemaining,
         applyReferralCode,
         shareReferralCode,
         regenerateReferralCode,

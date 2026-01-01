@@ -16,6 +16,7 @@ export const UsageCard = () => {
     getTrialDaysRemaining,
     getUsagePercentage,
     getRemainingActions,
+    getDaysRemaining, // Added
   } = useSubscription();
 
   const usagePercent = Math.round(getUsagePercentage());
