@@ -78,6 +78,7 @@ const Settings = () => {
     applyReferralCode,
     usedReferralCode,
     rewardAdWatched,
+    subscriptionEndDate, // Added
   } = useSubscription();
   const {
     purchasePremium,
@@ -152,7 +153,7 @@ const Settings = () => {
     const isProActive = !!proEntitlement;
 
     // 1. Handle Upgrades / Sync
-    if (isPremiumActive && (currentPlan !== 'premium' || !userData?.subscription?.subscriptionEndDate)) { // Force sync if date is missing
+    if (isPremiumActive && (currentPlan !== 'premium' || !subscriptionEndDate)) { // Using context value
       console.log("🔄 Sync: Upgrading/Syncing Premium from RevenueCat");
       const expirationDate = premiumEntitlement.expirationDate;
       const productIdentifier = premiumEntitlement.productIdentifier;
@@ -160,7 +161,7 @@ const Settings = () => {
 
       upgradeToPremium(isYearly ? 'yearly' : 'monthly', expirationDate || undefined);
 
-    } else if (isProActive && (currentPlan !== 'pro' || !userData?.subscription?.subscriptionEndDate)) {
+    } else if (isProActive && (currentPlan !== 'pro' || !subscriptionEndDate)) {
       console.log("🔄 Sync: Upgrading/Syncing Pro from RevenueCat");
       const expirationDate = proEntitlement.expirationDate;
       const productIdentifier = proEntitlement.productIdentifier;
@@ -175,7 +176,7 @@ const Settings = () => {
       console.log("⚠️ Sync: Subscription Expired. Downgrading to Free.");
       downgradeToFree();
     }
-  }, [customerInfo, currentPlan, upgradeToPremium, upgradeToPro, downgradeToFree]);
+  }, [customerInfo, currentPlan, upgradeToPremium, upgradeToPro, downgradeToFree, subscriptionEndDate]);
 
   const handleRestore = async () => {
     try {

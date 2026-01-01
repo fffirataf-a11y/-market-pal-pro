@@ -37,6 +37,7 @@ interface SubscriptionContextType {
     promoCodeUsed?: string | null;
     hasUsedReferralButton: boolean;
     adRewardCount: number;
+    subscriptionEndDate?: string | null;
 
     canPerformAction: () => boolean;
     incrementAction: () => void;
@@ -604,6 +605,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         promoCodeUsed: state?.promoCodeUsed,
         hasUsedReferralButton: state?.hasUsedReferralButton ?? false,
         adRewardCount: state?.adRewardCount ?? 0,
+        subscriptionEndDate: state?.subscriptionEndDate,
         canPerformAction,
         incrementAction,
         getRemainingActions,
