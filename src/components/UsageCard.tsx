@@ -109,10 +109,10 @@ export const UsageCard = () => {
               <div className="text-center p-3 rounded-xl bg-gradient-to-br from-purple-50 to-purple-100/50 dark:from-purple-950/30 dark:to-purple-900/20 border border-purple-200/50 dark:border-purple-800/50">
                 <Clock className="w-5 h-5 mx-auto mb-1 text-purple-600 dark:text-purple-400" />
                 <p className="text-xl font-bold">
-                  {isTrialActive ? trialDaysLeft : '∞'}
+                  {getDaysRemaining()}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {isTrialActive ? t('subscription.daysLeft') : t('subscription.unlimited')}
+                  {getDaysRemaining() === 0 ? t('subscription.expired') : t('subscription.daysLeft')}
                 </p>
               </div>
             </div>

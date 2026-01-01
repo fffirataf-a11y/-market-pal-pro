@@ -183,7 +183,8 @@
     "servings": "porsiyon",
     "recipeSuggestions": "Tarif Önerileri",
     "addAllToList": "Tümünü Listeye Ekle",
-    "addAllItems": "Tümünü Listeye Ekle"
+    "addAllItems": "Tümünü Listeye Ekle",
+    "allAddedSuccess": "Tüm ürünler başarıyla eklendi"
   },
   "ads": {
     "rewardedTitle": "Ek Özellikler için Reklam İzle",
@@ -226,6 +227,7 @@
     "today": "Bugün",
     "dailyLeft": "Bugün kalan",
     "daysLeft": "Kalan gün",
+    "expired": "Süre doldu",
     "unlimitedAccess": "Sınırsız erişim",
     "detailedStats": "Detaylı istatistikler",
     "viewReports": "Raporları gör",

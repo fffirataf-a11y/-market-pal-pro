@@ -183,7 +183,8 @@
     "servings": "servings",
     "recipeSuggestions": "Recipe Suggestions",
     "addAllToList": "Add All to List",
-    "addAllItems": "Add All to List"
+    "addAllItems": "Add All to List",
+    "allAddedSuccess": "All items added successfully"
   },
   "ads": {
     "rewardedTitle": "Watch Ad for Extra Features",
@@ -226,6 +227,7 @@
     "today": "Today",
     "dailyLeft": "Actions left today",
     "daysLeft": "Days left",
+    "expired": "Expired",
     "unlimitedAccess": "Unlimited access",
     "detailedStats": "Detailed stats",
     "viewReports": "View reports",

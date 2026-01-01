@@ -109,7 +109,7 @@ const AIChef = () => {
           quantity: ingredient.quantity || "1 adet",
           category: detectCategory(ingredient.name || ingredient.toString()),
           completed: false,
-        });
+        }, { silent: true }); // ✅ Sessiz mod
         await incrementAction();
         remaining--; // Local sayacı düş
       }
@@ -118,7 +118,7 @@ const AIChef = () => {
 
       toast({
         title: t('common.success'),
-        description: `${generatedRecipe.ingredients.length} ${t('aichef.ingredients')} ${t('lists.addedByYou')}`,
+        description: t('aichef.allAddedSuccess'),
         duration: 3000,
       });
 

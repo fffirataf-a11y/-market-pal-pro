@@ -228,7 +228,7 @@ export const useShoppingLists = () => {
   };
 
   // Listeye ürün ekle
-  const addItem = async (listId: string, item: Omit<ShoppingItem, 'id' | 'addedBy' | 'addedByName' | 'addedAt'>) => {
+  const addItem = async (listId: string, item: Omit<ShoppingItem, 'id' | 'addedBy' | 'addedByName' | 'addedAt'>, options?: { silent?: boolean }) => {
     if (!currentUser) return;
 
     // ABONELİK KONTROLÜ
@@ -262,11 +262,13 @@ export const useShoppingLists = () => {
       // Kredi Düşme işlemi UI tarafında (Lists.tsx) yapılacak
       // incrementAction();
 
-      toast({
-        title: t('common.success'),
-        description: t('lists.itemAdded') || `${item.name} added to list`,
-        duration: 2000,
-      });
+      if (!options?.silent) {
+        toast({
+          title: t('common.success'),
+          description: t('lists.itemAdded') || `${item.name} added to list`,
+          duration: 2000,
+        });
+      }
     } catch (error) {
       console.error('Add item error:', error);
       toast({

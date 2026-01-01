@@ -145,16 +145,28 @@ const Settings = () => {
   useEffect(() => {
     if (!customerInfo) return;
 
-    const isPremiumActive = typeof customerInfo.entitlements.active['premium'] !== 'undefined';
-    const isProActive = typeof customerInfo.entitlements.active['pro'] !== 'undefined';
+    const premiumEntitlement = customerInfo.entitlements.active['premium'];
+    const proEntitlement = customerInfo.entitlements.active['pro'];
 
-    // 1. Handle Upgrades
-    if (isPremiumActive && currentPlan !== 'premium') {
-      console.log("🔄 Sync: Upgrading to Premium from RevenueCat");
-      upgradeToPremium();
-    } else if (isProActive && currentPlan !== 'pro') {
-      console.log("🔄 Sync: Upgrading to Pro from RevenueCat");
-      upgradeToPro();
+    const isPremiumActive = !!premiumEntitlement;
+    const isProActive = !!proEntitlement;
+
+    // 1. Handle Upgrades / Sync
+    if (isPremiumActive && (currentPlan !== 'premium' || !userData?.subscription?.subscriptionEndDate)) { // Force sync if date is missing
+      console.log("🔄 Sync: Upgrading/Syncing Premium from RevenueCat");
+      const expirationDate = premiumEntitlement.expirationDate;
+      const productIdentifier = premiumEntitlement.productIdentifier;
+      const isYearly = productIdentifier.includes('yearly') || productIdentifier.includes('annual');
+
+      upgradeToPremium(isYearly ? 'yearly' : 'monthly', expirationDate || undefined);
+
+    } else if (isProActive && (currentPlan !== 'pro' || !userData?.subscription?.subscriptionEndDate)) {
+      console.log("🔄 Sync: Upgrading/Syncing Pro from RevenueCat");
+      const expirationDate = proEntitlement.expirationDate;
+      const productIdentifier = proEntitlement.productIdentifier;
+      const isYearly = productIdentifier.includes('yearly') || productIdentifier.includes('annual');
+
+      upgradeToPro(isYearly ? 'yearly' : 'monthly', expirationDate || undefined);
     }
 
     // 2. Handle Expiration/Downgrades
@@ -349,8 +361,8 @@ const Settings = () => {
       }
 
       if (success) {
-        if (planId === 'premium') upgradeToPremium();
-        if (planId === 'pro') upgradeToPro();
+        if (planId === 'premium') upgradeToPremium(period);
+        if (planId === 'pro') upgradeToPro(period);
 
         toast({
           title: t('common.success'),

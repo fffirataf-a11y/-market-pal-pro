@@ -22,7 +22,8 @@ export interface SubscriptionState {
     hasReferral?: boolean;
     usedReferralCode?: string | null;
     promoCodeUsed?: string | null;
-    lastAdWatchTime?: string | null; // ISO Date string
+    subscriptionEndDate?: string | null;
+    lastAdWatchTime?: string | null;
 }
 
 interface SubscriptionContextType {
@@ -41,12 +42,12 @@ interface SubscriptionContextType {
     incrementAction: () => void;
     getRemainingActions: () => number;
     getUsagePercentage: () => number;
-    getTrialDaysRemaining: () => number;
+    getDaysRemaining: () => number;
     applyReferralCode: (code: string) => Promise<{ success: boolean; message: string }>;
     shareReferralCode: () => void;
     regenerateReferralCode: () => void;
-    upgradeToPremium: () => void;
-    upgradeToPro: () => void;
+    upgradeToPremium: (period: 'monthly' | 'yearly', expirationDateOverride?: string) => void;
+    upgradeToPro: (period: 'monthly' | 'yearly', expirationDateOverride?: string) => void;
     downgradeToFree: () => void;
     applyPromoCode: (code: string) => Promise<{ success: boolean; message: string; plan?: PlanType }>;
     rewardAdWatched: () => { success: boolean; message: string };
@@ -124,6 +125,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             hasUsedReferralButton: false,
             adRewardCount: 0,
             lastAdWatchTime: null,
+            subscriptionEndDate: null,
         };
     });
 
@@ -165,20 +167,25 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                         if (!isTrialStillActive(subData.trialEndDate)) {
                             isTrialActive = false;
                             plan = 'free';
-                            dailyLimit = 10;
+                            dailyLimit = 0; // Expired = 0
 
                             // DB'yi güncelle (Client-side trigger)
                             await updateDoc(userRef, {
                                 'subscription.isTrialActive': false,
                                 'subscription.plan': 'free',
-                                'subscription.dailyLimit': 10
+                                'subscription.dailyLimit': 0 // Expired = 0
                             });
                         }
                     }
 
                     // Günlük Limit Reset Kontrolü (DB'de saklanan lastResetDate ile)
                     if (checkIfNewDay(subData.lastResetDate)) {
-                        const newLimit = plan === 'pro' ? -1 : (plan === 'premium' ? 30 : 10);
+                        let newLimit = 0;
+                        if (plan === 'pro') newLimit = -1;
+                        else if (plan === 'premium') newLimit = 30;
+                        else if (plan === 'free' && isTrialActive) newLimit = 10;
+                        else newLimit = 0; // Free + Expired = 0
+
                         await updateDoc(userRef, {
                             'subscription.dailyUsed': 0,
                             'subscription.adRewardCount': 0,
@@ -260,39 +267,49 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         return () => unsubscribeSnapshot();
     }, [currentUserId]);
 
+    const getDaysRemaining = (): number => {
+        const endDateString = state.plan === 'free' ? state.trialEndDate : state.subscriptionEndDate;
+        if (!endDateString) return 0;
+
+        const now = new Date();
+        const endDate = new Date(endDateString);
+
+        // Ensure we don't return negative
+        if (now > endDate) return 0;
+
+        const diffTime = endDate.getTime() - now.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    const isExpired = getDaysRemaining() === 0;
+
+    const currentDailyLimit = state.plan === 'pro' ? -1 : (
+        state.plan === 'premium' ? 30 : (
+            // If trial active, 10. If not (expired/free-tier-only), 0 in theory, 
+            // but we rely on state.dailyLimit to be accurate.
+            10 // Base limit for display/reference if needed, but strict limit comes from state
+        )
+    );
+
     const canPerformAction = (): boolean => {
-        if (state.plan === 'pro') {
-            return true;
-        }
+        // if (isExpired) return false; // REMOVED: Allow Ad rewards to work
+        if (state.plan === 'pro') return true;
+
+        // Use state.dailyLimit which includes Ad Rewards
         return state.dailyUsed < state.dailyLimit;
     };
 
     const getRemainingActions = (): number => {
-        if (state.plan === 'pro') {
-            return -1;
-        }
+        // if (isExpired) return 0; // REMOVED: Allow Ad rewards to work
+        if (state.plan === 'pro') return -1;
         return Math.max(0, state.dailyLimit - state.dailyUsed);
     };
 
     const getUsagePercentage = (): number => {
-        if (state.plan === 'pro') {
-            return 0;
-        }
-        if (state.dailyLimit === 0) {
-            return 100;
-        }
+        // if (isExpired) return 100; // REMOVED: Allow Ad rewards to work
+        if (state.plan === 'pro') return 0;
+        if (state.dailyLimit === 0) return 100;
         return (state.dailyUsed / state.dailyLimit) * 100;
-    };
-
-    const getTrialDaysRemaining = (): number => {
-        if (!state.isTrialActive || !state.trialEndDate) {
-            return 0;
-        }
-        const now = new Date();
-        const endDate = new Date(state.trialEndDate);
-        const diffTime = endDate.getTime() - now.getTime();
-        const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        return Math.max(0, diffDays);
     };
 
     // Actions update Firestore now
@@ -315,7 +332,20 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         }
     };
 
-    const upgradeToPremium = async () => {
+    const upgradeToPremium = async (period: 'monthly' | 'yearly', expirationDateOverride?: string) => {
+        let endDateString = expirationDateOverride;
+
+        if (!endDateString) {
+            const now = new Date();
+            const endDate = new Date();
+            if (period === 'monthly') {
+                endDate.setDate(now.getDate() + 30);
+            } else {
+                endDate.setDate(now.getDate() + 365);
+            }
+            endDateString = endDate.toISOString();
+        }
+
         setState(prev => ({
             ...prev,
             plan: 'premium',
@@ -324,18 +354,33 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             trialStartDate: null,
             trialEndDate: null,
             isTrialActive: false,
+            subscriptionEndDate: endDateString
         }));
         if (currentUserId) {
             await updateDoc(doc(db, 'users', currentUserId), {
                 'subscription.plan': 'premium',
                 'subscription.dailyLimit': 30,
                 'subscription.isTrialActive': false,
-                'subscription.trialEndDate': null
+                'subscription.trialEndDate': null,
+                'subscription.subscriptionEndDate': endDateString
             });
         }
     };
 
-    const upgradeToPro = async () => {
+    const upgradeToPro = async (period: 'monthly' | 'yearly', expirationDateOverride?: string) => {
+        let endDateString = expirationDateOverride;
+
+        if (!endDateString) {
+            const now = new Date();
+            const endDate = new Date();
+            if (period === 'monthly') {
+                endDate.setDate(now.getDate() + 30);
+            } else {
+                endDate.setDate(now.getDate() + 365);
+            }
+            endDateString = endDate.toISOString();
+        }
+
         setState(prev => ({
             ...prev,
             plan: 'pro',
@@ -344,13 +389,15 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             trialStartDate: null,
             trialEndDate: null,
             isTrialActive: false,
+            subscriptionEndDate: endDateString
         }));
         if (currentUserId) {
             await updateDoc(doc(db, 'users', currentUserId), {
                 'subscription.plan': 'pro',
                 'subscription.dailyLimit': -1,
                 'subscription.isTrialActive': false,
-                'subscription.trialEndDate': null
+                'subscription.trialEndDate': null,
+                'subscription.subscriptionEndDate': endDateString
             });
         }
     };
@@ -535,10 +582,14 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     };
 
     const downgradeToFree = async () => {
-        setState(prev => ({ ...prev, plan: 'free' }));
+        // Downgrade to "Limited Free" (0 actions until ad watch)
+        setState(prev => ({ ...prev, plan: 'free', dailyLimit: 0 }));
         if (currentUserId) {
             const userRef = doc(db, 'users', currentUserId);
-            await updateDoc(userRef, { 'subscription.plan': 'free' });
+            await updateDoc(userRef, {
+                'subscription.plan': 'free',
+                'subscription.dailyLimit': 0
+            });
         }
     };
 
@@ -557,7 +608,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         incrementAction,
         getRemainingActions,
         getUsagePercentage,
-        getTrialDaysRemaining,
+        getDaysRemaining,
         applyReferralCode,
         shareReferralCode,
         regenerateReferralCode,
