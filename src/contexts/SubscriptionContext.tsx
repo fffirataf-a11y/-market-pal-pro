@@ -464,7 +464,27 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             const endDate = new Date(now);
             endDate.setDate(endDate.getDate() + durationDays);
 
-            // Update State
+            // First Update Firestore (Critical Step)
+            // If this fails, we should NOT update local state
+            if (currentUserId) {
+                try {
+                    await setDoc(doc(db, 'users', currentUserId), {
+                        subscription: {
+                            plan: planType,
+                            dailyLimit: planType === 'pro' ? -1 : 30,
+                            isTrialActive: false,
+                            trialEndDate: null,
+                            subscriptionEndDate: endDate.toISOString(),
+                            promoCodeUsed: code
+                        }
+                    }, { merge: true });
+                } catch (dbError: any) {
+                    console.error("Promo DB Error:", dbError);
+                    return { success: false, message: `DB Hatası: ${dbError.message || 'Veritabanına yazılamadı'}` };
+                }
+            }
+
+            // Update State (Only if DB update succeeded)
             setState(prev => ({
                 ...prev,
                 plan: planType,
@@ -477,28 +497,14 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                 promoCodeUsed: code,
             }));
 
-            // Update Firestore
-            if (currentUserId) {
-                await setDoc(doc(db, 'users', currentUserId), {
-                    subscription: {
-                        plan: planType,
-                        dailyLimit: planType === 'pro' ? -1 : 30,
-                        isTrialActive: false,
-                        trialEndDate: null,
-                        subscriptionEndDate: endDate.toISOString(),
-                        promoCodeUsed: code
-                    }
-                }, { merge: true });
-            }
-
             return {
                 success: true,
                 message: `${planType.toUpperCase()} plan ${durationDays} gün boyunca aktif!`,
                 plan: planType,
             };
-        } catch (error) {
+        } catch (error: any) {
             console.error('Promo code error:', error);
-            return { success: false, message: 'Bir hata oluştu' };
+            return { success: false, message: `Hata: ${error.message || 'Bir hata oluştu'}` };
         }
     };
 
