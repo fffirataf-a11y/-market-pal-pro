@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { PlanType } from '../types/subscription';
 import { auth, db } from '../config/firebase';
 import { onAuthStateChanged } from 'firebase/auth';
-import { doc, getDoc, updateDoc, increment, onSnapshot } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, increment, onSnapshot, setDoc, deleteField } from 'firebase/firestore';
 
 export interface SubscriptionState {
     plan: PlanType;
@@ -165,17 +165,39 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                     let plan = subData.plan;
                     let dailyLimit = subData.dailyLimit;
 
+                    // 1. Check Trial Expiration
                     if (isTrialActive && subData.trialEndDate) {
                         if (!isTrialStillActive(subData.trialEndDate)) {
+                            console.log("Context: Trial Expired");
                             isTrialActive = false;
                             plan = 'free';
                             dailyLimit = 0; // Expired = 0
 
-                            // DB'yi güncelle (Client-side trigger)
+                            // Immediately update DB
                             await updateDoc(userRef, {
                                 'subscription.isTrialActive': false,
                                 'subscription.plan': 'free',
-                                'subscription.dailyLimit': 0 // Expired = 0
+                                'subscription.dailyLimit': 0
+                            });
+                        }
+                    }
+
+                    // 2. Check Paid/Promo Subscription Expiration
+                    // If plan is NOT free, check if subscriptionEndDate has passed
+                    if (plan !== 'free' && subData.subscriptionEndDate) {
+                        const endDate = new Date(subData.subscriptionEndDate);
+                        const now = new Date();
+                        if (endDate < now) {
+                            console.log("Context: Subscription/Promo Expired");
+                            plan = 'free';
+                            dailyLimit = 0; // Expired = 0
+
+                            // Immediately downgrade in DB
+                            await updateDoc(userRef, {
+                                'subscription.plan': 'free',
+                                'subscription.dailyLimit': 0,
+                                'subscription.subscriptionEndDate': null, // Clear end date
+                                'subscription.promoCodeUsed': deleteField() // Clear promo if used
                             });
                         }
                     }
@@ -448,21 +470,25 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                 plan: planType,
                 dailyLimit: planType === 'pro' ? -1 : 30,
                 dailyUsed: 0,
-                trialStartDate: now.toISOString(),
-                trialEndDate: endDate.toISOString(),
-                isTrialActive: true,
+                trialStartDate: null,
+                trialEndDate: null,
+                isTrialActive: false, // It is NOT a trial, it is a full subscription via promo
+                subscriptionEndDate: endDate.toISOString(), // Set the REAL end date
                 promoCodeUsed: code,
             }));
 
             // Update Firestore
             if (currentUserId) {
-                await updateDoc(doc(db, 'users', currentUserId), {
-                    'subscription.plan': planType,
-                    'subscription.dailyLimit': planType === 'pro' ? -1 : 30,
-                    'subscription.isTrialActive': true,
-                    'subscription.trialEndDate': endDate.toISOString(),
-                    'subscription.promoCodeUsed': code
-                });
+                await setDoc(doc(db, 'users', currentUserId), {
+                    subscription: {
+                        plan: planType,
+                        dailyLimit: planType === 'pro' ? -1 : 30,
+                        isTrialActive: false,
+                        trialEndDate: null,
+                        subscriptionEndDate: endDate.toISOString(),
+                        promoCodeUsed: code
+                    }
+                }, { merge: true });
             }
 
             return {

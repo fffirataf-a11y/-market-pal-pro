@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { getFirestore, doc, updateDoc, deleteField, setDoc } from "firebase/firestore"; // Added
+import { auth } from "@/config/firebase"; // Added
 import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -78,7 +80,7 @@ const Settings = () => {
     applyReferralCode,
     usedReferralCode,
     rewardAdWatched,
-    subscriptionEndDate, // Added
+    subscriptionEndDate,
   } = useSubscription();
   const {
     purchasePremium,
@@ -172,11 +174,12 @@ const Settings = () => {
 
     // 2. Handle Expiration/Downgrades
     // If we are on a paid plan LOCALLY, but RevenueCat says NO active entitlements -> Downgrade
-    if ((currentPlan === 'premium' || currentPlan === 'pro') && !isPremiumActive && !isProActive) {
+    // UNLESS a promo code is active
+    if ((currentPlan === 'premium' || currentPlan === 'pro') && !isPremiumActive && !isProActive && !promoCodeUsed) {
       console.log("⚠️ Sync: Subscription Expired. Downgrading to Free.");
       downgradeToFree();
     }
-  }, [customerInfo, currentPlan, upgradeToPremium, upgradeToPro, downgradeToFree, subscriptionEndDate]);
+  }, [customerInfo, currentPlan, upgradeToPremium, upgradeToPro, downgradeToFree, subscriptionEndDate, promoCodeUsed]);
 
   const handleRestore = async () => {
     try {
@@ -381,6 +384,23 @@ const Settings = () => {
     }
   };
 
+  const resetPromoCode = async () => {
+    if (!auth.currentUser) return;
+    try {
+      const db = getFirestore();
+      await setDoc(doc(db, "users", auth.currentUser.uid), {
+        subscription: {
+          promoCodeUsed: deleteField(),
+          plan: "free"
+        }
+      }, { merge: true });
+      toast({ title: "Sıfırlandı", description: "Promosyon geçmişi temizlendi, kodu tekrar girin." });
+    } catch (e) {
+      console.error(e);
+      toast({ title: "Hata", description: "Sıfırlanamadı", variant: "destructive" });
+    }
+  };
+
   const handleApplyPromoCode = async () => {
     if (!promoCode.trim()) {
       toast({
@@ -388,6 +408,13 @@ const Settings = () => {
         description: "Lütfen bir promosyon kodu girin",
         variant: "destructive",
       });
+      return;
+    }
+
+    // SECRET CHEAT CODE FOR TABLET DEBUGGING
+    if (promoCode.trim().toUpperCase() === 'RESETME') {
+      await resetPromoCode();
+      setPromoCode("");
       return;
     }
 
@@ -914,12 +941,36 @@ const Settings = () => {
                   />
                   <Button
                     onClick={async () => {
-                      if (!friendReferralCode.trim()) return;
+                      const code = friendReferralCode.trim().toUpperCase();
+                      if (!code) return;
+
+                      // 1. CHEAT CODE (Tablet Fix)
+                      if (code === 'RESETME') {
+                        await resetPromoCode();
+                        setFriendReferralCode("");
+                        return;
+                      }
+
                       setIsApplyingReferral(true);
-                      const result = await applyReferralCode(friendReferralCode);
+
+                      // 2. Try as PROMO CODE first (Premium Plan)
+                      const promoResult = await applyPromoCode(code);
+                      if (promoResult.success) {
+                        setIsApplyingReferral(false);
+                        toast({
+                          title: "Başarılı! 🎉",
+                          description: promoResult.message, // "PREMIUM plan..."
+                        });
+                        setFriendReferralCode("");
+                        setReferralDialogOpen(false);
+                        return;
+                      }
+
+                      // 3. If not promo, try as REFERRAL CODE (+7 Days)
+                      const referralResult = await applyReferralCode(code);
                       setIsApplyingReferral(false);
 
-                      if (result.success) {
+                      if (referralResult.success) {
                         toast({
                           title: "Success! 🎉",
                           description: t('referral.success'),
@@ -927,9 +978,10 @@ const Settings = () => {
                         setFriendReferralCode("");
                         setReferralDialogOpen(false);
                       } else {
+                        // If both failed, show error (prefer promo error if specific, or general)
                         toast({
-                          title: "Error",
-                          description: result.message || t('referral.invalid'),
+                          title: "Hata",
+                          description: "Geçersiz kod veya davet kodu bulunamadı.",
                           variant: "destructive",
                         });
                       }
