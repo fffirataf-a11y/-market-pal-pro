@@ -31,9 +31,18 @@ interface RecipeIngredient {
 const getApiConfig = () => {
   const isIOS = Capacitor.getPlatform() === 'ios';
 
+  // iOS için fallback key kullan
+  const geminiKey = isIOS
+    ? (import.meta.env.VITE_IOS_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDX1JXY1UCypEKk8cNF-qN-JMb2_YsWkZU')
+    : (import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpC993waGdgVHnwXp57zPLIRXclC2uWYA');
+
+  console.log('🔑 Platform:', Capacitor.getPlatform());
+  console.log('🔑 API Key exists:', !!geminiKey);
+  console.log('🔑 Key length:', geminiKey?.length || 0);
+
   if (isIOS) {
     return {
-      key: import.meta.env.VITE_GEMINI_API_KEY,
+      key: geminiKey,
       headers: {
         'X-Ios-Bundle-Identifier': 'com.lionx.smartmarket'
       }
@@ -42,7 +51,7 @@ const getApiConfig = () => {
 
   // Android Configuration
   return {
-    key: import.meta.env.VITE_GEMINI_API_KEY,
+    key: geminiKey,
     headers: {
       'X-Android-Package': 'com.lionx.smartmarket',
       'X-Android-Cert': 'C3B178ED4E381C2D2F7188D16B6A56BB60CB470D'

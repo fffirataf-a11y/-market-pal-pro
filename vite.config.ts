@@ -8,12 +8,23 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    // ✅ HTTPS'i kaldır - HTTP kullan
     headers: {
       'Cache-Control': 'no-cache, no-store, must-revalidate',
     },
   },
-  // Static assets için cache ayarları
+  // ✅ Environment variables'ı build'e inject et
+  define: {
+    'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(process.env.VITE_GEMINI_API_KEY || 'AIzaSyCpC993waGdgVHnwXp57zPLIRXclC2uWYA'),
+    'import.meta.env.VITE_GEMINI_BARCODE_API_KEY': JSON.stringify(process.env.VITE_GEMINI_BARCODE_API_KEY || 'AIzaSyCgyhdp-eY3mBZpXmiTlDVM6RWV8YcnKbg'),
+    'import.meta.env.VITE_IOS_API_KEY': JSON.stringify(process.env.VITE_IOS_API_KEY || 'AIzaSyDX1JXY1UCypEKk8cNF-qN-JMb2_YsWkZU'),
+    'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(process.env.VITE_FIREBASE_API_KEY || 'AIzaSyCMnNJgknRgDpd16bW-J1xC3ba5rqOb0ys'),
+    'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(process.env.VITE_FIREBASE_AUTH_DOMAIN || 'smartmarket-3a6bd.firebaseapp.com'),
+    'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(process.env.VITE_FIREBASE_PROJECT_ID || 'smartmarket-3a6bd'),
+    'import.meta.env.VITE_FIREBASE_STORAGE_BUCKET': JSON.stringify(process.env.VITE_FIREBASE_STORAGE_BUCKET || 'smartmarket-3a6bd.firebasestorage.app'),
+    'import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID': JSON.stringify(process.env.VITE_FIREBASE_MESSAGING_SENDER_ID || '425083044183'),
+    'import.meta.env.VITE_FIREBASE_APP_ID': JSON.stringify(process.env.VITE_FIREBASE_APP_ID || '1:425083044183:web:a2a882385fd42885b8be12'),
+    'import.meta.env.VITE_FIREBASE_VAPID_KEY': JSON.stringify(process.env.VITE_FIREBASE_VAPID_KEY || 'BNnnmu7Sk6kBj1P3fB10VMg3lhEDo8hI4oCUTSK3xJIre19iaqpoGDf07dcNFNaZa6878ItyyCSTtjSRkIBm6Y4'),
+  },
   build: {
     target: "es2015",
     sourcemap: true,
@@ -21,7 +32,6 @@ export default defineConfig(({ mode }) => ({
     rollupOptions: {
       output: {
         assetFileNames: (assetInfo) => {
-          // Icon dosyaları için cache busting
           if (assetInfo.name && assetInfo.name.includes('icon')) {
             return `assets/[name]-[hash][extname]`;
           }
@@ -32,7 +42,6 @@ export default defineConfig(({ mode }) => ({
   },
   plugins: [
     react(),
-    // ✅ mkcert'i kaldır
     mode === 'development' &&
     componentTagger(),
   ].filter(Boolean),
