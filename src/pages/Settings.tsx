@@ -438,10 +438,10 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen bg-background pb-20 overflow-x-hidden">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b">
-        <div className="container max-w-4xl py-4">
+        <div className="container w-full max-w-full sm:max-w-2xl lg:max-w-4xl px-4 py-4">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -456,7 +456,7 @@ const Settings = () => {
       </header>
 
       {/* Content */}
-      <main className="container max-w-4xl py-6 space-y-6">
+      <main className="container w-full max-w-full sm:max-w-2xl lg:max-w-4xl px-4 py-6 space-y-6">
         {/* Profile Section */}
         <Card className="p-6">
           <div className="flex items-center gap-4">
@@ -644,7 +644,7 @@ const Settings = () => {
                 </div>
 
                 {/* Inline Billing Toggle */}
-                <div className="bg-background/50 p-1 rounded-lg border flex text-xs font-medium">
+                <div className="bg-background/50 p-1 rounded-lg border flex text-[10px] sm:text-xs font-medium shrink-0">
                   <button
                     onClick={() => setBillingCycle('monthly')}
                     className={`px-3 py-1.5 rounded-md transition-all ${billingCycle === 'monthly'
@@ -756,7 +756,7 @@ const Settings = () => {
 
       {/* Subscription Plans Dialog */}
       <Dialog open={subscriptionPlansOpen} onOpenChange={setSubscriptionPlansOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-full max-w-[95vw] sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="text-2xl font-bold text-center mb-2">
               {t('subscription.title')}
@@ -798,7 +798,7 @@ const Settings = () => {
           </div>
 
 
-          <div className="grid md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
             {subscriptionPlans.map((plan) => (
               <Card
                 key={plan.id}
@@ -817,8 +817,8 @@ const Settings = () => {
 
                 <div className="mb-6">
                   <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
-                  <div className="flex items-baseline gap-1">
-                    <span className="text-3xl font-bold">{plan.price}</span>
+                  <div className="flex items-baseline gap-1 flex-wrap">
+                    <span className="text-2xl sm:text-3xl font-bold break-all">{plan.price}</span>
                     {plan.price !== 'Free' && plan.price !== 'Ücretsiz' && (
                       <span className="text-muted-foreground">
                         /{isYearly ? 'year' : 'month'}
@@ -874,7 +874,7 @@ const Settings = () => {
             <div className="space-y-2">
               <Label>{t('referral.yourCode')}</Label>
               <div className="flex gap-2">
-                <div className="flex-1 p-3 bg-muted rounded-lg font-mono text-center text-lg tracking-wider border-2 border-dashed border-primary/20">
+                <div className="flex-1 p-3 bg-muted rounded-lg font-mono text-center text-sm sm:text-lg tracking-wider border-2 border-dashed border-primary/20 break-all">
                   {referralCode || "LOADING..."}
                 </div>
                 <Button

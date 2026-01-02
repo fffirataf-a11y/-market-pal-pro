@@ -152,8 +152,8 @@ export const useFriends = () => {
 
     setLoading(true);
     try {
-      // searchKey alanı küçük harf olarak kaydedilmiş, bu yüzden case-insensitive arama yapabiliriz
       const searchTerm = searchName.trim().toLowerCase();
+      console.log('🔍 Searching for:', searchTerm);
 
       const usersRef = collection(db, 'users');
       const q = query(
@@ -162,10 +162,13 @@ export const useFriends = () => {
         where('searchKey', '<=', searchTerm + '\uf8ff'),
       );
 
+      console.log('📡 Executing query...');
       const snapshot = await getDocs(q);
+      console.log('✅ Query result count:', snapshot.size);
+
       const users: User[] = [];
-      const seenUids = new Set<string>(); // Duplicate kontrolü için
-      const seenEmails = new Set<string>(); // Email kontrolü için
+      const seenUids = new Set<string>();
+      const seenEmails = new Set<string>();
 
       snapshot.forEach((docSnapshot) => {
         const userData = docSnapshot.data() as User;
@@ -182,9 +185,10 @@ export const useFriends = () => {
         }
       });
 
+      console.log('👥 Found users:', users.length);
       return users.slice(0, 20);
     } catch (error) {
-      console.error('Search user error:', error);
+      console.error('❌ Search user error:', error);
       toast({
         title: "Error",
         description: "Failed to search users",
@@ -266,18 +270,6 @@ export const useFriends = () => {
         createdAt: Timestamp.now(),
       });
 
-      // ✅ YENİ: Local notification göster (hedef kullanıcı app'te ise)
-      try {
-        if (Notification.permission === 'granted') {
-          new Notification('👋 Friend Request Sent', {
-            body: `Your request was sent to ${toUser.displayName}`,
-            icon: toUser.photoURL || '/logo.png',
-          });
-        }
-      } catch (err) {
-        console.log('Notification error:', err);
-      }
-
       toast({
         title: "Success",
         description: `Friend request sent to ${toUser.displayName}`,
@@ -298,42 +290,22 @@ export const useFriends = () => {
     if (!currentUser) return;
 
     console.log('🔵 Accepting request:', request);
-    console.log('🔵 Current user:', currentUser.uid);
-    console.log('🔵 Friend user:', request.fromUserId);
-
     setLoading(true);
     try {
       await updateDoc(doc(db, 'friendRequests', request.id), {
         status: 'accepted',
       });
-      console.log('✅ Request updated');
 
       const currentUserRef = doc(db, 'users', currentUser.uid);
       const friendUserRef = doc(db, 'users', request.fromUserId);
 
-      console.log('🔵 Updating current user doc:', currentUser.uid);
       await updateDoc(currentUserRef, {
         friends: arrayUnion(request.fromUserId),
       });
-      console.log('✅ Current user updated');
 
-      console.log('🔵 Updating friend user doc:', request.fromUserId);
       await updateDoc(friendUserRef, {
         friends: arrayUnion(currentUser.uid),
       });
-      console.log('✅ Friend user updated');
-
-      // ✅ YENİ: Local notification göster
-      try {
-        if (Notification.permission === 'granted') {
-          new Notification('✅ Friend Request Accepted', {
-            body: `You are now friends with ${request.fromUserName}!`,
-            icon: request.fromUserPhoto || '/logo.png',
-          });
-        }
-      } catch (err) {
-        console.log('Notification error:', err);
-      }
 
       toast({
         title: "Success",
