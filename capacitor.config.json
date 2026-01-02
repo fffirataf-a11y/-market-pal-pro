@@ -2,10 +2,10 @@
   "appId": "com.lionx.smartmarket",
   "appName": "SmartMarket",
   "webDir": "dist",
+  "backgroundColor": "#121212",
   "showSpinner": false,
   "splashFullScreen": true,
   "splashImmersive": true,
-  "backgroundColor": "#121212",
   "plugins": {
     "PushNotifications": {
       "presentationOptions": [
@@ -31,13 +31,9 @@
       "launchAutoHide": true,
       "launchFadeOutDuration": 500,
       "backgroundColor": "#121212",
-      "androidSplashResourceName": "splash",
-      "androidScaleType": "CENTER_CROP",
       "showSpinner": false,
-      "iosSpinnerStyle": "small",
-      "spinnerColor": "#ffffff",
-      "splashFullScreen": false,
-      "splashImmersive": false
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP"
     }
   }
 }
