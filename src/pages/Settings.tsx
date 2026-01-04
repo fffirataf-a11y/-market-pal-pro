@@ -1,7 +1,4 @@
 import { useState, useEffect } from "react";
-import { getFirestore, doc, updateDoc, deleteField, setDoc } from "firebase/firestore"; // Added
-import { auth } from "@/config/firebase"; // Added
-import { Input } from "@/components/ui/input";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -38,18 +35,9 @@ import {
   Sun,
   Bell,
   LogOut,
-  CreditCard,
   Check,
-  Gift,
-  Loader2,
   Mail,
-  MessageSquare,
-  UserPlus,
-  Copy,
-  Share2,
-  ChevronDown,
 } from "lucide-react";
-import { Share } from "@capacitor/share";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
@@ -73,12 +61,6 @@ const Settings = () => {
     isTrialActive,
     applyPromoCode,
     promoCodeUsed,
-    referralCode,
-    referralCount,
-    regenerateReferralCode,
-    hasUsedReferralButton,
-    applyReferralCode,
-    usedReferralCode,
     rewardAdWatched,
     subscriptionEndDate,
   } = useSubscription();
@@ -93,12 +75,7 @@ const Settings = () => {
   } = usePurchases();
   const { permission, loading: notificationLoading, requestPermission } = useNotifications();
   const [notifications, setNotifications] = useState(true);
-  const [promoCode, setPromoCode] = useState("");
-  const [isApplying, setIsApplying] = useState(false);
-  const [referralDialogOpen, setReferralDialogOpen] = useState(false);
   const [subscriptionPlansOpen, setSubscriptionPlansOpen] = useState(false);
-  const [friendReferralCode, setFriendReferralCode] = useState("");
-  const [isApplyingReferral, setIsApplyingReferral] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const isYearly = billingCycle === 'yearly';
 
@@ -384,59 +361,6 @@ const Settings = () => {
     }
   };
 
-  const resetPromoCode = async () => {
-    if (!auth.currentUser) return;
-    try {
-      const db = getFirestore();
-      await setDoc(doc(db, "users", auth.currentUser.uid), {
-        subscription: {
-          promoCodeUsed: deleteField(),
-          plan: "free"
-        }
-      }, { merge: true });
-      toast({ title: "Sıfırlandı", description: "Promosyon geçmişi temizlendi, kodu tekrar girin." });
-    } catch (e) {
-      console.error(e);
-      toast({ title: "Hata", description: "Sıfırlanamadı", variant: "destructive" });
-    }
-  };
-
-  const handleApplyPromoCode = async () => {
-    if (!promoCode.trim()) {
-      toast({
-        title: "Hata",
-        description: "Lütfen bir promosyon kodu girin",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // SECRET CHEAT CODE FOR TABLET DEBUGGING
-    if (promoCode.trim().toUpperCase() === 'RESETME') {
-      await resetPromoCode();
-      setPromoCode("");
-      return;
-    }
-
-    setIsApplying(true);
-    const result = await applyPromoCode(promoCode.trim());
-    setIsApplying(false);
-
-    if (result.success) {
-      toast({
-        title: "Başarılı! 🎉",
-        description: result.message,
-      });
-      setPromoCode("");
-    } else {
-      toast({
-        title: "Hata",
-        description: result.message,
-        variant: "destructive",
-      });
-    }
-  };
-
   return (
     <div className="min-h-screen bg-background pb-20 overflow-x-hidden">
       {/* Header */}
@@ -463,16 +387,16 @@ const Settings = () => {
             <img
               src={userData.avatar}
               alt={userData.name}
-              className="w-20 h-20 rounded-full object-cover border-4 border-primary"
+              className="w-20 h-20 rounded-full object-cover border-4 border-primary shrink-0"
             />
-            <div className="flex-1">
-              <h2 className="text-xl font-semibold">{userData.name}</h2>
-              <p className="text-muted-foreground">{userData.email}</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-xl font-semibold truncate">{userData.name}</h2>
+              <p className="text-muted-foreground truncate">{userData.email}</p>
             </div>
             <Button
               variant="outline"
               onClick={() => navigate("/profile")}
-              className="relative"
+              className="relative shrink-0 text-sm px-3"
             >
               {t('settings.viewProfile')}
               {friendRequests.length > 0 && (
@@ -487,63 +411,7 @@ const Settings = () => {
         {/* Usage Card - Modern Dashboard */}
         <UsageCard />
 
-        {/* Invite Friends Card */}
-        <Card className="p-5 bg-gradient-to-br from-pink-50 via-purple-50 to-orange-50 dark:from-pink-950/20 dark:via-purple-950/20 dark:to-orange-950/20 border-2 border-pink-200/50 dark:border-pink-800/50 hover:shadow-lg transition-all">
-          <div
-            className="flex items-center gap-4 w-full cursor-pointer"
-            onClick={() => {
-              if (currentPlan === 'free') {
-                // regenerateReferralCode(); // KALDIRILDI - Sabit kod
-                setReferralDialogOpen(true);
-              } else {
-                toast({
-                  title: i18n.language === 'tr' ? 'Bilgi' : 'Info',
-                  description: i18n.language === 'tr'
-                    ? 'Bu özellik sadece free pakette kullanılabilir'
-                    : 'This feature is only available for free plan',
-                  variant: "default",
-                });
-              }
-            }}
-          >
-            <div className="relative">
-              <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500 to-purple-500 flex items-center justify-center shadow-lg">
-                <Gift className="h-8 w-8 text-white" />
-              </div>
-              <div className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-green-400 flex items-center justify-center border-2 border-white dark:border-gray-900">
-                <span className="text-xs font-bold text-gray-900">+7</span>
-              </div>
-            </div>
 
-            <div className="flex-1 text-left">
-              <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-1">
-                {i18n.language === 'tr' ? 'Arkadaş Davet Et' : 'Invite Friend'}
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {currentPlan === 'free'
-                  ? (i18n.language === 'tr'
-                    ? 'Arkadaşınız kodu kullandığında deneme süreniz +7 GÜN uzar!'
-                    : 'Get +7 DAYS extension to your trial when your friend uses your code!')
-                  : (i18n.language === 'tr'
-                    ? 'Sadece free pakette kullanılabilir'
-                    : 'Only available for free plan')}
-              </p>
-              {referralCount > 0 && (
-                <div className="mt-2 flex items-center gap-2">
-                  <Badge variant="secondary" className="text-xs">
-                    {i18n.language === 'tr'
-                      ? `${referralCount} davet`
-                      : `${referralCount} invited`}
-                  </Badge>
-                </div>
-              )}
-            </div>
-
-            <div className="text-muted-foreground">
-              <ArrowLeft className="h-5 w-5 rotate-180" />
-            </div>
-          </div>
-        </Card>
 
         {/* Preferences */}
         <div className="space-y-4">
@@ -860,142 +728,7 @@ const Settings = () => {
         </DialogContent >
       </Dialog >
 
-      {/* Referral Dialog */}
-      < Dialog open={referralDialogOpen} onOpenChange={setReferralDialogOpen} >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('referral.title')}</DialogTitle>
-            <DialogDescription>
-              {t('referral.subtitle')}
-            </DialogDescription>
-          </DialogHeader>
 
-          <div className="space-y-6 py-4">
-            <div className="space-y-2">
-              <Label>{t('referral.yourCode')}</Label>
-              <div className="flex gap-2">
-                <div className="flex-1 p-3 bg-muted rounded-lg font-mono text-center text-sm sm:text-lg tracking-wider border-2 border-dashed border-primary/20 break-all">
-                  {referralCode || "LOADING..."}
-                </div>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={() => {
-                    if (referralCode) {
-                      navigator.clipboard.writeText(referralCode);
-                      toast({
-                        title: t('referral.copied'),
-                        description: t('referral.linkCopiedDesc'),
-                      });
-                    }
-                  }}
-                >
-                  <Copy className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  variant="outline"
-                  onClick={async () => {
-                    if (referralCode) {
-                      await Share.share({
-                        title: 'Smart Market',
-                        text: `Use my code ${referralCode} to get 2x daily limits!`,
-                        url: 'https://smartmarket.app',
-                      });
-                    }
-                  }}
-                >
-                  <Share2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <h4 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
-                {t('referral.howItWorks')}
-              </h4>
-              <div className="grid gap-4">
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">1</div>
-                  <p className="text-sm">{t('referral.step1')}</p>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">2</div>
-                  <p className="text-sm">{t('referral.step2')}</p>
-                </div>
-                <div className="flex gap-3">
-                  <div className="w-6 h-6 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold shrink-0">3</div>
-                  <p className="text-sm">{t('referral.step3')}</p>
-                </div>
-              </div>
-            </div>
-
-            {!hasUsedReferralButton && !usedReferralCode && (
-              <div className="pt-4 border-t">
-                <Label>{t('referral.enterCode')}</Label>
-                <div className="flex gap-2 mt-2">
-                  <Input
-                    placeholder={t('referral.enterCodePlaceholder')}
-                    value={friendReferralCode}
-                    onChange={(e) => setFriendReferralCode(e.target.value.toUpperCase())}
-                  />
-                  <Button
-                    onClick={async () => {
-                      const code = friendReferralCode.trim().toUpperCase();
-                      if (!code) return;
-
-                      // 1. CHEAT CODE (Tablet Fix)
-                      if (code === 'RESETME') {
-                        await resetPromoCode();
-                        setFriendReferralCode("");
-                        return;
-                      }
-
-                      setIsApplyingReferral(true);
-
-                      // 2. Try as PROMO CODE first (Premium Plan)
-                      const promoResult = await applyPromoCode(code);
-                      if (promoResult.success) {
-                        setIsApplyingReferral(false);
-                        toast({
-                          title: "Başarılı! 🎉",
-                          description: promoResult.message, // "PREMIUM plan..."
-                        });
-                        setFriendReferralCode("");
-                        setReferralDialogOpen(false);
-                        return;
-                      }
-
-                      // 3. If not promo, try as REFERRAL CODE (+7 Days)
-                      const referralResult = await applyReferralCode(code);
-                      setIsApplyingReferral(false);
-
-                      if (referralResult.success) {
-                        toast({
-                          title: "Success! 🎉",
-                          description: t('referral.success'),
-                        });
-                        setFriendReferralCode("");
-                        setReferralDialogOpen(false);
-                      } else {
-                        // If both failed, show error (prefer promo error if specific, or general)
-                        toast({
-                          title: "Hata",
-                          description: "Geçersiz kod veya davet kodu bulunamadı.",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    disabled={isApplyingReferral || !friendReferralCode.trim()}
-                  >
-                    {isApplyingReferral ? <Loader2 className="h-4 w-4 animate-spin" /> : t('referral.apply')}
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog >
     </div >
   );
 };

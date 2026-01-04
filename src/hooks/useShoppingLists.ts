@@ -227,9 +227,26 @@ export const useShoppingLists = () => {
     }
   };
 
-  // Listeye ürün ekle
   const addItem = async (listId: string, item: Omit<ShoppingItem, 'id' | 'addedBy' | 'addedByName' | 'addedAt'>, options?: { silent?: boolean }) => {
     if (!currentUser) return;
+
+    const list = lists.find(l => l.id === listId);
+    if (!list) return;
+
+    // ✅ İZİN KONTROLÜ
+    if (list.ownerId !== currentUser.uid) {
+      // Paylaşılan liste - izni kontrol et
+      const userPermission = list.permissions[currentUser.uid];
+      if (userPermission !== 'edit') {
+        toast({
+          title: t('common.error'),
+          description: "You don't have permission to edit this list",
+          variant: "destructive",
+          duration: 2000,
+        });
+        return;
+      }
+    }
 
     // ABONELİK KONTROLÜ
     if (plan !== 'pro' && !canPerformAction()) {
@@ -243,9 +260,6 @@ export const useShoppingLists = () => {
     }
 
     try {
-      const list = lists.find(l => l.id === listId);
-      if (!list) return;
-
       const newItem: ShoppingItem = {
         ...item,
         id: Date.now().toString(),
@@ -280,12 +294,27 @@ export const useShoppingLists = () => {
     }
   };
 
-  // Ürünü güncelle
   const updateItem = async (listId: string, itemId: string, updates: Partial<ShoppingItem>) => {
-    try {
-      const list = lists.find(l => l.id === listId);
-      if (!list) return;
+    if (!currentUser) return;
 
+    const list = lists.find(l => l.id === listId);
+    if (!list) return;
+
+    // ✅ İZİN KONTROLÜ
+    if (list.ownerId !== currentUser.uid) {
+      const userPermission = list.permissions[currentUser.uid];
+      if (userPermission !== 'edit') {
+        toast({
+          title: t('common.error'),
+          description: "You don't have permission to edit this list",
+          variant: "destructive",
+          duration: 2000,
+        });
+        return;
+      }
+    }
+
+    try {
       const updatedItems = list.items.map(item =>
         item.id === itemId ? { ...item, ...updates } : item
       );
@@ -307,12 +336,27 @@ export const useShoppingLists = () => {
 
   // Ürünü sil
   const deleteItem = async (listId: string, itemId: string) => {
+    if (!currentUser) return;
+
+    const list = lists.find(l => l.id === listId);
+    if (!list) return;
+
+    // ✅ İZİN KONTROLÜ
+    if (list.ownerId !== currentUser.uid) {
+      const userPermission = list.permissions[currentUser.uid];
+      if (userPermission !== 'edit') {
+        toast({
+          title: t('common.error'),
+          description: "You don't have permission to edit this list",
+          variant: "destructive",
+          duration: 2000,
+        });
+        return;
+      }
+    }
+
     try {
-      const list = lists.find(l => l.id === listId);
-      if (!list) return;
-
       const updatedItems = list.items.filter(item => item.id !== itemId);
-
       await updateDoc(doc(db, 'shoppingLists', listId), {
         items: updatedItems,
         updatedAt: Timestamp.now(),
@@ -334,8 +378,23 @@ export const useShoppingLists = () => {
     }
   };
 
-  // Tüm itemleri sil (Toplu silme)
   const deleteAllItems = async (listId: string) => {
+    if (!currentUser) return;
+
+    const list = lists.find(l => l.id === listId);
+    if (!list) return;
+
+    // ✅ İZİN KONTROLÜ (Sadece owner silebilir)
+    if (list.ownerId !== currentUser.uid) {
+      toast({
+        title: t('common.error'),
+        description: "Only the list owner can delete all items",
+        variant: "destructive",
+        duration: 2000,
+      });
+      return;
+    }
+
     try {
       await updateDoc(doc(db, 'shoppingLists', listId), {
         items: [],

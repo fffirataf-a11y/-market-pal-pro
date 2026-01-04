@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { updateDoc, doc } from 'firebase/firestore';
+import { db, auth } from '@/config/firebase';
 import { Badge } from "@/components/ui/badge";
 import { Bell } from "lucide-react";
 import {
@@ -134,8 +136,7 @@ const Profile = () => {
     setSearchResults(searchResults.filter(u => u.uid !== user.uid));
   };
 
-  // Save changes
-  const handleSaveChanges = () => {
+  const handleSaveChanges = async () => { // ✅ async ekle
     // Validation
     if (!userData.name.trim()) {
       toast({
@@ -156,18 +157,37 @@ const Profile = () => {
       return;
     }
 
-    // Save user data to localStorage
-    localStorage.setItem("user", JSON.stringify(userData));
-    setOriginalUserData(userData);
-    setHasChanges(false);
+    try {
+      // ✅ 1. Firebase'e kaydet
+      const currentUser = auth.currentUser;
+      if (currentUser) {
+        await updateDoc(doc(db, 'users', currentUser.uid), {
+          displayName: userData.name,
+          photoURL: userData.avatar,
+          searchKey: userData.name.toLowerCase(), // ✅ Arama için
+        });
+      }
 
-    // Trigger event for other components
-    window.dispatchEvent(new Event("user-data-change"));
+      // ✅ 2. localStorage'a kaydet
+      localStorage.setItem("user", JSON.stringify(userData));
+      setOriginalUserData(userData);
+      setHasChanges(false);
 
-    toast({
-      title: t("common.success"),
-      description: "Profile updated successfully",
-    });
+      // Trigger event
+      window.dispatchEvent(new Event("user-data-change"));
+
+      toast({
+        title: t("common.success"),
+        description: "Profile updated successfully",
+      });
+    } catch (error) {
+      console.error('Profile update error:', error);
+      toast({
+        title: t("common.error"),
+        description: "Failed to update profile",
+        variant: "destructive",
+      });
+    }
   };
 
   // Discard changes

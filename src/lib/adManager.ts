@@ -27,7 +27,7 @@ const IOS_AD_UNIT_IDS = {
   // banner: "", // BANNER DEVRE DIŞI
   interstitial: "ca-app-pub-3272601063768123/6643096287",
   appOpen: "ca-app-pub-3272601063768123/8718595284",
-  rewarded: "ca-app-pub-3272601063768123/4531988264",
+  rewarded: "ca-app-pub-3272601063768123/4531938264", // ✅ DOĞRU
 };
 
 // Android Ad Unit ID'leri (GERÇEK PRODUCTION ID'LER)
@@ -53,12 +53,11 @@ const initializeAdMob = async (): Promise<void> => {
 
   try {
     const platform = Capacitor.getPlatform();
-    const appId = platform === "ios" ? ADMOB_APP_IDS.ios : ADMOB_APP_IDS.android;
 
     await AdMob.initialize({
-      // Production Configuration
       testingDevices: [],
-      initializeForTesting: false,
+      initializeForTesting: true,
+      // requestTrackingAuthorization kaldırıldı - Info.plist'te halledeceğiz
     });
 
     if (platform === "ios") {

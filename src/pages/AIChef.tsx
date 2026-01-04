@@ -374,16 +374,16 @@ IMPORTANT: All text must be in ENGLISH!`;
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b">
-        <div className="container max-w-4xl py-4">
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/lists")}>
+        <div className="container max-w-4xl px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <Button variant="ghost" size="icon" onClick={() => navigate("/lists")} className="shrink-0">
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-2xl font-bold">{t('aichef.title')}</h1>
+              <h1 className="text-2xl font-bold truncate">{t('aichef.title')}</h1>
             </div>
-            {plan !== 'premium' && (
-              <Badge variant="secondary">
+            {plan !== 'pro' && (
+              <Badge variant="secondary" className="shrink-0 text-sm">
                 {remainingUses === -1 ? '∞' : remainingUses} {t('subscription.remaining')}
               </Badge>
             )}
@@ -391,11 +391,15 @@ IMPORTANT: All text must be in ENGLISH!`;
         </div>
       </header>
 
-      <main className="container max-w-4xl py-6 space-y-6">
+      <main className="container max-w-4xl px-4 py-6 space-y-6">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="recipe">{t('aichef.recipeGenerator')}</TabsTrigger>
-            <TabsTrigger value="ideas">{t('aichef.cookingIdeas')}</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 gap-2">
+            <TabsTrigger value="recipe" className="text-xs sm:text-sm px-2 sm:px-4 truncate">
+              {t('aichef.recipeGenerator')}
+            </TabsTrigger>
+            <TabsTrigger value="ideas" className="text-xs sm:text-sm px-2 sm:px-4 truncate">
+              {t('aichef.cookingIdeas')}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="recipe" className="space-y-6 mt-6">
