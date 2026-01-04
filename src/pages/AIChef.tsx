@@ -18,6 +18,7 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useInterstitialAd } from '@/hooks/useInterstitialAd'; // ✅ YENİ EKLENEN
 import { detectCategory } from "@/lib/categoryDetector";
 import { LimitReachedDialog } from "@/components/LimitReachedDialog";
 
@@ -61,11 +62,17 @@ const getApiConfig = () => {
 
 const AIChef = () => {
   const navigate = useNavigate();
-  const { t, i18n } = useTranslation(); // i18n eklendi
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { lists, addItem } = useShoppingLists();
 
   const { canPerformAction, incrementAction, plan, getRemainingActions } = useSubscription();
+
+  // ✅ YENİ EKLENEN - Interstitial Reklam Hook'u
+  const { showAd } = useInterstitialAd({
+    plan,
+    interval: 5 // Her 5 AI isteğinde bir reklam
+  });
 
   const [activeTab, setActiveTab] = useState("recipe");
   const [dishName, setDishName] = useState("");
@@ -236,6 +243,9 @@ IMPORTANT: All text must be in ENGLISH!`;
 
       incrementAction();
 
+      // ✅ YENİ: Reklam göster (sadece free için, her 5 işlemde bir)
+      showAd();
+
       try {
         const audio = new Audio('/sounds/success.mp3');
         audio.volume = 0.5;
@@ -349,6 +359,9 @@ IMPORTANT: All text must be in ENGLISH!`;
 
       incrementAction();
 
+      // ✅ YENİ: Reklam göster (sadece free için, her 5 işlemde bir)
+      showAd();
+
       try {
         const audio = new Audio('/sounds/success.mp3');
         audio.volume = 0.5;
@@ -374,7 +387,7 @@ IMPORTANT: All text must be in ENGLISH!`;
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b">
-        <div className="container max-w-4xl px-4 py-4">
+        <div className="container max-w-4xl px-4 py-2.5 sm:py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
               <Button variant="ghost" size="icon" onClick={() => navigate("/lists")} className="shrink-0">
@@ -391,7 +404,7 @@ IMPORTANT: All text must be in ENGLISH!`;
         </div>
       </header>
 
-      <main className="container max-w-4xl px-4 py-6 space-y-6">
+      <main className="container max-w-4xl px-4 py-3 pb-20 space-y-3 sm:space-y-4">
         <Tabs value={activeTab} onValueChange={setActiveTab}>
           <TabsList className="grid w-full grid-cols-2 gap-2">
             <TabsTrigger value="recipe" className="text-xs sm:text-sm px-2 sm:px-4 truncate">
@@ -402,9 +415,9 @@ IMPORTANT: All text must be in ENGLISH!`;
             </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="recipe" className="space-y-6 mt-6">
-            <Card className="p-6">
-              <div className="flex items-start gap-4 mb-6">
+          <TabsContent value="recipe" className="space-y-4 sm:space-y-5 mt-4">
+            <Card className="p-4 sm:p-5">
+              <div className="flex items-start gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl gradient-warm flex items-center justify-center flex-shrink-0">
                   <Utensils className="w-6 h-6 text-primary-foreground" />
                 </div>
@@ -414,20 +427,20 @@ IMPORTANT: All text must be in ENGLISH!`;
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder={t('aichef.dishPlaceholder')}
                     value={dishName}
                     onChange={(e) => setDishName(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleGenerateRecipe()}
-                    className="pl-10 h-12"
+                    className="pl-10 h-10 sm:h-11"
                   />
                 </div>
 
                 <Button
-                  className="w-full h-12 font-semibold"
+                  className="w-full h-10 sm:h-11 font-semibold"
                   onClick={handleGenerateRecipe}
                   disabled={loading || !dishName.trim()}
                 >
@@ -442,8 +455,8 @@ IMPORTANT: All text must be in ENGLISH!`;
             </Card>
 
             {loading && (
-              <Card className="p-8">
-                <div className="flex flex-col items-center justify-center space-y-6">
+              <Card className="p-6 sm:p-8">
+                <div className="flex flex-col items-center justify-center space-y-4 sm:space-y-5">
                   <div className="relative w-32 h-32">
                     <div className="absolute inset-0 animate-bounce">
                       <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-400 to-red-500 opacity-20 blur-xl"></div>
@@ -453,7 +466,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                     </div>
                   </div>
 
-                  <div className="text-center space-y-2">
+                  <div className="text-center space-y-1.5">
                     <h3 className="text-xl font-semibold">{t('aichef.preparingRecipe')}</h3>
                     <div className="flex items-center justify-center gap-1">
                       <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
@@ -470,11 +483,11 @@ IMPORTANT: All text must be in ENGLISH!`;
             )}
 
             {generatedRecipe && activeTab === "recipe" && !loading && (
-              <Card className="p-6">
-                <div className="space-y-6">
+              <Card className="p-4 sm:p-5">
+                <div className="space-y-4 sm:space-y-5">
                   <div>
-                    <h3 className="text-2xl font-bold mb-3">{generatedRecipe.name}</h3>
-                    <div className="flex flex-wrap gap-2">
+                    <h3 className="text-xl sm:text-2xl font-bold mb-2">{generatedRecipe.name}</h3>
+                    <div className="flex flex-wrap gap-1.5 sm:gap-2">
                       <Badge variant="secondary">{generatedRecipe.servings} {t('aichef.servings')}</Badge>
                       <Badge variant="secondary">{generatedRecipe.time}</Badge>
                       <Badge variant="secondary">{generatedRecipe.difficulty}</Badge>
@@ -482,10 +495,10 @@ IMPORTANT: All text must be in ENGLISH!`;
                   </div>
 
                   <div>
-                    <h4 className="font-semibold mb-3">{t('aichef.ingredients')}</h4>
-                    <div className="space-y-2">
+                    <h4 className="font-semibold text-sm sm:text-base mb-2">{t('aichef.ingredients')}</h4>
+                    <div className="space-y-1.5 sm:space-y-2">
                       {generatedRecipe.ingredients.map((item: any, index: number) => (
-                        <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                        <div key={index} className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg border bg-muted/30">
                           <span className="font-medium">{item.name}</span>
                           <span className="text-sm text-muted-foreground">{item.quantity}</span>
                         </div>
@@ -493,7 +506,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                     </div>
                   </div>
 
-                  <Button className="w-full h-12 font-semibold" onClick={handleAddToList}>
+                  <Button className="w-full h-10 sm:h-11 font-semibold" onClick={handleAddToList}>
                     <Plus className="mr-2 h-5 w-5" />
                     {t('aichef.addAllToList')}
                   </Button>
@@ -502,9 +515,9 @@ IMPORTANT: All text must be in ENGLISH!`;
             )}
           </TabsContent>
 
-          <TabsContent value="ideas" className="space-y-6 mt-6">
-            <Card className="p-6">
-              <div className="flex items-start gap-4 mb-6">
+          <TabsContent value="ideas" className="space-y-4 sm:space-y-5 mt-4">
+            <Card className="p-4 sm:p-5">
+              <div className="flex items-start gap-3 mb-4">
                 <div className="w-12 h-12 rounded-xl gradient-warm flex items-center justify-center flex-shrink-0">
                   <ChefHat className="w-6 h-6 text-primary-foreground" />
                 </div>
@@ -514,17 +527,17 @@ IMPORTANT: All text must be in ENGLISH!`;
                 </div>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-3">
                 <Input
                   placeholder={t('aichef.ingredientsPlaceholder')}
                   value={ingredients}
                   onChange={(e) => setIngredients(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleGenerateIdeas()}
-                  className="h-12"
+                  className="h-10 sm:h-11"
                 />
 
                 <Button
-                  className="w-full h-12 font-semibold"
+                  className="w-full h-10 sm:h-11 font-semibold"
                   onClick={handleGenerateIdeas}
                   disabled={loading || !ingredients.trim()}
                 >
@@ -539,8 +552,8 @@ IMPORTANT: All text must be in ENGLISH!`;
             </Card>
 
             {loading && (
-              <Card className="p-8">
-                <div className="flex flex-col items-center justify-center space-y-6">
+              <Card className="p-6 sm:p-8">
+                <div className="flex flex-col items-center justify-center space-y-4 sm:space-y-5">
                   <div className="relative w-32 h-32">
                     <div className="absolute inset-0 animate-bounce">
                       <div className="w-full h-full rounded-full bg-gradient-to-br from-orange-400 to-red-500 opacity-20 blur-xl"></div>
@@ -550,7 +563,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                     </div>
                   </div>
 
-                  <div className="text-center space-y-2">
+                  <div className="text-center space-y-1.5">
                     <h3 className="text-xl font-semibold">{t('aichef.findingIdeas')}</h3>
                     <div className="flex items-center justify-center gap-1">
                       <span className="w-2 h-2 bg-primary rounded-full animate-bounce [animation-delay:-0.3s]"></span>
@@ -569,11 +582,11 @@ IMPORTANT: All text must be in ENGLISH!`;
             {generatedRecipe && activeTab === "ideas" && !loading && (
               <>
                 {generatedRecipe.suggestions && (
-                  <Card className="p-6">
-                    <h3 className="font-semibold text-lg mb-4">{t('aichef.recipeSuggestions')}</h3>
-                    <div className="grid gap-3">
+                  <Card className="p-4 sm:p-5">
+                    <h3 className="font-semibold text-base sm:text-lg mb-3">{t('aichef.recipeSuggestions')}</h3>
+                    <div className="grid gap-2 sm:gap-3">
                       {generatedRecipe.suggestions.map((suggestion: string, index: number) => (
-                        <button key={index} className="p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors text-left">
+                        <button key={index} className="p-3 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors text-left">
                           <div className="flex items-center gap-3">
                             <Utensils className="h-5 w-5 text-primary" />
                             <span className="font-medium">{suggestion}</span>
@@ -584,11 +597,11 @@ IMPORTANT: All text must be in ENGLISH!`;
                   </Card>
                 )}
 
-                <Card className="p-6">
-                  <div className="space-y-6">
+                <Card className="p-4 sm:p-5">
+                  <div className="space-y-4 sm:space-y-5">
                     <div>
-                      <h3 className="text-2xl font-bold mb-3">{generatedRecipe.name}</h3>
-                      <div className="flex flex-wrap gap-2">
+                      <h3 className="text-xl sm:text-2xl font-bold mb-2">{generatedRecipe.name}</h3>
+                      <div className="flex flex-wrap gap-1.5 sm:gap-2">
                         <Badge variant="secondary">{generatedRecipe.servings} {t('aichef.servings')}</Badge>
                         <Badge variant="secondary">{generatedRecipe.time}</Badge>
                         <Badge variant="secondary">{generatedRecipe.difficulty}</Badge>
@@ -596,10 +609,10 @@ IMPORTANT: All text must be in ENGLISH!`;
                     </div>
 
                     <div>
-                      <h4 className="font-semibold mb-3">{t('aichef.ingredients')}</h4>
-                      <div className="space-y-2">
+                      <h4 className="font-semibold text-sm sm:text-base mb-2">{t('aichef.ingredients')}</h4>
+                      <div className="space-y-1.5 sm:space-y-2">
                         {generatedRecipe.ingredients.map((item: RecipeIngredient, index: number) => (
-                          <div key={index} className="flex items-center justify-between p-3 rounded-lg border bg-muted/30">
+                          <div key={index} className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg border bg-muted/30">
                             <span className="font-medium">{item.name}</span>
                             <span className="text-sm text-muted-foreground">{item.quantity}</span>
                           </div>
@@ -607,7 +620,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                       </div>
                     </div>
 
-                    <Button className="w-full h-12 font-semibold" onClick={handleAddToList}>
+                    <Button className="w-full h-10 sm:h-11 font-semibold" onClick={handleAddToList}>
                       <Plus className="mr-2 h-5 w-5" />
                       {t('aichef.addAllItems')}
                     </Button>

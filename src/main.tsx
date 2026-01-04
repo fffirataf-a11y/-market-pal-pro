@@ -1,4 +1,4 @@
-import { StrictMode, Suspense } from 'react'
+import { StrictMode, Suspense, useEffect } from 'react'
 import { createRoot } from 'react-dom/client'
 import { HashRouter } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
@@ -8,6 +8,8 @@ import { SubscriptionProvider } from "@/hooks/useSubscription"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { Toaster } from "@/components/ui/toaster"
 import { Toaster as Sonner } from "@/components/ui/sonner"
+import { initializeAdMob } from '@/lib/adManager' // ✅ YENİ EKLENDI
+import { Capacitor } from '@capacitor/core' // ✅ YENİ EKLENDI
 import './index.css'
 import App from './App.tsx'
 import './i18n'
@@ -21,10 +23,9 @@ const hideWebSplash = () => {
     webSplash.style.transition = 'opacity 0.5s';
     webSplash.style.opacity = '0';
     setTimeout(() => {
-      webSplash.remove(); // DOM'dan tamamen sil
+      webSplash.remove();
     }, 500);
   }
-  // Scroll'u tekrar aktif et
   document.body.style.overflow = 'auto';
 };
 
@@ -41,9 +42,39 @@ const LoadingFallback = () => (
   </div>
 );
 
+// ✅ YENİ EKLENDI: AdMob Wrapper Component
+const AppWithAdMob = () => {
+  useEffect(() => {
+    // AdMob'u sadece mobil platformda başlat
+    if (Capacitor.isNativePlatform()) {
+      console.log('[AdMob] 🚀 Initializing AdMob...');
+
+      const initAds = async () => {
+        try {
+          await initializeAdMob();
+          console.log('[AdMob] ✅ Successfully initialized');
+        } catch (error) {
+          console.error('[AdMob] ❌ Initialization failed:', error);
+        }
+      };
+
+      // Kısa bir gecikme ile başlat (splash screen sonrası)
+      const timer = setTimeout(() => {
+        initAds();
+      }, 1000);
+
+      return () => clearTimeout(timer);
+    } else {
+      console.log('[AdMob] 🌐 Web platform - AdMob disabled');
+    }
+  }, []);
+
+  return <App />;
+};
+
 console.log('[DEBUG] main.tsx: Starting full app render...');
 
-// Hide splash after a short delay to ensure React has mounted
+// Hide splash after a short delay
 setTimeout(hideWebSplash, 500);
 
 createRoot(document.getElementById('root')!).render(
@@ -57,7 +88,7 @@ createRoot(document.getElementById('root')!).render(
                 <SubscriptionProvider>
                   <Toaster />
                   <Sonner />
-                  <App />
+                  <AppWithAdMob /> {/* ✅ DEĞİŞTİ: App yerine AppWithAdMob */}
                 </SubscriptionProvider>
               </TooltipProvider>
             </AuthProvider>

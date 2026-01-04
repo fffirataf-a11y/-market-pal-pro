@@ -1,10 +1,9 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useRealtimeNotifications } from "@/hooks/useNotifications";
+import { initializeAdMob } from "@/lib/adManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePurchases } from "@/hooks/usePurchases";
-import { showAppOpenAd } from "@/lib/adManager";
-import { Capacitor } from "@capacitor/core";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
@@ -19,9 +18,23 @@ const App = () => {
   // ✅ Gerçek zamanlı notification dinleyici
   useRealtimeNotifications();
 
+  // ✅ AdMob Initialize
+  useEffect(() => {
+    const setupAdMob = async () => {
+      try {
+        console.log('🎬 [App] Initializing AdMob...');
+        await initializeAdMob();
+        console.log('✅ [App] AdMob initialized successfully');
+      } catch (error) {
+        console.error('❌ [App] AdMob initialization failed:', error);
+      }
+    };
+
+    setupAdMob();
+  }, []);
+
   const { plan, upgradeToPremium, upgradeToPro } = useSubscription();
   const { customerInfo, isLoading: purchasesLoading } = usePurchases();
-  const appOpenAdShown = useRef(false);
 
   const [isAuthenticated, setIsAuthenticated] = useState(
     !!localStorage.getItem("userToken")
@@ -37,10 +50,14 @@ const App = () => {
 
       if (entitlements['pro'] && plan !== 'pro') {
         console.log('🔄 Syncing subscription: Upgrading to PRO');
-        upgradeToPro();
+        const productId = entitlements['pro'].productIdentifier;
+        const isYearly = productId.includes('yearly') || productId.includes('annual');
+        upgradeToPro(isYearly ? 'yearly' : 'monthly');
       } else if (entitlements['premium'] && plan !== 'premium' && plan !== 'pro') {
         console.log('🔄 Syncing subscription: Upgrading to PREMIUM');
-        upgradeToPremium();
+        const productId = entitlements['premium'].productIdentifier;
+        const isYearly = productId.includes('yearly') || productId.includes('annual');
+        upgradeToPremium(isYearly ? 'yearly' : 'monthly');
       }
     }
   }, [customerInfo, purchasesLoading, plan, upgradeToPremium, upgradeToPro]);
@@ -54,10 +71,7 @@ const App = () => {
       );
     };
 
-    // Storage event listener (farklı tab'lar için)
     window.addEventListener("storage", handleStorageChange);
-
-    // Custom event listener (aynı tab için)
     window.addEventListener("auth-change", handleStorageChange);
 
     return () => {
@@ -65,24 +79,6 @@ const App = () => {
       window.removeEventListener("auth-change", handleStorageChange);
     };
   }, []);
-
-  // App Open Ad - Uygulama açılışında göster (sadece free plan kullanıcılarına)
-  useEffect(() => {
-    // Sadece mobil platformlarda ve ilk açılışta göster
-    if (!Capacitor.isNativePlatform() || appOpenAdShown.current) {
-      return;
-    }
-
-    // Kısa bir gecikme ile göster (splash screen'den sonra)
-    const timer = setTimeout(() => {
-      if (!appOpenAdShown.current) {
-        appOpenAdShown.current = true;
-        showAppOpenAd(plan);
-      }
-    }, 1000); // 1 saniye gecikme
-
-    return () => clearTimeout(timer);
-  }, [plan]);
 
   return (
     <ErrorBoundary>

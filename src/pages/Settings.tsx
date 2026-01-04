@@ -362,10 +362,10 @@ const Settings = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-20 overflow-x-hidden">
+    <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b">
-        <div className="container w-full max-w-full sm:max-w-2xl lg:max-w-4xl px-4 py-4">
+      <header className="bg-background border-b">
+        <div className="container max-w-2xl px-4 py-4 mx-auto">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -380,23 +380,23 @@ const Settings = () => {
       </header>
 
       {/* Content */}
-      <main className="container w-full max-w-full sm:max-w-2xl lg:max-w-4xl px-4 py-6 space-y-6">
+      <main className="container max-w-2xl px-4 py-4 mx-auto space-y-4 pb-20">
         {/* Profile Section */}
-        <Card className="p-6">
-          <div className="flex items-center gap-4">
+        <Card className="p-4">
+          <div className="flex items-center gap-3">
             <img
               src={userData.avatar}
               alt={userData.name}
-              className="w-20 h-20 rounded-full object-cover border-4 border-primary shrink-0"
+              className="w-16 h-16 rounded-full object-cover border-4 border-primary shrink-0"
             />
-            <div className="flex-1 min-w-0">
-              <h2 className="text-xl font-semibold truncate">{userData.name}</h2>
-              <p className="text-muted-foreground truncate">{userData.email}</p>
+            <div className="flex-1 min-w-0 overflow-hidden">
+              <h2 className="text-lg font-semibold truncate">{userData.name}</h2>
+              <p className="text-sm text-muted-foreground truncate">{userData.email}</p>
             </div>
             <Button
               variant="outline"
               onClick={() => navigate("/profile")}
-              className="relative shrink-0 text-sm px-3"
+              className="relative shrink-0 text-xs px-3 min-h-[44px]"
             >
               {t('settings.viewProfile')}
               {friendRequests.length > 0 && (
@@ -418,7 +418,7 @@ const Settings = () => {
           <h3 className="text-lg font-semibold">{t('settings.preferences')}</h3>
 
           {/* Language */}
-          <Card className="p-4">
+          <Card className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Globe className="h-5 w-5 text-muted-foreground" />
@@ -445,7 +445,7 @@ const Settings = () => {
           </Card>
 
           {/* Theme */}
-          <Card className="p-4">
+          <Card className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 {theme === "dark" ? (
@@ -472,7 +472,7 @@ const Settings = () => {
           </Card>
 
           {/* Notifications */}
-          <Card className="p-4">
+          <Card className="p-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Bell className="h-5 w-5 text-muted-foreground" />
@@ -499,11 +499,10 @@ const Settings = () => {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">{t('subscription.title')}</h3>
 
-            {/* Main Subscription Card with Inline Toggle */}
-            <Card className="p-6 border-primary/20 bg-primary/5">
-              <div className="flex items-center justify-between mb-6">
+            <Card className="p-4 border-primary/20 bg-primary/5">
+              <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center gap-2">
-                  <h4 className="text-lg font-semibold capitalize">
+                  <h4 className="text-base font-semibold capitalize">
                     {currentPlan === 'free' ? t('subscription.free.name') : currentPlan}
                   </h4>
                   <Badge variant={currentPlan === 'free' ? "secondary" : "default"}>
@@ -512,10 +511,10 @@ const Settings = () => {
                 </div>
 
                 {/* Inline Billing Toggle */}
-                <div className="bg-background/50 p-1 rounded-lg border flex text-[10px] sm:text-xs font-medium shrink-0">
+                <div className="bg-background/50 p-1 rounded-lg border flex text-xs font-medium shrink-0">
                   <button
                     onClick={() => setBillingCycle('monthly')}
-                    className={`px-3 py-1.5 rounded-md transition-all ${billingCycle === 'monthly'
+                    className={`px-2 sm:px-3 py-1.5 rounded-md transition-all min-h-[36px] ${billingCycle === 'monthly'
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-background/80'
                       }`}
@@ -524,7 +523,7 @@ const Settings = () => {
                   </button>
                   <button
                     onClick={() => setBillingCycle('yearly')}
-                    className={`px-3 py-1.5 rounded-md transition-all flex items-center gap-1 ${billingCycle === 'yearly'
+                    className={`px-2 sm:px-3 py-1.5 rounded-md transition-all flex items-center gap-1 min-h-[36px] ${billingCycle === 'yearly'
                       ? 'bg-primary text-primary-foreground shadow-sm'
                       : 'text-muted-foreground hover:bg-background/80'
                       }`}
@@ -537,7 +536,7 @@ const Settings = () => {
                 </div>
               </div>
 
-              <div className="mb-6">
+              <div className="mb-4">
                 <p className="text-sm text-muted-foreground mb-1">
                   {currentPlan === 'free' ? t('subscription.free.dailyLimit') : (
                     currentPlan === 'premium' ? t('subscription.premium.dailyLimit') : t('subscription.pro.dailyLimit')
@@ -546,7 +545,7 @@ const Settings = () => {
               </div>
 
               <Button
-                className="w-full"
+                className="w-full min-h-[44px]"
                 onClick={() => setSubscriptionPlansOpen(true)}
               >
                 {t('subscription.manage')}
@@ -559,10 +558,8 @@ const Settings = () => {
             <h3 className="text-lg font-semibold">{t('settings.appSettings')}</h3>
 
             <Card className="divide-y">
-
-
               <div
-                className="p-4 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors"
+                className="p-3 flex items-center justify-between cursor-pointer hover:bg-accent/50 transition-colors min-h-[56px]"
                 onClick={() => window.location.href = `mailto:smartmarketttt@gmail.com`}
               >
                 <div className="flex items-center gap-3">
@@ -584,16 +581,29 @@ const Settings = () => {
                   plan={currentPlan}
                   placement="settings_reward"
                   onReward={() => {
-                    const result = rewardAdWatched();
-                    if (result.success) {
+                    console.log('🎁 [Settings] onReward callback triggered');
+
+                    try {
+                      const result = rewardAdWatched();
+                      console.log('🎁 [Settings] rewardAdWatched result:', result);
+
+                      if (result && result.success) {
+                        toast({
+                          title: t('common.success'),
+                          description: result.message,
+                        });
+                      } else {
+                        toast({
+                          title: i18n.language === 'tr' ? 'Bilgi' : 'Info',
+                          description: result?.message || 'Reward processed',
+                        });
+                      }
+                    } catch (error) {
+                      console.error('❌ [Settings] Error processing reward:', error);
                       toast({
-                        title: t('common.success'),
-                        description: result.message,
-                      });
-                    } else {
-                      toast({
-                        title: "Bilgi",
-                        description: result.message,
+                        title: i18n.language === 'tr' ? 'Hata' : 'Error',
+                        description: 'Failed to process reward',
+                        variant: 'destructive',
                       });
                     }
                   }}
@@ -603,7 +613,7 @@ const Settings = () => {
 
 
               <div
-                className="p-4 flex items-center justify-between cursor-pointer hover:bg-destructive/10 transition-colors"
+                className="p-3 flex items-center justify-between cursor-pointer hover:bg-destructive/10 transition-colors min-h-[56px]"
                 onClick={handleLogout}
               >
                 <div className="flex items-center gap-3">
@@ -624,9 +634,9 @@ const Settings = () => {
 
       {/* Subscription Plans Dialog */}
       <Dialog open={subscriptionPlansOpen} onOpenChange={setSubscriptionPlansOpen}>
-        <DialogContent className="w-full max-w-[95vw] sm:max-w-2xl lg:max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[calc(100vw-32px)] sm:max-w-2xl lg:max-w-4xl max-h-[85vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold text-center mb-2">
+            <DialogTitle className="text-xl font-bold text-center mb-2">
               {t('subscription.title')}
             </DialogTitle>
             <DialogDescription className="text-center mb-6">
@@ -634,7 +644,7 @@ const Settings = () => {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="flex justify-center mb-8">
+          <div className="flex justify-center mb-6">
             <div className="relative flex items-center bg-muted p-1.5 rounded-full border w-fit shadow-inner">
               {/* Active Pill Indicator */}
               <div
@@ -647,14 +657,14 @@ const Settings = () => {
 
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`relative z-10 px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full ${!isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full min-h-[44px] ${!isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
               >
                 Monthly
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`relative z-10 px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full flex items-center gap-2 ${isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
+                className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full flex items-center gap-2 min-h-[44px] ${isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
                   }`}
               >
                 Yearly
@@ -666,48 +676,48 @@ const Settings = () => {
           </div>
 
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
             {subscriptionPlans.map((plan) => (
               <Card
                 key={plan.id}
-                className={`relative p-6 flex flex-col ${plan.current
+                className={`relative p-4 flex flex-col ${plan.current
                   ? 'border-primary shadow-lg scale-105'
                   : 'border-border hover:border-primary/50'
                   }`}
               >
                 {plan.current && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-primary text-primary-foreground">
+                    <Badge className="bg-primary text-primary-foreground text-xs">
                       {t('subscription.currentPlan')}
                     </Badge>
                   </div>
                 )}
 
-                <div className="mb-6">
-                  <h3 className="text-xl font-bold mb-2">{plan.name}</h3>
+                <div className="mb-4">
+                  <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-2xl sm:text-3xl font-bold break-all">{plan.price}</span>
+                    <span className="text-xl sm:text-2xl font-bold break-all">{plan.price}</span>
                     {plan.price !== 'Free' && plan.price !== 'Ücretsiz' && (
-                      <span className="text-muted-foreground">
+                      <span className="text-sm text-muted-foreground">
                         /{isYearly ? 'year' : 'month'}
                       </span>
                     )}
                   </div>
                   {isYearly && plan.yearlyPrice && (
-                    <p className="text-sm text-green-600 mt-2 font-medium">
+                    <p className="text-xs text-green-600 mt-1 font-medium">
                       {t('subscription.premium.yearlySavings')}
                     </p>
                   )}
                 </div>
 
-                <div className="flex-1 space-y-4 mb-6">
+                <div className="flex-1 space-y-3 mb-4">
                   <div className="flex items-center gap-2 text-sm font-medium">
-                    <Badge variant="secondary">{plan.dailyLimit}</Badge>
+                    <Badge variant="secondary" className="text-xs">{plan.dailyLimit}</Badge>
                   </div>
-                  <ul className="space-y-3">
+                  <ul className="space-y-2">
                     {plan.features.map((feature, i) => (
-                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
-                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                      <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                        <Check className="h-3.5 w-3.5 text-primary shrink-0 mt-0.5" />
                         <span>{feature}</span>
                       </li>
                     ))}
@@ -715,7 +725,7 @@ const Settings = () => {
                 </div>
 
                 <Button
-                  className="w-full"
+                  className="w-full min-h-[44px]"
                   variant={plan.current ? "outline" : "default"}
                   disabled={plan.current}
                   onClick={() => handleUpgrade(plan.id)}

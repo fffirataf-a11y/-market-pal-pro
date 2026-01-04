@@ -33,7 +33,9 @@
       "backgroundColor": "#121212",
       "showSpinner": false,
       "androidSplashResourceName": "splash",
-      "androidScaleType": "CENTER_CROP"
+      "androidScaleType": "CENTER_CROP",
+      "iosSpinnerStyle": "small",
+      "spinnerColor": "#999999"
     }
   }
 }

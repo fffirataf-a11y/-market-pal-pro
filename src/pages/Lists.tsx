@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { BottomNav } from "@/components/BottomNav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import { useInterstitialAd } from '@/hooks/useInterstitialAd'; // ✅ Import var
 import {
   Dialog,
   DialogContent,
@@ -55,7 +56,13 @@ const Lists = () => {
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { canPerformAction, incrementAction, plan, rewardAdWatched, getRemainingActions, dailyLimit } = useSubscription();
-  const currentUserId = auth.currentUser?.uid; // ✅ ID eklendi
+  const currentUserId = auth.currentUser?.uid;
+
+  // ✅ YENİ EKLENEN - Interstitial Reklam Hook'u
+  const { showAd } = useInterstitialAd({
+    plan,
+    interval: 5 // Her 5 işlemde bir reklam
+  });
 
   // ✅ Firestore hook
   const {
@@ -303,7 +310,6 @@ const Lists = () => {
     setIsDeleteAlertOpen(true);
   };
 
-  // ✅ Tümünü silme işlemi (Dialog onayı sonrası)
   const confirmDeleteAll = async () => {
     if (!selectedList) return;
     setIsDeleteAlertOpen(false);
@@ -314,10 +320,8 @@ const Lists = () => {
     try {
       await deleteAllItems(selectedList.id);
 
-      // Show Interstitial Ad
-      if (ADS_ENABLED) {
-        await showInterstitialAd(plan);
-      }
+      // ✅ YENİ: Hook üzerinden reklam göster (plan kontrolü otomatik)
+      showAd();
 
       toast({
         title: t('common.success'),
@@ -360,6 +364,10 @@ const Lists = () => {
       });
 
       await incrementAction();
+
+      // ✅ YENİ: Reklam göster (sadece free için, her 5 işlemde bir)
+      showAd();
+
       setNewItem({ name: "", quantity: "", category: "Fruits" });
       setIsAddDialogOpen(false);
 
@@ -385,7 +393,7 @@ const Lists = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b">
-        <div className="container max-w-4xl py-4">
+        <div className="container max-w-4xl py-2.5 sm:py-3">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">{t('lists.title')}</h1>
             <div className="flex gap-2">
@@ -399,23 +407,21 @@ const Lists = () => {
             </div>
           </div>
           <div className="relative">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              {/* Using standard input to avoid character mapping issues (ü -> st) */}
-              <input
-                placeholder={t('lists.searchPlaceholder')}
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-            </div>
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            {/* Using standard input to avoid character mapping issues (ü -> st) */}
+            <input
+              placeholder={t('lists.searchPlaceholder')}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="flex h-12 w-full rounded-md border border-input bg-background px-3 py-2 pl-10 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            />
           </div>
         </div>
       </header>
 
-      <main className="container max-w-4xl py-6 pb-24">
+      <main className="container max-w-4xl py-3 pb-20 sm:py-4">
         <Tabs defaultValue="my-lists" value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
+          <TabsList className="grid w-full grid-cols-2 mb-4 h-10">
             <TabsTrigger value="my-lists">{t('lists.myLists')}</TabsTrigger>
             <TabsTrigger value="shared">{t('lists.sharedLists')}</TabsTrigger>
           </TabsList>
@@ -424,8 +430,8 @@ const Lists = () => {
 
 
             {items.length === 0 ? (
-              <Card className="p-8 text-center">
-                <div className="flex flex-col items-center justify-center space-y-4">
+              <Card className="p-4 sm:p-6 text-center">
+                <div className="flex flex-col items-center justify-center space-y-3">
                   <div className="p-4 bg-primary/10 rounded-full">
                     <ChefHat className="h-12 w-12 text-primary" />
                   </div>
@@ -537,7 +543,7 @@ const Lists = () => {
             {items.length > 0 && (
               <Button
                 variant="destructive"
-                className="w-full mt-3"
+                className="w-full mt-2 h-10 sm:h-11"
                 onClick={handleDeleteAllItems}
                 disabled={isDeletingAll}
               >
@@ -639,8 +645,8 @@ const Lists = () => {
               {t('lists.addItemDesc')}
             </DialogDescription>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
+          <div className="space-y-3 py-3">
+            <div className="space-y-1.5">
               <label className="text-sm font-medium">{t('lists.itemName')}</label>
               <input
                 placeholder={t('lists.itemNamePlaceholder')}
@@ -658,7 +664,7 @@ const Lists = () => {
                 className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-base ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               />
             </div>
-            <Button className="w-full" onClick={handleAddItem} disabled={isSubmitting}>
+            <Button className="w-full h-10 sm:h-11" onClick={handleAddItem} disabled={isSubmitting}>
               {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
               {t('common.add')}
             </Button>
