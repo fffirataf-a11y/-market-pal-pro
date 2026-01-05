@@ -28,8 +28,8 @@ const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'developme
 // ============================================
 
 const IOS_AD_UNIT_IDS = {
-  interstitial: "ca-app-pub-3272601063768123/8718595284",
-  rewarded: "ca-app-pub-3272601063768123/4531938264",
+  interstitial: "ca-app-pub-3272601063768123/8718595284", // Interstitial_GecisReklam
+  rewarded: "ca-app-pub-3272601063768123/4531938264", // Rewarded_Odullu
 };
 
 const ANDROID_AD_UNIT_IDS = {
@@ -79,8 +79,8 @@ export const initializeAdMob = async (): Promise<void> => {
 
     // AdMob'u initialize et
     await AdMob.initialize({
-      testingDevices: isDevelopment ? ['YOUR_TEST_DEVICE_ID'] : [],
-      initializeForTesting: isDevelopment,
+      testingDevices: [], // Production'da gerçek reklamlar
+      initializeForTesting: false, // Test modu kapalı
     });
 
     // iOS ses ayarları (optional)
