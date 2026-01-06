@@ -161,6 +161,20 @@ export const usePurchases = (): UsePurchasesReturn => {
       throw new Error('Satın alma başarısız - Premium entitlement aktif değil');
     } catch (err: any) {
       console.error('❌ Premium purchase error:', err);
+
+      // Check if user cancelled (not a real error)
+      const isCancellation = err.code === '1' ||
+        err.userCancelled === true ||
+        err.message?.toLowerCase().includes('cancel') ||
+        err.message?.toLowerCase().includes('user');
+
+      if (isCancellation) {
+        console.log('[IAP] User cancelled purchase');
+        setIsLoading(false);
+        return false;
+      }
+
+      // Real error
       setError(err.message);
       setIsLoading(false);
       return false;
@@ -216,6 +230,20 @@ export const usePurchases = (): UsePurchasesReturn => {
       throw new Error('Satın alma başarısız - Pro entitlement aktif değil');
     } catch (err: any) {
       console.error('❌ Pro purchase error:', err);
+
+      // Check if user cancelled (not a real error)
+      const isCancellation = err.code === '1' ||
+        err.userCancelled === true ||
+        err.message?.toLowerCase().includes('cancel') ||
+        err.message?.toLowerCase().includes('user');
+
+      if (isCancellation) {
+        console.log('[IAP] User cancelled purchase');
+        setIsLoading(false);
+        return false;
+      }
+
+      // Real error
       setError(err.message);
       setIsLoading(false);
       return false;

@@ -45,9 +45,21 @@ const RewardedAdSlot = ({
           onReward?.();
         },
       });
-    } catch (error) {
-      console.error("Rewarded ad placeholder error:", error);
+    } catch (error: any) {
+      console.error("Rewarded ad error:", error);
       setStatus("idle");
+
+      // Show error toast to user
+      const errorMessage = error.message || 'Failed to load ad';
+      if (typeof window !== 'undefined' && (window as any).showToast) {
+        (window as any).showToast({
+          title: "Ad Unavailable",
+          description: errorMessage.includes('timeout')
+            ? "Ad loading timed out. Please try again later."
+            : "Unable to load ad. Please check your connection.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
