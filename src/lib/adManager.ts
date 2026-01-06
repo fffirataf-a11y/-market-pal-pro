@@ -122,11 +122,7 @@ const shouldShowRewardedAd = (plan: PlanType): boolean => {
 const getAdUnitId = (adType: 'interstitial' | 'rewarded'): string => {
   const platform = Capacitor.getPlatform() as 'ios' | 'android';
 
-  if (isDevelopment) {
-    console.log(`[Ads] 🧪 Using TEST ad unit for ${adType}`);
-    return TEST_AD_UNIT_IDS[adType];
-  }
-
+  // Always use production ad units
   if (platform === 'ios') {
     return IOS_AD_UNIT_IDS[adType];
   } else {
