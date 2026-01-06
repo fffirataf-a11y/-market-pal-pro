@@ -79,8 +79,8 @@ export const initializeAdMob = async (): Promise<void> => {
 
     // AdMob'u initialize et
     await AdMob.initialize({
-      testingDevices: [], // Production - gerçek reklamlar
-      initializeForTesting: false, // Test modu KAPALI - production reklamlar
+      testingDevices: [],
+      initializeForTesting: platform === 'ios' ? true : false, // iOS: Test mode (AdMob review bekliyor)
     });
 
     // iOS ses ayarları (optional)

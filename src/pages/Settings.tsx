@@ -284,9 +284,9 @@ const Settings = () => {
       id: 'premium',
       name: t('subscription.premium.name'),
       price: isYearly
-        ? (premiumYearly?.product.priceString || '')
-        : (premiumMonthly?.product.priceString || ''),
-      yearlyPrice: premiumYearly?.product.priceString || '',
+        ? (premiumYearly?.product.priceString || '₺499.99/yıl')
+        : (premiumMonthly?.product.priceString || '₺49.99/ay'),
+      yearlyPrice: premiumYearly?.product.priceString || '₺499.99/yıl',
       dailyLimit: t('subscription.premium.dailyLimit'),
       features: t('subscription.premium.features', { returnObjects: true }) as string[],
       current: currentPlan === 'premium' && (
@@ -299,9 +299,9 @@ const Settings = () => {
       id: 'pro',
       name: t('subscription.pro.name'),
       price: isYearly
-        ? (proYearly?.product.priceString || '')
-        : (proMonthly?.product.priceString || ''),
-      yearlyPrice: proYearly?.product.priceString || '',
+        ? (proYearly?.product.priceString || '₺999.99/yıl')
+        : (proMonthly?.product.priceString || '₺99.99/ay'),
+      yearlyPrice: proYearly?.product.priceString || '₺999.99/yıl',
       dailyLimit: t('subscription.pro.dailyLimit'),
       features: t('subscription.pro.features', { returnObjects: true }) as string[],
       current: currentPlan === 'pro' && (
