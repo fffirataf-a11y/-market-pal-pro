@@ -391,7 +391,7 @@ const Lists = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-24">
       <header className="sticky top-0 z-50 bg-background/95 backdrop-blur border-b safe-top">
         <div className="container max-w-4xl py-2.5 sm:py-3">
           <div className="flex items-center justify-between mb-4">
