@@ -174,72 +174,59 @@ export const showRewardedAd = async (
     console.log(`[Ads] 📱 Platform: ${platform}`);
     console.log(`[Ads] 🎯 Ad Unit ID: ${adUnitId}`);
 
-    // Listener'ları ekle
-    console.log("[Ads] 🔊 Setting up listeners...");
-
     const admobAny = AdMob as any;
 
-    if (admobAny.addListener) {
-      admobAny.addListener('onRewardedVideoAdLoaded', (info: any) => {
-        console.log("[Ads] ✅ Rewarded ad loaded:", info);
-      });
+    // Timeout wrapper function
+    const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, errorMsg: string): Promise<T> => {
+      return Promise.race([
+        promise,
+        new Promise<T>((_, reject) =>
+          setTimeout(() => reject(new Error(errorMsg)), timeoutMs)
+        ),
+      ]);
+    };
 
-      admobAny.addListener('onRewardedVideoAdFailedToLoad', (error: any) => {
-        console.error("[Ads] ❌ Rewarded ad failed to load:", error);
-        options.onFailed?.(error);
-      });
-
-      admobAny.addListener('onRewardedVideoAdShowed', () => {
-        console.log("[Ads] 🎬 Rewarded ad showing");
-      });
-
-      admobAny.addListener('onRewardedVideoAdFailedToShow', (error: any) => {
-        console.error("[Ads] ❌ Rewarded ad failed to show:", error);
-        options.onFailed?.(error);
-      });
-
-      admobAny.addListener('onRewarded', (reward: any) => {
-        console.log("[Ads] 🎁 Reward received:", reward);
-        console.log(`[Ads] 💰 Amount: ${reward.amount}, Type: ${reward.type}`);
-      });
-
-      admobAny.addListener('onRewardedVideoAdClosed', () => {
-        console.log("[Ads] 🚪 Rewarded ad closed");
-      });
-    }
-
-    // Reklam yükle ve göster
+    // Reklam yükle ve göster (10 saniye timeout)
     console.log("[Ads] ⏳ Preparing rewarded ad...");
 
-    if (admobAny.prepareRewardVideoAd) {
-      await admobAny.prepareRewardVideoAd({ adId: adUnitId });
-    }
-
-    console.log("[Ads] 🎬 Showing rewarded ad...");
-
-    if (admobAny.showRewardVideoAd) {
-      const reward = await admobAny.showRewardVideoAd();
-      console.log("[Ads] ✅ Rewarded ad completed successfully:", reward);
-      options.onComplete?.();
-    }
-
-    // Listener'ları temizle
-    setTimeout(() => {
-      if (admobAny.removeAllListeners) {
-        admobAny.removeAllListeners();
+    try {
+      if (admobAny.prepareRewardVideoAd) {
+        await withTimeout(
+          admobAny.prepareRewardVideoAd({ adId: adUnitId }),
+          10000,
+          'Rewarded ad preparation timeout'
+        );
       }
-    }, 1000);
+
+      console.log("[Ads] 🎬 Showing rewarded ad...");
+
+      if (admobAny.showRewardVideoAd) {
+        const reward = await withTimeout(
+          admobAny.showRewardVideoAd(),
+          30000,
+          'Rewarded ad show timeout'
+        );
+        console.log("[Ads] ✅ Rewarded ad completed successfully:", reward);
+        options.onComplete?.();
+      }
+    } catch (adError: any) {
+      console.error("[Ads] ❌ Rewarded ad failed:", adError);
+
+      // iOS'ta reklam yüklenemezse placeholder göster
+      if (platform === 'ios') {
+        console.log("[Ads] 🔄 Falling back to placeholder (iOS ad unavailable)");
+        await showRewardedAdPlaceholder(plan, options);
+        return;
+      }
+
+      throw adError;
+    }
 
   } catch (error: any) {
     console.error("[Ads] ❌ Rewarded ad error:", error);
     console.error("[Ads] ❌ Error details:", JSON.stringify(error, null, 2));
 
     options.onFailed?.(error);
-
-    const admobAny = AdMob as any;
-    if (admobAny.removeAllListeners) {
-      admobAny.removeAllListeners();
-    }
   }
 };
 

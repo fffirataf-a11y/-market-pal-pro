@@ -330,16 +330,35 @@ const Settings = () => {
     }
 
     try {
+      console.log(`🚀 [IAP] Starting upgrade to ${planId} with period: ${isYearly ? 'yearly' : 'monthly'}`);
+      console.log(`🚀 [IAP] Offerings available:`, currentOffering ? 'YES' : 'NO');
+
+      if (!currentOffering) {
+        console.error('❌ [IAP] No offerings available - RevenueCat may not be initialized');
+        toast({
+          title: i18n.language === 'tr' ? 'Hata' : 'Error',
+          description: i18n.language === 'tr'
+            ? 'Ürünler yüklenemedi. Lütfen uygulamayı yeniden başlatın.'
+            : 'Products not loaded. Please restart the app.',
+          variant: "destructive",
+        });
+        return;
+      }
+
+      console.log(`🚀 [IAP] Available packages:`, currentOffering.availablePackages.map(p => p.identifier));
+
       let success = false;
       const period = isYearly ? 'yearly' : 'monthly';
 
-      console.log(`🚀 Upgrading to ${planId} with period: ${period}`);
+      console.log(`🚀 [IAP] Calling purchase function for ${planId} (${period})`);
 
       if (planId === 'premium') {
         success = await purchasePremium(period);
       } else if (planId === 'pro') {
         success = await purchasePro(period);
       }
+
+      console.log(`🚀 [IAP] Purchase result:`, success ? 'SUCCESS' : 'FAILED');
 
       if (success) {
         if (planId === 'premium') upgradeToPremium(period);
@@ -351,8 +370,20 @@ const Settings = () => {
             ? `${plan.name} planına başarıyla yükseltildi!`
             : `Successfully upgraded to ${plan.name}!`,
         });
+      } else {
+        console.error('❌ [IAP] Purchase failed but no error thrown');
+        toast({
+          title: i18n.language === 'tr' ? 'Satın alma iptal edildi' : 'Purchase Cancelled',
+          description: i18n.language === 'tr'
+            ? 'Satın alma işlemi tamamlanamadı.'
+            : 'Purchase could not be completed.',
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
+      console.error('❌ [IAP] Purchase error:', error);
+      console.error('❌ [IAP] Error details:', JSON.stringify(error, null, 2));
+
       toast({
         title: i18n.language === 'tr' ? 'Satın alma başarısız' : 'Purchase Failed',
         description: error.message || (i18n.language === 'tr' ? 'Bir hata oluştu' : 'Something went wrong'),
