@@ -284,9 +284,9 @@ const Settings = () => {
       id: 'premium',
       name: t('subscription.premium.name'),
       price: isYearly
-        ? (premiumYearly?.product.priceString || '₺499.99/yıl')
-        : (premiumMonthly?.product.priceString || '₺49.99/ay'),
-      yearlyPrice: premiumYearly?.product.priceString || '₺499.99/yıl',
+        ? (premiumYearly?.product.priceString || '$54.99/year')
+        : (premiumMonthly?.product.priceString || '$4.99/month'),
+      yearlyPrice: premiumYearly?.product.priceString || '$54.99/year',
       dailyLimit: t('subscription.premium.dailyLimit'),
       features: t('subscription.premium.features', { returnObjects: true }) as string[],
       current: currentPlan === 'premium' && (
@@ -299,9 +299,9 @@ const Settings = () => {
       id: 'pro',
       name: t('subscription.pro.name'),
       price: isYearly
-        ? (proYearly?.product.priceString || '₺999.99/yıl')
-        : (proMonthly?.product.priceString || '₺99.99/ay'),
-      yearlyPrice: proYearly?.product.priceString || '₺999.99/yıl',
+        ? (proYearly?.product.priceString || '$99.99/year')
+        : (proMonthly?.product.priceString || '$8.99/month'),
+      yearlyPrice: proYearly?.product.priceString || '$99.99/year',
       dailyLimit: t('subscription.pro.dailyLimit'),
       features: t('subscription.pro.features', { returnObjects: true }) as string[],
       current: currentPlan === 'pro' && (
@@ -696,10 +696,17 @@ const Settings = () => {
                 <div className="mb-4">
                   <h3 className="text-lg font-bold mb-2">{plan.name}</h3>
                   <div className="flex items-baseline gap-1 flex-wrap">
-                    <span className="text-xl sm:text-2xl font-bold break-all">{plan.price}</span>
-                    {plan.price !== 'Free' && plan.price !== 'Ücretsiz' && (
+                    <span className="text-xl sm:text-2xl font-bold break-all">
+                      {plan.price || (plan.id === 'premium'
+                        ? (isYearly ? '$54.99' : '$4.99')
+                        : plan.id === 'pro'
+                          ? (isYearly ? '$99.99' : '$8.99')
+                          : plan.price
+                      )}
+                    </span>
+                    {plan.price !== 'Free' && plan.price !== 'Ücretsiz' && plan.id !== 'free' && (
                       <span className="text-sm text-muted-foreground">
-                        /{isYearly ? 'year' : 'month'}
+                        /{isYearly ? 'yıl' : 'ay'}
                       </span>
                     )}
                   </div>
