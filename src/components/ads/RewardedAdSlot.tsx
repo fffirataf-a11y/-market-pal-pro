@@ -26,6 +26,7 @@ const RewardedAdSlot = ({
   disabled,
 }: RewardedAdSlotProps) => {
   const { t } = useTranslation();
+  const { toast } = useToast();
   const [status, setStatus] = useState<RewardedStatus>("idle");
   const [lastSimulated, setLastSimulated] = useState<Date | null>(null);
 
@@ -52,15 +53,13 @@ const RewardedAdSlot = ({
 
       // Show error toast to user
       const errorMessage = error.message || 'Failed to load ad';
-      if (typeof window !== 'undefined' && (window as any).showToast) {
-        (window as any).showToast({
-          title: "Ad Unavailable",
-          description: errorMessage.includes('timeout')
-            ? "Ad loading timed out. Please try again later."
-            : "Unable to load ad. Please check your connection.",
-          variant: "destructive"
-        });
-      }
+      toast({
+        title: "Ad Unavailable",
+        description: errorMessage.includes('timeout')
+          ? "Ad loading timed out. Please try again later."
+          : "Unable to load ad. Please check your connection.",
+        variant: "destructive"
+      });
     }
   };
 
