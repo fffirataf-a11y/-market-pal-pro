@@ -4,6 +4,7 @@ import { PlayCircle, Loader2 } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import type { PlanType } from "@/types/subscription";
+import { useToast } from "@/hooks/use-toast";
 import {
   isAdSupportedForPlan,
   showRewardedAd,
