@@ -139,6 +139,23 @@
     box-shadow: var(--shadow-md);
   }
 
+  /* Safe Area Support - Works on ALL iPhone models */
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+
   .shadow-elevated {
     box-shadow: var(--shadow-lg);
   }

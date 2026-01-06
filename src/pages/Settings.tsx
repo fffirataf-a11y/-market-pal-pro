@@ -364,7 +364,7 @@ const Settings = () => {
   return (
     <div className="min-h-screen bg-background pb-24 overflow-x-hidden">
       {/* Header */}
-      <header className="bg-background border-b" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header className="bg-background border-b safe-top">
         <div className="container max-w-2xl px-4 py-4 mx-auto">
           <div className="flex items-center gap-4">
             <Button
