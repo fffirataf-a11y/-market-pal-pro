@@ -42,38 +42,69 @@ export const usePurchases = (): UsePurchasesReturn => {
         console.log(`[RevenueCat] 🚀 Initializing for ${platform}...`);
         console.log(`[RevenueCat] 🔑 API Key:`, apiKey.substring(0, 20) + '...');
 
-        await Purchases.configure({ apiKey: apiKey });
-        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+        // Retry configuration
+        const maxRetries = 3;
+        let retryCount = 0;
+        let lastError: any = null;
 
-        console.log('[RevenueCat] ✅ Configured successfully');
+        while (retryCount < maxRetries) {
+          try {
+            console.log(`[RevenueCat] 📡 Attempt ${retryCount + 1}/${maxRetries}...`);
 
-        // Mevcut offerings'i al
-        console.log('[RevenueCat] 📦 Fetching offerings...');
-        const offerings = await Purchases.getOfferings();
+            await Purchases.configure({ apiKey: apiKey });
+            await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
 
-        console.log('[RevenueCat] 📦 Offerings fetched:', offerings);
-        console.log('[RevenueCat] 📦 Current offering:', offerings.current);
-        console.log('[RevenueCat] 📦 Available packages:', offerings.current?.availablePackages.map(p => p.identifier));
+            console.log('[RevenueCat] ✅ Configured successfully');
 
-        setOfferings(offerings);
+            // Mevcut offerings'i al
+            console.log('[RevenueCat] 📦 Fetching offerings...');
+            const offerings = await Purchases.getOfferings();
 
-        // Kullanıcı bilgilerini al
-        console.log('[RevenueCat] 👤 Fetching customer info...');
-        const { customerInfo: info } = await Purchases.getCustomerInfo();
-        setCustomerInfo(info);
+            console.log('[RevenueCat] 📦 Offerings fetched:', offerings);
+            console.log('[RevenueCat] 📦 Current offering:', offerings.current);
+            console.log('[RevenueCat] 📦 Available packages:', offerings.current?.availablePackages.map(p => p.identifier));
 
-        console.log('[RevenueCat] ✅ Initialization complete');
-        console.log('[RevenueCat] 👤 Customer info:', info);
+            setOfferings(offerings);
 
-        // Listener ekle
-        await Purchases.addCustomerInfoUpdateListener((info) => {
-          console.log('[RevenueCat] 🔄 Customer Info Updated:', info);
-          setCustomerInfo(info);
-        });
+            // Kullanıcı bilgilerini al
+            console.log('[RevenueCat] 👤 Fetching customer info...');
+            const { customerInfo: info } = await Purchases.getCustomerInfo();
+            setCustomerInfo(info);
+
+            console.log('[RevenueCat] ✅ Initialization complete');
+            console.log('[RevenueCat] 👤 Customer info:', info);
+
+            // Listener ekle
+            await Purchases.addCustomerInfoUpdateListener((info) => {
+              console.log('[RevenueCat] 🔄 Customer Info Updated:', info);
+              setCustomerInfo(info);
+            });
+
+            // Success - break retry loop
+            break;
+
+          } catch (err: any) {
+            lastError = err;
+            retryCount++;
+
+            console.error(`[RevenueCat] ❌ Attempt ${retryCount} failed:`, err);
+            console.error('[RevenueCat] ❌ Error details:', JSON.stringify(err, null, 2));
+
+            if (retryCount < maxRetries) {
+              // Exponential backoff: 1s, 2s, 4s
+              const backoffMs = Math.pow(2, retryCount - 1) * 1000;
+              console.log(`[RevenueCat] ⏳ Retrying in ${backoffMs}ms...`);
+              await new Promise(resolve => setTimeout(resolve, backoffMs));
+            } else {
+              // All retries failed
+              console.error('[RevenueCat] ❌ All retry attempts failed');
+              setError(lastError.message || 'RevenueCat initialization failed after 3 attempts');
+            }
+          }
+        }
 
       } catch (err: any) {
-        console.error('[RevenueCat] ❌ Initialization error:', err);
-        console.error('[RevenueCat] ❌ Error details:', JSON.stringify(err, null, 2));
+        console.error('[RevenueCat] ❌ Unexpected error:', err);
         setError(err.message || 'RevenueCat initialization failed');
       }
     };
