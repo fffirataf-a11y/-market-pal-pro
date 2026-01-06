@@ -32,36 +32,49 @@ export const usePurchases = (): UsePurchasesReturn => {
       try {
         // Sadece mobil platformlarda çalış
         if (!Capacitor.isNativePlatform()) {
-          console.log('Web platform - IAP disabled');
+          console.log('[RevenueCat] Web platform - IAP disabled');
           return;
         }
 
         const platform = Capacitor.getPlatform();
         const apiKey = platform === 'ios' ? REVENUECAT_API_KEY.ios : REVENUECAT_API_KEY.android;
 
+        console.log(`[RevenueCat] 🚀 Initializing for ${platform}...`);
+        console.log(`[RevenueCat] 🔑 API Key:`, apiKey.substring(0, 20) + '...');
+
         await Purchases.configure({ apiKey: apiKey });
         await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
 
+        console.log('[RevenueCat] ✅ Configured successfully');
+
         // Mevcut offerings'i al
+        console.log('[RevenueCat] 📦 Fetching offerings...');
         const offerings = await Purchases.getOfferings();
+
+        console.log('[RevenueCat] 📦 Offerings fetched:', offerings);
+        console.log('[RevenueCat] 📦 Current offering:', offerings.current);
+        console.log('[RevenueCat] 📦 Available packages:', offerings.current?.availablePackages.map(p => p.identifier));
+
         setOfferings(offerings);
 
         // Kullanıcı bilgilerini al
+        console.log('[RevenueCat] 👤 Fetching customer info...');
         const { customerInfo: info } = await Purchases.getCustomerInfo();
         setCustomerInfo(info);
 
-        console.log('✅ RevenueCat initialized successfully');
-        console.log('📦 Available offerings:', offerings);
-        console.log('👤 Customer info:', info);
+        console.log('[RevenueCat] ✅ Initialization complete');
+        console.log('[RevenueCat] 👤 Customer info:', info);
 
         // Listener ekle
         await Purchases.addCustomerInfoUpdateListener((info) => {
-          console.log('🔄 Customer Info Updated:', info);
+          console.log('[RevenueCat] 🔄 Customer Info Updated:', info);
           setCustomerInfo(info);
         });
 
-      } catch (err) {
-        console.error('RevenueCat init error:', err);
+      } catch (err: any) {
+        console.error('[RevenueCat] ❌ Initialization error:', err);
+        console.error('[RevenueCat] ❌ Error details:', JSON.stringify(err, null, 2));
+        setError(err.message || 'RevenueCat initialization failed');
       }
     };
 

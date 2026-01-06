@@ -211,14 +211,6 @@ export const showRewardedAd = async (
       }
     } catch (adError: any) {
       console.error("[Ads] ❌ Rewarded ad failed:", adError);
-
-      // iOS'ta reklam yüklenemezse placeholder göster
-      if (platform === 'ios') {
-        console.log("[Ads] 🔄 Falling back to placeholder (iOS ad unavailable)");
-        await showRewardedAdPlaceholder(plan, options);
-        return;
-      }
-
       throw adError;
     }
 
