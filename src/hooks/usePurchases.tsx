@@ -133,7 +133,7 @@ export const usePurchases = (): UsePurchasesReturn => {
       }
 
       // Premium package'ı bul
-      const identifier = period === 'monthly' ? 'premium_monthly' : 'premium_yearly';
+      const identifier = period === 'monthly' ? 'Premium_Monthly' : 'Premium_Year';
       const premiumPackage = offering.availablePackages.find(
         (pkg) => pkg.identifier === identifier
       );
@@ -202,7 +202,7 @@ export const usePurchases = (): UsePurchasesReturn => {
       }
 
       // Pro package'ı bul
-      const identifier = period === 'monthly' ? 'pro_monthly' : 'pro_yearly';
+      const identifier = period === 'monthly' ? 'Pro_Monthly' : 'Pro_Years';
       const proPackage = offering.availablePackages.find(
         (pkg) => pkg.identifier === identifier
       );
