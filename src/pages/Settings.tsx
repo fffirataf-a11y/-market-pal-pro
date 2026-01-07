@@ -71,6 +71,7 @@ const Settings = () => {
     restorePurchases,
     customerInfo,
     isLoading: purchaseLoading,
+    isInitializing,
     error: purchaseError,
     offerings,
   } = usePurchases();
@@ -413,18 +414,6 @@ const Settings = () => {
 
       {/* Content */}
       <main className="container max-w-2xl px-4 py-4 mx-auto space-y-4 pb-20">
-        {/* RevenueCat Error Alert */}
-        {purchaseError && (
-          <Alert variant="destructive">
-            <AlertTitle>{i18n.language === 'tr' ? 'Satın Alma Hatası' : 'Purchase Error'}</AlertTitle>
-            <AlertDescription>
-              {i18n.language === 'tr'
-                ? 'Ürünler yüklenemedi. Lütfen internet bağlantınızı kontrol edin ve uygulamayı yeniden başlatın.'
-                : 'Failed to load products. Please check your internet connection and restart the app.'}
-            </AlertDescription>
-          </Alert>
-        )}
-
         {/* Profile Section */}
         <Card className="p-4">
           <div className="flex items-center gap-3">

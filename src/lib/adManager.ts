@@ -192,32 +192,58 @@ export const showRewardedAd = async (
       ]);
     };
 
-    // Reklam yükle ve göster (10 saniye timeout)
-    console.log("[Ads] ⏳ Preparing rewarded ad...");
+    // Retry configuration for ad loading
+    const maxRetries = 3;
+    let retryCount = 0;
+    let lastAdError: any = null;
 
-    try {
-      if (admobAny.prepareRewardVideoAd) {
-        await withTimeout(
-          admobAny.prepareRewardVideoAd({ adId: adUnitId }),
-          10000,
-          'Rewarded ad preparation timeout'
-        );
+    while (retryCount < maxRetries) {
+      try {
+        console.log(`[Ads] 📡 Ad load attempt ${retryCount + 1}/${maxRetries}...`);
+
+        // Reklam yükle ve göster
+        console.log("[Ads] ⏳ Preparing rewarded ad...");
+
+        if (admobAny.prepareRewardVideoAd) {
+          await withTimeout(
+            admobAny.prepareRewardVideoAd({ adId: adUnitId }),
+            10000,
+            'Rewarded ad preparation timeout'
+          );
+        }
+
+        console.log("[Ads] 🎬 Showing rewarded ad...");
+
+        if (admobAny.showRewardVideoAd) {
+          const reward = await withTimeout(
+            admobAny.showRewardVideoAd(),
+            30000,
+            'Rewarded ad show timeout'
+          );
+          console.log("[Ads] ✅ Rewarded ad completed successfully:", reward);
+          options.onComplete?.();
+        }
+
+        // Success - break retry loop
+        break;
+
+      } catch (adError: any) {
+        lastAdError = adError;
+        retryCount++;
+
+        console.error(`[Ads] ❌ Attempt ${retryCount} failed:`, adError);
+
+        if (retryCount < maxRetries) {
+          // Exponential backoff: 1s, 2s
+          const backoffMs = Math.pow(2, retryCount - 1) * 1000;
+          console.log(`[Ads] ⏳ Retrying in ${backoffMs}ms...`);
+          await new Promise(resolve => setTimeout(resolve, backoffMs));
+        } else {
+          // All retries failed
+          console.error("[Ads] ❌ All ad retry attempts failed");
+          throw lastAdError;
+        }
       }
-
-      console.log("[Ads] 🎬 Showing rewarded ad...");
-
-      if (admobAny.showRewardVideoAd) {
-        const reward = await withTimeout(
-          admobAny.showRewardVideoAd(),
-          30000,
-          'Rewarded ad show timeout'
-        );
-        console.log("[Ads] ✅ Rewarded ad completed successfully:", reward);
-        options.onComplete?.();
-      }
-    } catch (adError: any) {
-      console.error("[Ads] ❌ Rewarded ad failed:", adError);
-      throw adError;
     }
 
   } catch (error: any) {

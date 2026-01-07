@@ -8,6 +8,7 @@ interface UsePurchasesReturn {
   offerings: PurchasesOfferings | null;
   customerInfo: CustomerInfo | null;
   isLoading: boolean;
+  isInitializing: boolean;
   error: string | null;
   purchasePremium: (period?: 'monthly' | 'yearly') => Promise<boolean>;
   purchasePro: (period?: 'monthly' | 'yearly') => Promise<boolean>;
@@ -24,6 +25,7 @@ export const usePurchases = (): UsePurchasesReturn => {
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isInitializing, setIsInitializing] = useState(true); // Track initialization
   const [error, setError] = useState<string | null>(null);
 
   // Initialize RevenueCat
@@ -81,6 +83,7 @@ export const usePurchases = (): UsePurchasesReturn => {
             });
 
             // Success - break retry loop
+            setIsInitializing(false);
             break;
 
           } catch (err: any) {
@@ -99,6 +102,7 @@ export const usePurchases = (): UsePurchasesReturn => {
               // All retries failed
               console.error('[RevenueCat] ❌ All retry attempts failed');
               setError(lastError.message || 'RevenueCat initialization failed after 3 attempts');
+              setIsInitializing(false);
             }
           }
         }
@@ -106,6 +110,7 @@ export const usePurchases = (): UsePurchasesReturn => {
       } catch (err: any) {
         console.error('[RevenueCat] ❌ Unexpected error:', err);
         setError(err.message || 'RevenueCat initialization failed');
+        setIsInitializing(false);
       }
     };
 
@@ -287,6 +292,7 @@ export const usePurchases = (): UsePurchasesReturn => {
     offerings,
     customerInfo,
     isLoading,
+    isInitializing,
     error,
     purchasePremium,
     purchasePro,

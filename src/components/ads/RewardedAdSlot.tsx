@@ -35,20 +35,30 @@ const RewardedAdSlot = ({
   }
 
   const handleWatchAd = async () => {
-    if (status === "loading" || disabled) return;
+    console.log('[RewardedAd] 🎬 Button clicked');
+    console.log('[RewardedAd] 📊 Current status:', status);
+    console.log('[RewardedAd] 🚫 Disabled:', disabled);
+
+    if (status === "loading" || disabled) {
+      console.log('[RewardedAd] ⛔ Blocked - status:', status, 'disabled:', disabled);
+      return;
+    }
 
     try {
+      console.log('[RewardedAd] ▶️ Starting ad request...');
       setStatus("loading");
       await showRewardedAd(plan, {
         placement,
         onComplete: () => {
+          console.log('[RewardedAd] ✅ Ad completed, granting reward');
           setStatus("completed");
           setLastSimulated(new Date());
           onReward?.();
         },
       });
     } catch (error: any) {
-      console.error("Rewarded ad error:", error);
+      console.error("[RewardedAd] ❌ Ad error:", error);
+      console.error("[RewardedAd] ❌ Error message:", error.message);
       setStatus("idle");
 
       // Show error toast to user
