@@ -17,7 +17,7 @@ interface UsePurchasesReturn {
 }
 
 const REVENUECAT_API_KEY = {
-  ios: 'appl_pMUUgJTRkfjqIQxitaAgTgSSBLV',
+  ios: 'appl_pMUUgJTRkfJqIQXitaAgTgSSBLV',
   android: 'goog_VeKdfhekIaXDfJyinZIRpzlqHON',
 };
 
