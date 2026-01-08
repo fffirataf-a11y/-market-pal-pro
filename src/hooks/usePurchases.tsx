@@ -66,6 +66,16 @@ export const usePurchases = (): UsePurchasesReturn => {
             console.log('[RevenueCat] 📦 Current offering:', offerings.current);
             console.log('[RevenueCat] 📦 Available packages:', offerings.current?.availablePackages.map(p => p.identifier));
 
+            // 🔍 DEBUG ALERT - RUNTIME EVIDENCE
+            if (!offerings.current) {
+              const allOfferingIds = Object.keys(offerings.all);
+              alert(`🚨 DEBUG: offerings.current is NULL!\n\nAll offerings: ${allOfferingIds.join(', ') || 'NONE'}\n\nThis is why IAP fails!`);
+            } else {
+              const packageIds = offerings.current.availablePackages.map(p => p.identifier).join(', ');
+              const packageCount = offerings.current.availablePackages.length;
+              alert(`✅ DEBUG: Current offering FOUND!\n\nPackages (${packageCount}):\n${packageIds}\n\nIAP should work!`);
+            }
+
             setOfferings(offerings);
 
             // Kullanıcı bilgilerini al
