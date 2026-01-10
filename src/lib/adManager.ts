@@ -77,16 +77,16 @@ export const initializeAdMob = async (): Promise<void> => {
       }
     }
 
-    // AdMob'u initialize et
-    const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
-    const useTestAds = platform === 'ios' && isDevelopment;
+    // CRITICAL FIX: Always use test ads until AdMob account fully approved
+    // TODO: Change to false after AdMob account approval confirmed
+    const useTestAds = true;
 
     console.log(`[Ads] 🎯 Environment: ${import.meta.env.MODE}`);
-    console.log(`[Ads] 🧪 Test mode: ${useTestAds ? 'ENABLED' : 'DISABLED'}`);
+    console.log(`[Ads] 🧪 Test mode: FORCED ENABLED (waiting AdMob approval)`);
 
     await AdMob.initialize({
-      testingDevices: [],
-      initializeForTesting: useTestAds, // Test mode only in development
+      testingDevices: [], // Add device ID here if needed
+      initializeForTesting: true, // Force test mode
     });
 
     // iOS ses ayarları (optional)

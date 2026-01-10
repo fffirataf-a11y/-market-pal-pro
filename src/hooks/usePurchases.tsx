@@ -143,7 +143,7 @@ export const usePurchases = (): UsePurchasesReturn => {
       }
 
       // Premium package'ı bul
-      const identifier = period === 'monthly' ? 'Premium_Monthly' : 'Premium_Year';
+      const identifier = period === 'monthly' ? 'premium_monthly' : 'premium_yearly';
       const premiumPackage = offering.availablePackages.find(
         (pkg) => pkg.identifier === identifier
       );
@@ -161,6 +161,16 @@ export const usePurchases = (): UsePurchasesReturn => {
 
       console.log(`🛒 Purchasing Premium plan (${period}):`, premiumPackage.identifier);
       console.log(`🆔 Product ID:`, premiumPackage.product.identifier);
+      console.log(`💰 Price:`, premiumPackage.product.priceString);
+
+      // CRITICAL: Enhanced logging for debugging
+      console.log('[IAP] 🚀 Initiating purchase...');
+      console.log('[IAP] 📱 Platform:', Capacitor.getPlatform());
+      console.log('[IAP] 📦 Package details:', JSON.stringify({
+        identifier: premiumPackage.identifier,
+        productId: premiumPackage.product.identifier,
+        price: premiumPackage.product.priceString
+      }));
 
       const result = await Purchases.purchasePackage({ aPackage: premiumPackage });
 
@@ -212,7 +222,7 @@ export const usePurchases = (): UsePurchasesReturn => {
       }
 
       // Pro package'ı bul
-      const identifier = period === 'monthly' ? 'Pro_Monthly' : 'Pro_Years';
+      const identifier = period === 'monthly' ? 'pro_monthly' : 'pro_yearly';
       const proPackage = offering.availablePackages.find(
         (pkg) => pkg.identifier === identifier
       );
@@ -230,6 +240,16 @@ export const usePurchases = (): UsePurchasesReturn => {
 
       console.log(`🛒 Purchasing Pro plan (${period}):`, proPackage.identifier);
       console.log(`🆔 Product ID:`, proPackage.product.identifier);
+      console.log(`💰 Price:`, proPackage.product.priceString);
+
+      // CRITICAL: Enhanced logging for debugging
+      console.log('[IAP] 🚀 Initiating purchase...');
+      console.log('[IAP] 📱 Platform:', Capacitor.getPlatform());
+      console.log('[IAP] 📦 Package details:', JSON.stringify({
+        identifier: proPackage.identifier,
+        productId: proPackage.product.identifier,
+        price: proPackage.product.priceString
+      }));
 
       const result = await Purchases.purchasePackage({ aPackage: proPackage });
 
