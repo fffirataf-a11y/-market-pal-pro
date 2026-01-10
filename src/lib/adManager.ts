@@ -28,8 +28,8 @@ const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'developme
 // ============================================
 
 const IOS_AD_UNIT_IDS = {
-  interstitial: "ca-app-pub-3272601063768123/8718595284", // Interstitial_GecisReklam
-  rewarded: "ca-app-pub-3272601063768123/4531938264", // Rewarded_Odullu
+  interstitial: "ca-app-pub-3272601063768123/6092431943", // FIXED: Corrected from dashboard
+  rewarded: "ca-app-pub-3272601063768123/5285233841", // FIXED: Corrected from dashboard
 };
 
 const ANDROID_AD_UNIT_IDS = {
