@@ -18,7 +18,7 @@ export type RewardedAdOptions = {
 
 // Plan bazlı reklam kontrolü
 const FORCED_AD_PLANS: PlanType[] = ["free"]; // Interstitial sadece free
-const REWARDED_AD_PLANS: PlanType[] = ["free", "premium"]; // Rewarded free ve premium
+const REWARDED_AD_PLANS: PlanType[] = ["free"]; // Rewarded ads SADECE free kullanıcılara gösterilir - Premium ve Pro kullanıcılar reklam görmez
 
 // Development mode kontrolü
 const isDevelopment = import.meta.env.DEV || import.meta.env.MODE === 'development';
