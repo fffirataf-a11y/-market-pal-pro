@@ -201,17 +201,17 @@ export const showRewardedAd = async (
       try {
         console.log(`[Ads] 📡 Ad load attempt ${retryCount + 1}/${maxRetries}...`);
 
-        // Load and show rewarded ad (v7.2.0 API)
+        // Load and show rewarded ad (v7.2.0 API - CORRECTED)
         console.log("[Ads] ⏳ Preparing rewarded ad...");
         await withTimeout(
-          AdMob.prepareRewardAd({ adId: adUnitId }),
+          AdMob.prepareRewardVideoAd({ adId: adUnitId }),
           15000,
           'Rewarded ad preparation timeout'
         );
 
         console.log("[Ads] 🎬 Showing rewarded ad...");
         const rewardResult = await withTimeout(
-          AdMob.showRewardAd(),
+          AdMob.showRewardVideoAd(),
           30000,
           'Rewarded ad show timeout'
         );
