@@ -201,28 +201,23 @@ export const showRewardedAd = async (
       try {
         console.log(`[Ads] 📡 Ad load attempt ${retryCount + 1}/${maxRetries}...`);
 
-        // Reklam yükle ve göster
+        // Load and show rewarded ad (v7.2.0 API)
         console.log("[Ads] ⏳ Preparing rewarded ad...");
-
-        if (admobAny.prepareRewardVideoAd) {
-          await withTimeout(
-            admobAny.prepareRewardVideoAd({ adId: adUnitId }),
-            10000,
-            'Rewarded ad preparation timeout'
-          );
-        }
+        await withTimeout(
+          AdMob.prepareRewardAd({ adId: adUnitId }),
+          15000,
+          'Rewarded ad preparation timeout'
+        );
 
         console.log("[Ads] 🎬 Showing rewarded ad...");
+        const rewardResult = await withTimeout(
+          AdMob.showRewardAd(),
+          30000,
+          'Rewarded ad show timeout'
+        );
 
-        if (admobAny.showRewardVideoAd) {
-          const reward = await withTimeout(
-            admobAny.showRewardVideoAd(),
-            30000,
-            'Rewarded ad show timeout'
-          );
-          console.log("[Ads] ✅ Rewarded ad completed successfully:", reward);
-          options.onComplete?.();
-        }
+        console.log("[Ads] ✅ Rewarded ad completed:", rewardResult);
+        options.onComplete?.();
 
         // Success - break retry loop
         break;
@@ -282,49 +277,18 @@ export const showInterstitialAd = async (plan: PlanType): Promise<void> => {
 
     const admobAny = AdMob as any;
 
-    // Listener'ları ekle
-    if (admobAny.addListener) {
-      admobAny.addListener('onInterstitialAdLoaded', () => {
-        console.log("[Ads] ✅ Interstitial ad loaded");
-      });
-
-      admobAny.addListener('onInterstitialAdFailedToLoad', (error: any) => {
-        console.error("[Ads] ❌ Interstitial ad failed to load:", error);
-      });
-
-      admobAny.addListener('onInterstitialAdShowed', () => {
-        console.log("[Ads] 🎬 Interstitial ad showing");
-      });
-
-      admobAny.addListener('onInterstitialAdDismissed', () => {
-        console.log("[Ads] 🚪 Interstitial ad dismissed");
-        if (admobAny.removeAllListeners) {
-          admobAny.removeAllListeners();
-        }
-      });
-    }
-
-    // Reklam yükle
+    // Load and show interstitial ad (v7.2.0 API)
     console.log("[Ads] ⏳ Preparing interstitial ad...");
-    if (admobAny.prepareInterstitial) {
-      await admobAny.prepareInterstitial({ adId: adUnitId });
-    }
+    await AdMob.prepareInterstitial({ adId: adUnitId });
 
-    // Reklam göster
     console.log("[Ads] 🎬 Showing interstitial ad...");
-    if (admobAny.showInterstitial) {
-      await admobAny.showInterstitial();
-      console.log("[Ads] ✅ Interstitial ad shown successfully");
-    }
+    await AdMob.showInterstitial();
+
+    console.log("[Ads] ✅ Interstitial ad shown successfully");
 
   } catch (error) {
     console.error("[Ads] ❌ Interstitial ad error:", error);
     console.error("[Ads] ❌ Error details:", JSON.stringify(error, null, 2));
-
-    const admobAny = AdMob as any;
-    if (admobAny.removeAllListeners) {
-      admobAny.removeAllListeners();
-    }
   }
 };
 
