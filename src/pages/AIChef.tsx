@@ -32,10 +32,17 @@ interface RecipeIngredient {
 const getApiConfig = () => {
   const isIOS = Capacitor.getPlatform() === 'ios';
 
-  // iOS için fallback key kullan
+  // Get API key from environment variables
   const geminiKey = isIOS
-    ? (import.meta.env.VITE_IOS_API_KEY || import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyDX1JXY1UCypEKk8cNF-qN-JMb2_YsWkZU')
-    : (import.meta.env.VITE_GEMINI_API_KEY || 'AIzaSyCpC993waGdgVHnwXp57zPLIRXclC2uWYA');
+    ? (import.meta.env.VITE_IOS_API_KEY || import.meta.env.VITE_GEMINI_API_KEY)
+    : import.meta.env.VITE_GEMINI_API_KEY;
+
+  // Validation
+  if (!geminiKey) {
+    console.error('❌ Gemini API key not found in environment variables');
+    console.error('💡 Please create .env file with VITE_GEMINI_API_KEY');
+    throw new Error('API key not configured. Please check .env file.');
+  }
 
   console.log('🔑 Platform:', Capacitor.getPlatform());
   console.log('🔑 API Key exists:', !!geminiKey);

@@ -128,7 +128,18 @@ const shouldShowRewardedAd = (plan: PlanType): boolean => {
 const getAdUnitId = (adType: 'interstitial' | 'rewarded'): string => {
   const platform = Capacitor.getPlatform() as 'ios' | 'android';
 
-  // Always use production ad units
+  // CRITICAL FIX: Always use test ads until AdMob account fully approved
+  // TODO: Change to false after AdMob account approval confirmed
+  const useTestAds = true;
+
+  // Test mode - use Google test IDs
+  if (useTestAds) {
+    console.log(`[Ads] 🧪 Using TEST ad unit for ${adType}`);
+    return TEST_AD_UNIT_IDS[adType];
+  }
+
+  // Production mode - use real ad units
+  console.log(`[Ads] 🎯 Using PRODUCTION ad unit for ${adType} on ${platform}`);
   if (platform === 'ios') {
     return IOS_AD_UNIT_IDS[adType];
   } else {

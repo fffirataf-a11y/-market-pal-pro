@@ -1,0 +1,39 @@
+name: Generate CSR
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-csr:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Generate CSR
+        run: |
+          # Create CSR configuration
+          cat > csr_config.txt << EOF
+          [req]
+          distinguished_name = req_distinguished_name
+          prompt = no
+          
+          [req_distinguished_name]
+          CN = FURKAN FIRAT
+          emailAddress = firatfurkan@yahoo.com
+          EOF
+          
+          # Generate private key and CSR
+          openssl req -new -newkey rsa:2048 -nodes \
+            -keyout private_key.pem \
+            -out CertificateSigningRequest.certSigningRequest \
+            -config csr_config.txt
+          
+          # Display CSR content
+          echo "=== CSR Generated Successfully ==="
+          cat CertificateSigningRequest.certSigningRequest
+          
+      - name: Upload CSR as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: certificate-signing-request
+          path: CertificateSigningRequest.certSigningRequest
+          retention-days: 1
