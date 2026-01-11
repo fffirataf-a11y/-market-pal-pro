@@ -39,12 +39,20 @@ jobs:
           
           echo "Private key recreated"
           
-      - name: Convert CER to P12
+      - name: Convert CER to PEM
+        run: |
+          # Convert DER-encoded CER to PEM format
+          openssl x509 -inform DER -in distribution.cer -out distribution.pem
+          
+          echo "=== CER converted to PEM ==="
+          cat distribution.pem
+          
+      - name: Convert to P12
         run: |
           # Combine certificate and private key into P12
           openssl pkcs12 -export \
             -inkey private_key.pem \
-            -in distribution.cer \
+            -in distribution.pem \
             -out distribution.p12 \
             -password pass:123456
           
