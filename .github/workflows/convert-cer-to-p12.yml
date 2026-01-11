@@ -1,0 +1,59 @@
+name: Convert CER to P12
+
+on:
+  workflow_dispatch:
+
+jobs:
+  convert-to-p12:
+    runs-on: macos-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Download distribution.cer
+        run: |
+          # User will manually upload distribution.cer to repo
+          # Or we can download from a URL
+          echo "Checking for distribution.cer..."
+          ls -la
+          
+      - name: Recreate Private Key
+        run: |
+          # Recreate the same private key from CSR generation
+          cat > csr_config.txt << EOF
+          [req]
+          distinguished_name = req_distinguished_name
+          prompt = no
+          
+          [req_distinguished_name]
+          CN = FURKAN FIRAT
+          emailAddress = firatfurkan@yahoo.com
+          EOF
+          
+          # Generate the same private key
+          openssl req -new -newkey rsa:2048 -nodes \
+            -keyout private_key.pem \
+            -out temp_csr.certSigningRequest \
+            -config csr_config.txt
+          
+          echo "Private key recreated"
+          
+      - name: Convert CER to P12
+        run: |
+          # Combine certificate and private key into P12
+          openssl pkcs12 -export \
+            -inkey private_key.pem \
+            -in distribution.cer \
+            -out distribution.p12 \
+            -password pass:123456
+          
+          echo "=== P12 Created Successfully ==="
+          ls -lh distribution.p12
+          
+      - name: Upload P12 as Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: distribution-p12
+          path: distribution.p12
+          retention-days: 1
