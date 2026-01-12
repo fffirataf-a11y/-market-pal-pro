@@ -72,9 +72,9 @@ const Profile = () => {
     return saved
       ? JSON.parse(saved)
       : {
-        name: "Guest User",
+        name: "User",
         username: "",
-        email: "guest@smartmarket.app",
+        email: "",
         avatar: AVATARS[0].url,
       };
   });

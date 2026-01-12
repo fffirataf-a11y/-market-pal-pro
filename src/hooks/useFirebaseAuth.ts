@@ -164,9 +164,22 @@ export const useFirebaseAuth = () => {
       // OTOMATİK GİRİŞ İÇİN SIGNOUT YAPMIYORUZ
       // await signOut(auth);
 
+      // ✅ LOCAL STORAGE'A KULLANICI BİLGİLERİNİ KAYDET (Settings için)
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        name: fullName,
+        fullName: fullName,
+        searchKey: fullName.toLowerCase(),
+        avatar: "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
+      };
+      localStorage.setItem('user', JSON.stringify(userData));
+      console.log('[Auth] ✅ User data saved to localStorage:', userData);
+
       // Local storage güncelle (Auto login için)
       localStorage.setItem('userToken', user.uid);
       window.dispatchEvent(new Event('auth-change'));
+      window.dispatchEvent(new Event('user-data-change')); // ← Settings'i güncelle
 
       toast({
         title: "Success",
