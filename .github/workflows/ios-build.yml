@@ -40,7 +40,13 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
           # import certificate and provisioning profile from secrets
-          echo "$BUILD_CERTIFICATE_BASE64" | base64 -D -o $CERTIFICATE_PATH
+          echo "$BUILD_CERTIFICATE_BASE64" > cert_secret_b64.txt
+          echo "MD5 of Secret Text:"
+          md5 cert_secret_b64.txt
+          
+          # Decode using temporary file input
+          base64 -D -i cert_secret_b64.txt -o $CERTIFICATE_PATH
+          
           echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 -D -o $PP_PATH
           
           # Debugging: Check file size and hash
