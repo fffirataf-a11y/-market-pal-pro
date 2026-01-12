@@ -93,8 +93,8 @@ const Settings = () => {
     }
 
     return {
-      name: "Guest User",
-      email: "guest@smartmarket.app",
+      name: "User",
+      email: "",
       avatar: "https://api.dicebear.com/9.x/micah/svg?seed=SmartMarket&backgroundColor=b6e3f4,c0aede,ffd5dc&radius=50"
     };
   });

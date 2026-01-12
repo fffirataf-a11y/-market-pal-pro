@@ -312,13 +312,24 @@ export const usePurchases = (): UsePurchasesReturn => {
 
   // Aktif aboneliği kontrol et
   const checkActiveSubscription = (): 'free' | 'premium' | 'pro' => {
-    if (!customerInfo) return 'free';
+    // Web platformunda veya RevenueCat initialize olmadan önce FREE döndür
+    if (!customerInfo) {
+      console.log('[RevenueCat] checkActiveSubscription: No customerInfo, returning FREE');
+      return 'free';
+    }
 
     const entitlements = customerInfo.entitlements.active;
 
-    if (entitlements['pro']) return 'pro';
-    if (entitlements['premium']) return 'premium';
+    if (entitlements['pro']) {
+      console.log('[RevenueCat] checkActiveSubscription: PRO active');
+      return 'pro';
+    }
+    if (entitlements['premium']) {
+      console.log('[RevenueCat] checkActiveSubscription: PREMIUM active');
+      return 'premium';
+    }
 
+    console.log('[RevenueCat] checkActiveSubscription: No active entitlements, returning FREE');
     return 'free';
   };
 
