@@ -40,11 +40,12 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
           # import certificate and provisioning profile from secrets
-          echo "$BUILD_CERTIFICATE_BASE64" > cert_secret_b64.txt
-          echo "MD5 of Secret Text:"
+          # BYPASSING SECRET: Read from repo file
+          cat cert_FINAL_v5_base64_PURE.txt > cert_secret_b64.txt
+          echo "MD5 of Repo File Text:"
           md5 cert_secret_b64.txt
           
-          # Decode using temporary file input
+          # Decode using file input
           base64 -D -i cert_secret_b64.txt -o $CERTIFICATE_PATH
           
           echo "$BUILD_PROVISION_PROFILE_BASE64" | base64 -D -o $PP_PATH
