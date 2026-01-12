@@ -73,7 +73,11 @@ export const usePurchases = (): UsePurchasesReturn => {
             } else {
               const packageIds = offerings.current.availablePackages.map(p => p.identifier).join(', ');
               const packageCount = offerings.current.availablePackages.length;
-              alert(`✅ DEBUG: Current offering FOUND!\n\nPackages (${packageCount}):\n${packageIds}\n\nIAP should work!`);
+              /*
+            if (import.meta.env.DEV) {
+               console.log(`✅ DEBUG: Current offering FOUND! Packages (${packageCount}): ${packageIds}`);
+            }
+            */
             }
 
             setOfferings(offerings);

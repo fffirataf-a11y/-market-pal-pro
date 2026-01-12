@@ -118,11 +118,15 @@ export const isAdSupportedForPlan = (plan: PlanType): boolean => {
 };
 
 const shouldShowForcedAd = (plan: PlanType): boolean => {
-  return FORCED_AD_PLANS.includes(plan);
+  const result = FORCED_AD_PLANS.includes(plan);
+  console.log(`[Ads] shouldShowForcedAd(${plan}) = ${result}`);
+  return result;
 };
 
 const shouldShowRewardedAd = (plan: PlanType): boolean => {
-  return REWARDED_AD_PLANS.includes(plan);
+  const result = REWARDED_AD_PLANS.includes(plan);
+  console.log(`[Ads] shouldShowRewardedAd(${plan}) = ${result}`);
+  return result;
 };
 
 const getAdUnitId = (adType: 'interstitial' | 'rewarded'): string => {
