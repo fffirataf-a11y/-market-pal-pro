@@ -312,6 +312,12 @@ export const usePurchases = (): UsePurchasesReturn => {
 
   // Aktif aboneliği kontrol et
   const checkActiveSubscription = (): 'free' | 'premium' | 'pro' => {
+    // 🌐 WEB PLATFORMU - RevenueCat çalışmaz, ZORUNLU FREE
+    if (!Capacitor.isNativePlatform()) {
+      console.log('[RevenueCat] 🌐 Web platform detected → Forcing FREE plan');
+      return 'free';
+    }
+
     // Web platformunda veya RevenueCat initialize olmadan önce FREE döndür
     if (!customerInfo) {
       console.log('[RevenueCat] checkActiveSubscription: No customerInfo, returning FREE');

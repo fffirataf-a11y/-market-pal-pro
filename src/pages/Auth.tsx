@@ -380,6 +380,7 @@ const Auth = () => {
                     />
                   </div>
 
+                  {/* REFERRAL CODE - ŞU ANLIK KAPALI (Build 85)
                   <div className="space-y-2">
                     <Label htmlFor="signup-referral">{t('referral.enterCode')}</Label>
                     <Input
@@ -396,6 +397,7 @@ const Auth = () => {
                         : 'Enter your friend\'s referral code to get 7 days free'}
                     </p>
                   </div>
+                  */}
 
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? (
