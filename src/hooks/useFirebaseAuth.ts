@@ -45,10 +45,11 @@ export const useFirebaseAuth = () => {
       const user = userCredential.user;
       console.log('Login successful for:', user.email);
 
-      // Email doğrulama kontrolünü GEÇİCİ OLARAK DEVRE DIŞI BIRAK
-      // Apple review ekibi için bu kontrolü atlamamız gerekebilir
+      // 🛑 EMAIL VERIFICATION KONTROLÜ (ZORUNLU)
       if (!user.emailVerified) {
-        console.warn('Email not verified but allowing access for testing:', user.email);
+        console.warn('⚠️ Email not verified! Blocking access.');
+        await signOut(auth);
+        throw new Error('Email doğrulanmadan giriş yapılamaz. Lütfen email kutunuzu kontrol edin.');
       }
 
       // ✅ Firestore'dan kullanıcı bilgilerini al (Timeout ekli)

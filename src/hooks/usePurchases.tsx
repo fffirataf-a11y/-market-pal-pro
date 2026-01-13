@@ -3,6 +3,7 @@ import { Purchases, LOG_LEVEL, PurchasesOfferings, CustomerInfo } from '@revenue
 import { Capacitor } from '@capacitor/core';
 
 export type PurchaseStatus = 'idle' | 'loading' | 'success' | 'error';
+export type PlanType = 'free' | 'premium' | 'pro';
 
 interface UsePurchasesReturn {
   offerings: PurchasesOfferings | null;
@@ -13,331 +14,148 @@ interface UsePurchasesReturn {
   purchasePremium: (period?: 'monthly' | 'yearly') => Promise<boolean>;
   purchasePro: (period?: 'monthly' | 'yearly') => Promise<boolean>;
   restorePurchases: () => Promise<boolean>;
-  checkActiveSubscription: () => 'free' | 'premium' | 'pro';
+  checkActiveSubscription: () => PlanType;
+  activePlan: PlanType;
 }
 
 const REVENUECAT_API_KEY = {
   ios: 'appl_pMUUgJTRkfJqIQXitaAgTgSSBLV',
-  android: 'goog_VeKdfhekIaXDfJyinZIRpzlqHON',
+  android: 'goog_VeKdfhekIaXDfJyinZIRPzlqHON',
 };
 
 export const usePurchases = (): UsePurchasesReturn => {
+  const [activePlan, setActivePlan] = useState<PlanType>('free'); // ZORUNLU KURAL 3: DEFAULT FREE
   const [offerings, setOfferings] = useState<PurchasesOfferings | null>(null);
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitializing, setIsInitializing] = useState(true); // Track initialization
+  const [isInitializing, setIsInitializing] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Initialize RevenueCat
   useEffect(() => {
-    const initPurchases = async () => {
+    const initialize = async () => {
+      const platform = Capacitor.getPlatform();
+      console.log('[RevenueCat] 🎯 Platform:', platform);
+
+      // WEB → ZORUNLU FREE
+      if (!Capacitor.isNativePlatform()) {
+        console.log('[RevenueCat] 🌐 WEB → FORCING FREE');
+        setActivePlan('free');
+        setIsInitializing(false);
+        return;
+      }
+
       try {
-        // Sadece mobil platformlarda çalış
-        if (!Capacitor.isNativePlatform()) {
-          console.log('[RevenueCat] Web platform - IAP disabled');
-          return;
-        }
+        console.log('[RevenueCat] 🔄 RESET IDENTITY (LogOut)');
+        await Purchases.logOut(); // ZORUNLU KURAL 1: IDENTITY RESET
 
-        const platform = Capacitor.getPlatform();
         const apiKey = platform === 'ios' ? REVENUECAT_API_KEY.ios : REVENUECAT_API_KEY.android;
+        await Purchases.configure({ apiKey });
+        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
 
-        console.log(`[RevenueCat] 🚀 Initializing for ${platform}...`);
-        console.log(`[RevenueCat] 🔑 API Key:`, apiKey.substring(0, 20) + '...');
+        console.log('[RevenueCat] 👤 Fetching customer info...');
+        const info = await Purchases.getCustomerInfo();
+        setCustomerInfo(info.customerInfo);
 
-        // Retry configuration
-        const maxRetries = 3;
-        let retryCount = 0;
-        let lastError: any = null;
-
-        while (retryCount < maxRetries) {
-          try {
-            console.log(`[RevenueCat] 📡 Attempt ${retryCount + 1}/${maxRetries}...`);
-
-            await Purchases.configure({ apiKey: apiKey });
-            await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
-
-            console.log('[RevenueCat] ✅ Configured successfully');
-
-            // Mevcut offerings'i al
-            console.log('[RevenueCat] 📦 Fetching offerings...');
-            const offerings = await Purchases.getOfferings();
-
-            console.log('[RevenueCat] 📦 Offerings fetched:', offerings);
-            console.log('[RevenueCat] 📦 Current offering:', offerings.current);
-            console.log('[RevenueCat] 📦 Available packages:', offerings.current?.availablePackages.map(p => p.identifier));
-
-            // 🔍 DEBUG ALERT - RUNTIME EVIDENCE
-            if (!offerings.current) {
-              const allOfferingIds = Object.keys(offerings.all);
-              alert(`🚨 DEBUG: offerings.current is NULL!\n\nAll offerings: ${allOfferingIds.join(', ') || 'NONE'}\n\nThis is why IAP fails!`);
-            } else {
-              const packageIds = offerings.current.availablePackages.map(p => p.identifier).join(', ');
-              const packageCount = offerings.current.availablePackages.length;
-              /*
-            if (import.meta.env.DEV) {
-               console.log(`✅ DEBUG: Current offering FOUND! Packages (${packageCount}): ${packageIds}`);
-            }
-            */
-            }
-
-            setOfferings(offerings);
-
-            // Kullanıcı bilgilerini al
-            console.log('[RevenueCat] 👤 Fetching customer info...');
-            const { customerInfo: info } = await Purchases.getCustomerInfo();
-            setCustomerInfo(info);
-
-            console.log('[RevenueCat] ✅ Initialization complete');
-            console.log('[RevenueCat] 👤 Customer info:', info);
-
-            // Listener ekle
-            await Purchases.addCustomerInfoUpdateListener((info) => {
-              console.log('[RevenueCat] 🔄 Customer Info Updated:', info);
-              setCustomerInfo(info);
-            });
-
-            // Success - break retry loop
-            setIsInitializing(false);
-            break;
-
-          } catch (err: any) {
-            lastError = err;
-            retryCount++;
-
-            console.error(`[RevenueCat] ❌ Attempt ${retryCount} failed:`, err);
-            console.error('[RevenueCat] ❌ Error details:', JSON.stringify(err, null, 2));
-
-            if (retryCount < maxRetries) {
-              // Exponential backoff: 1s, 2s, 4s
-              const backoffMs = Math.pow(2, retryCount - 1) * 1000;
-              console.log(`[RevenueCat] ⏳ Retrying in ${backoffMs}ms...`);
-              await new Promise(resolve => setTimeout(resolve, backoffMs));
-            } else {
-              // All retries failed
-              console.error('[RevenueCat] ❌ All retry attempts failed');
-              setError(lastError.message || 'RevenueCat initialization failed after 3 attempts');
-              setIsInitializing(false);
-            }
-          }
+        // Offerings (Optional but useful)
+        try {
+          const offers = await Purchases.getOfferings();
+          setOfferings(offers);
+        } catch (err) {
+          console.warn('[RevenueCat] Failed to fetch offerings', err);
         }
 
-      } catch (err: any) {
-        console.error('[RevenueCat] ❌ Unexpected error:', err);
-        setError(err.message || 'RevenueCat initialization failed');
+        const ent = info.customerInfo.entitlements.active;
+        let plan: PlanType = 'free';
+
+        if (ent['pro']) {
+          plan = 'pro';
+        } else if (ent['premium']) {
+          plan = 'premium';
+        }
+
+        console.log('[RevenueCat] 🎯 FINAL PLAN:', plan);
+        setActivePlan(plan);
+
+      } catch (e: any) {
+        console.error('[RevenueCat] ❌ ERROR → FREE', e);
+        // Error handling forces FREE
+        setActivePlan('free');
+        setError(e.message || 'Initialization failed');
+      } finally {
         setIsInitializing(false);
       }
     };
 
-    initPurchases();
+    initialize();
   }, []);
 
-  // Premium satın al
-  const purchasePremium = async (period: 'monthly' | 'yearly' = 'monthly'): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-
+  const purchasePackage = async (packageIdentifier: string): Promise<boolean> => {
     try {
-      if (!Capacitor.isNativePlatform()) {
-        throw new Error('IAP sadece mobil platformlarda çalışır');
+      setIsLoading(true);
+      setError(null);
+
+      if (!offerings?.current) {
+        throw new Error('No offerings available');
       }
 
-      const offering = offerings?.current;
-      if (!offering) {
-        throw new Error('Ürün bulunamadı');
-      }
-
-      // Premium package'ı bul
-      const identifier = period === 'monthly' ? 'premium_monthly' : 'premium_yearly';
-      const premiumPackage = offering.availablePackages.find(
-        (pkg) => pkg.identifier === identifier
+      const pkg = offerings.current.availablePackages.find(
+        (p) => p.identifier === packageIdentifier
       );
 
-      if (!premiumPackage) {
-        console.error(`❌ Premium package (${identifier}) not found. Available packages:`,
-          offering.availablePackages.map(p => p.identifier));
-        throw new Error('Premium paketi bulunamadı');
+      if (!pkg) {
+        throw new Error('Package not found');
       }
 
-      // Heuristic check
-      if (period === 'yearly' && !premiumPackage.identifier.includes('yearly')) {
-        console.warn('⚠️ Warning: Requested YEARLY period but package identifier does not contain "yearly". Check RevenueCat configuration.');
-      }
+      const { customerInfo } = await Purchases.purchasePackage({ aPackage: pkg });
+      setCustomerInfo(customerInfo);
 
-      console.log(`🛒 Purchasing Premium plan (${period}):`, premiumPackage.identifier);
-      console.log(`🆔 Product ID:`, premiumPackage.product.identifier);
-      console.log(`💰 Price:`, premiumPackage.product.priceString);
+      // Update plan immediately after purchase
+      const ent = customerInfo.entitlements.active;
+      if (ent['pro']) setActivePlan('pro');
+      else if (ent['premium']) setActivePlan('premium');
 
-      // CRITICAL: Enhanced logging for debugging
-      console.log('[IAP] 🚀 Initiating purchase...');
-      console.log('[IAP] 📱 Platform:', Capacitor.getPlatform());
-      console.log('[IAP] 📦 Package details:', JSON.stringify({
-        identifier: premiumPackage.identifier,
-        productId: premiumPackage.product.identifier,
-        price: premiumPackage.product.priceString
-      }));
-
-      const result = await Purchases.purchasePackage({ aPackage: premiumPackage });
-
-      console.log('📦 Purchase result:', result);
-
-      if (result.customerInfo.entitlements.active['premium']) {
-        setCustomerInfo(result.customerInfo);
-        console.log('✅ Premium plan purchase successful');
-        setIsLoading(false);
-        return true;
-      }
-
-      throw new Error('Satın alma başarısız - Premium entitlement aktif değil');
-    } catch (err: any) {
-      console.error('❌ Premium purchase error:', err);
-
-      // Check if user cancelled (not a real error)
-      const isCancellation = err.code === '1' ||
-        err.userCancelled === true ||
-        err.message?.toLowerCase().includes('cancel') ||
-        err.message?.toLowerCase().includes('user');
-
-      if (isCancellation) {
-        console.log('[IAP] User cancelled purchase');
-        setIsLoading(false);
-        return false;
-      }
-
-      // Real error
-      setError(err.message);
-      setIsLoading(false);
-      return false;
-    }
-  };
-
-  // Pro satın al
-  const purchasePro = async (period: 'monthly' | 'yearly' = 'monthly'): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      if (!Capacitor.isNativePlatform()) {
-        throw new Error('IAP sadece mobil platformlarda çalışır');
-      }
-
-      const offering = offerings?.current;
-      if (!offering) {
-        throw new Error('Ürün bulunamadı');
-      }
-
-      // Pro package'ı bul
-      const identifier = period === 'monthly' ? 'pro_monthly' : 'pro_yearly';
-      const proPackage = offering.availablePackages.find(
-        (pkg) => pkg.identifier === identifier
-      );
-
-      if (!proPackage) {
-        console.error(`❌ Pro package (${identifier}) not found. Available packages:`,
-          offering.availablePackages.map(p => p.identifier));
-        throw new Error('Pro paketi bulunamadı');
-      }
-
-      // Heuristic check
-      if (period === 'yearly' && !proPackage.identifier.includes('yearly')) {
-        console.warn('⚠️ Warning: Requested YEARLY period but package identifier does not contain "yearly". Check RevenueCat configuration.');
-      }
-
-      console.log(`🛒 Purchasing Pro plan (${period}):`, proPackage.identifier);
-      console.log(`🆔 Product ID:`, proPackage.product.identifier);
-      console.log(`💰 Price:`, proPackage.product.priceString);
-
-      // CRITICAL: Enhanced logging for debugging
-      console.log('[IAP] 🚀 Initiating purchase...');
-      console.log('[IAP] 📱 Platform:', Capacitor.getPlatform());
-      console.log('[IAP] 📦 Package details:', JSON.stringify({
-        identifier: proPackage.identifier,
-        productId: proPackage.product.identifier,
-        price: proPackage.product.priceString
-      }));
-
-      const result = await Purchases.purchasePackage({ aPackage: proPackage });
-
-      console.log('📦 Purchase result:', result);
-
-      if (result.customerInfo.entitlements.active['pro']) {
-        setCustomerInfo(result.customerInfo);
-        console.log('✅ Pro plan purchase successful');
-        setIsLoading(false);
-        return true;
-      }
-
-      throw new Error('Satın alma başarısız - Pro entitlement aktif değil');
-    } catch (err: any) {
-      console.error('❌ Pro purchase error:', err);
-
-      // Check if user cancelled (not a real error)
-      const isCancellation = err.code === '1' ||
-        err.userCancelled === true ||
-        err.message?.toLowerCase().includes('cancel') ||
-        err.message?.toLowerCase().includes('user');
-
-      if (isCancellation) {
-        console.log('[IAP] User cancelled purchase');
-        setIsLoading(false);
-        return false;
-      }
-
-      // Real error
-      setError(err.message);
-      setIsLoading(false);
-      return false;
-    }
-  };
-
-  // Satın alımları geri yükle
-  const restorePurchases = async (): Promise<boolean> => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      if (!Capacitor.isNativePlatform()) {
-        throw new Error('IAP sadece mobil platformlarda çalışır');
-      }
-
-      const info = await Purchases.restorePurchases();
-      setCustomerInfo(info.customerInfo);
-      setIsLoading(false);
       return true;
     } catch (err: any) {
-      console.error('Restore error:', err);
-      setError(err.message);
-      setIsLoading(false);
+      if (!err.userCancelled) {
+        setError(err.message);
+        console.error('[RevenueCat] Purchase failed:', err);
+      }
       return false;
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  // Aktif aboneliği kontrol et
-  const checkActiveSubscription = (): 'free' | 'premium' | 'pro' => {
-    // 🌐 WEB PLATFORMU - RevenueCat çalışmaz, ZORUNLU FREE
-    if (!Capacitor.isNativePlatform()) {
-      console.log('[RevenueCat] 🌐 Web platform detected → Forcing FREE plan');
-      return 'free';
-    }
+  const purchasePremium = (period: 'monthly' | 'yearly' = 'monthly') =>
+    purchasePackage(period === 'monthly' ? '$rc_monthly' : '$rc_annual');
 
-    // Web platformunda veya RevenueCat initialize olmadan önce FREE döndür
-    if (!customerInfo) {
-      console.log('[RevenueCat] checkActiveSubscription: No customerInfo, returning FREE');
-      return 'free';
-    }
+  const purchasePro = (period: 'monthly' | 'yearly' = 'monthly') =>
+    purchasePackage(period === 'monthly' ? 'pro_monthly' : 'pro_yearly');
 
-    const entitlements = customerInfo.entitlements.active;
+  const restorePurchases = async (): Promise<boolean> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const { customerInfo } = await Purchases.restorePurchases();
+      setCustomerInfo(customerInfo);
 
-    if (entitlements['pro']) {
-      console.log('[RevenueCat] checkActiveSubscription: PRO active');
-      return 'pro';
-    }
-    if (entitlements['premium']) {
-      console.log('[RevenueCat] checkActiveSubscription: PREMIUM active');
-      return 'premium';
-    }
+      // Update plan after restore
+      const ent = customerInfo.entitlements.active;
+      if (ent['pro']) setActivePlan('pro');
+      else if (ent['premium']) setActivePlan('premium');
+      else setActivePlan('free');
 
-    console.log('[RevenueCat] checkActiveSubscription: No active entitlements, returning FREE');
-    return 'free';
+      return true;
+    } catch (err: any) {
+      setError(err.message);
+      console.error('[RevenueCat] Restore failed:', err);
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const checkActiveSubscription = () => activePlan;
 
   return {
     offerings,
@@ -349,5 +167,6 @@ export const usePurchases = (): UsePurchasesReturn => {
     purchasePro,
     restorePurchases,
     checkActiveSubscription,
+    activePlan
   };
 };
