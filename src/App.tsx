@@ -13,6 +13,7 @@ import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
 import IconPreview from "./pages/IconPreview";
 import Checkout from "./pages/Checkout";
+import DebugAudit from "./pages/DebugAudit";
 
 const App = () => {
   // ✅ Gerçek zamanlı notification dinleyici
@@ -33,7 +34,7 @@ const App = () => {
     setupAdMob();
   }, []);
 
-  const { plan, upgradeToPremium, upgradeToPro } = useSubscription();
+  const { plan, upgradeToPremium, upgradeToPro, downgradeToFree } = useSubscription();
   const { customerInfo, isLoading: purchasesLoading } = usePurchases();
 
   const [isAuthenticated, setIsAuthenticated] = useState(
@@ -43,6 +44,7 @@ const App = () => {
     localStorage.getItem("onboardingCompleted") === "true"
   );
 
+  // RevenueCat ile abonelik durumunu senkronize et
   // RevenueCat ile abonelik durumunu senkronize et
   useEffect(() => {
     if (!purchasesLoading && customerInfo) {
@@ -58,9 +60,13 @@ const App = () => {
         const productId = entitlements['premium'].productIdentifier;
         const isYearly = productId.includes('yearly') || productId.includes('annual');
         upgradeToPremium(isYearly ? 'yearly' : 'monthly');
+      } else if (!entitlements['pro'] && !entitlements['premium'] && plan !== 'free') {
+        // ✅ NEW: Two-way sync - Downgrade if no active entitlements
+        console.log('🔄 Syncing subscription: Downgrading to FREE (No active entitlements)');
+        downgradeToFree();
       }
     }
-  }, [customerInfo, purchasesLoading, plan, upgradeToPremium, upgradeToPro]);
+  }, [customerInfo, purchasesLoading, plan, upgradeToPremium, upgradeToPro, downgradeToFree]);
 
   // localStorage değişikliklerini dinle
   useEffect(() => {
@@ -138,6 +144,12 @@ const App = () => {
         <Route
           path="/checkout"
           element={isAuthenticated ? <Checkout /> : <Navigate to="/auth" replace />}
+        />
+
+        {/* AUDIT ROUTE - REMOVE BEFORE PROD */}
+        <Route
+          path="/debug-audit"
+          element={isAuthenticated ? <DebugAudit /> : <Navigate to="/auth" replace />}
         />
 
         <Route path="*" element={<Navigate to="/" replace />} />

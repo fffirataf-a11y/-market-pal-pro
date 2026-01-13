@@ -49,7 +49,7 @@ export const useFirebaseAuth = () => {
       if (!user.emailVerified) {
         console.warn('⚠️ Email not verified! Blocking access.');
         await signOut(auth);
-        throw new Error('Email doğrulanmadan giriş yapılamaz. Lütfen email kutunuzu kontrol edin.');
+        throw new Error('Email not verified. Please check your inbox.');
       }
 
       // ✅ Firestore'dan kullanıcı bilgilerini al (Timeout ekli)
@@ -162,31 +162,20 @@ export const useFirebaseAuth = () => {
         console.warn('Verification email send failed:', emailError);
       }
 
-      // OTOMATİK GİRİŞ İÇİN SIGNOUT YAPMIYORUZ
-      // await signOut(auth);
+      // OTOMATİK GİRİŞ YOK - EMAIL VERIFICATION ZORUNLU
+      await signOut(auth);
 
-      // ✅ LOCAL STORAGE'A KULLANICI BİLGİLERİNİ KAYDET (Settings için)
-      const userData = {
-        uid: user.uid,
-        email: user.email,
-        name: fullName,
-        fullName: fullName,
-        searchKey: fullName.toLowerCase(),
-        avatar: "https://api.dicebear.com/9.x/thumbs/svg?seed=Easton",
-      };
-      localStorage.setItem('user', JSON.stringify(userData));
-      console.log('[Auth] ✅ User data saved to localStorage:', userData);
-
-      // Local storage güncelle (Auto login için)
-      localStorage.setItem('userToken', user.uid);
-      window.dispatchEvent(new Event('auth-change'));
-      window.dispatchEvent(new Event('user-data-change')); // ← Settings'i güncelle
+      // LocalStorage temizle (garanti olsun)
+      localStorage.removeItem('user');
+      localStorage.removeItem('userToken');
 
       toast({
-        title: "Success",
-        description: "Account created! You are logged in.",
-        duration: 3000,
+        title: "Account Created",
+        description: "Please check your email to verify your account before logging in.",
+        duration: 5000,
       });
+
+      return user;
 
       return user;
     } catch (error: any) {

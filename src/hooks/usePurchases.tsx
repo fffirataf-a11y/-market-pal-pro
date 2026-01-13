@@ -73,7 +73,7 @@ export const usePurchases = (): UsePurchasesReturn => {
           plan = 'premium';
         }
 
-        console.log('[RevenueCat] 🎯 FINAL PLAN:', plan);
+        console.log(`[RevenueCat] FINAL AUTHORITY → Updating global plan: ${plan}`);
         setActivePlan(plan);
 
       } catch (e: any) {

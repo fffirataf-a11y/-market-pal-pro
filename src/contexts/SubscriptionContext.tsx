@@ -165,42 +165,27 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                     let plan = subData.plan;
                     let dailyLimit = subData.dailyLimit;
 
-                    // 1. Check Trial Expiration
+                    // 1. Check Trial Expiration (RevenueCat handles this, but keeping for legacy compatibility/double-check if needed)
+                    // Note: Logic simplified to avoid aggressive local overrides
                     if (isTrialActive && subData.trialEndDate) {
                         if (!isTrialStillActive(subData.trialEndDate)) {
-                            console.log("Context: Trial Expired");
-                            isTrialActive = false;
-                            plan = 'free';
-                            dailyLimit = 0; // Expired = 0
-
-                            // Immediately update DB
-                            await updateDoc(userRef, {
-                                'subscription.isTrialActive': false,
-                                'subscription.plan': 'free',
-                                'subscription.dailyLimit': 0
-                            });
+                            // console.log("Context: Trial Expired");
+                            // We rely on RevenueCat to tell us if we are downgraded
                         }
                     }
 
                     // 2. Check Paid/Promo Subscription Expiration
-                    // If plan is NOT free, check if subscriptionEndDate has passed
+                    // STRICT CHANGE: RevenueCat is the source of truth. We do NOT look at Firestore dates to determine plan.
+                    // We only look at Firestore for 'display' purposes or legacy guest modes.
+                    /*
                     if (plan !== 'free' && subData.subscriptionEndDate) {
                         const endDate = new Date(subData.subscriptionEndDate);
                         const now = new Date();
                         if (endDate < now) {
-                            console.log("Context: Subscription/Promo Expired");
-                            plan = 'free';
-                            dailyLimit = 0; // Expired = 0
-
-                            // Immediately downgrade in DB
-                            await updateDoc(userRef, {
-                                'subscription.plan': 'free',
-                                'subscription.dailyLimit': 0,
-                                'subscription.subscriptionEndDate': null, // Clear end date
-                                'subscription.promoCodeUsed': deleteField() // Clear promo if used
-                            });
+                             // Disabled to prevent conflicts
                         }
                     }
+                    */
 
                     // Günlük Limit Reset Kontrolü (DB'de saklanan lastResetDate ile)
                     if (checkIfNewDay(subData.lastResetDate)) {
@@ -216,9 +201,33 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                             'subscription.dailyLimit': newLimit,
                             'subscription.lastResetDate': new Date().toDateString()
                         });
-                        // State update listener'dan gelecek
+                        // State update triggers automatically via onSnapshot cycle
                     } else {
-                        setState(subData);
+                        // CRITICAL FIX: Source of Truth = RevenueCat
+                        // We do NOT let Firestore overwrite the 'plan' state locally unless it's an admin override.
+                        // subData comes from Firestore.
+
+                        const isAdminOverride = (subData as any).isAdminOverride === true; // Check for explicit override flag
+
+                        setState(prev => {
+                            if (isAdminOverride) {
+                                console.log(`[Subscription] Admin Override Detected. Accepting Firestore Plan: ${subData.plan}`);
+                                return subData;
+                            }
+
+                            // If Firestore plan contradicts local (RevenueCat-sourced) plan:
+                            if (subData.plan !== prev.plan) {
+                                console.log(`[Subscription] Firestore plan ignored (stale). Firestore says: ${subData.plan}, Keeping current: ${prev.plan}`);
+                                // Merge Firestore data (usage, etc) BUT Keep local plan
+                                return {
+                                    ...subData,
+                                    plan: prev.plan // FORCE local plan (from RevenueCat) to win
+                                };
+                            }
+
+                            // If they match, safe to sync
+                            return subData;
+                        });
                     }
                 } else {
                     // Kullanıcı var ama subscription objesi yok (Eski kullanıcı veya yeni kayıt)
@@ -429,29 +438,29 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
     const applyPromoCode = async (code: string): Promise<{ success: boolean; message: string; plan?: PlanType }> => {
         try {
             if (state.promoCodeUsed) {
-                return { success: false, message: 'Daha önce bir promosyon kodu kullandınız' };
+                return { success: false, message: 'You have already used a promo code.' };
             }
             if (!auth.currentUser) {
-                return { success: false, message: 'Önce giriş yapmalısınız' };
+                return { success: false, message: 'You must be logged in first.' };
             }
 
             const promoRef = doc(db, 'PromoCodes', code);
             const promoSnap = await getDoc(promoRef);
 
             if (!promoSnap.exists()) {
-                return { success: false, message: 'Geçersiz promosyon kodu' };
+                return { success: false, message: 'Invalid promo code' };
             }
 
             const promoData = promoSnap.data();
 
             if (!promoData.isActive) {
-                return { success: false, message: 'Bu kod artık aktif değil' };
+                return { success: false, message: 'This code is no longer active' };
             }
             if (promoData.usedCount >= promoData.maxUses) {
-                return { success: false, message: 'Bu kod kullanım limitine ulaştı' };
+                return { success: false, message: 'This code has reached its usage limit' };
             }
             if (promoData.expiresAt && new Date() > promoData.expiresAt.toDate()) {
-                return { success: false, message: 'Bu kodun süresi dolmuş' };
+                return { success: false, message: 'This code has expired' };
             }
 
             await updateDoc(promoRef, {
@@ -499,7 +508,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
             return {
                 success: true,
-                message: `${planType.toUpperCase()} plan ${durationDays} gün boyunca aktif!`,
+                message: `${planType.toUpperCase()} plan active for ${durationDays} days!`,
                 plan: planType,
             };
         } catch (error: any) {
@@ -558,12 +567,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         // as we haven't migrated the global referral registry to Firestore yet.
         // This keeps existing functionality working.
         if (state.usedReferralCode) {
-            return { success: false, message: 'Daha önce bir davet kodu kullandınız.' };
+            return { success: false, message: 'You have already used a referral code.' };
         }
 
         const referralRegistry = JSON.parse(localStorage.getItem('referral_registry') || '{}');
         if (!referralRegistry[code]) {
-            return { success: false, message: 'Davet kodu bulunamadı.' };
+            return { success: false, message: 'Referral code not found.' };
         }
 
         const currentEndDate = new Date(state.trialEndDate || new Date());
@@ -585,12 +594,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
             });
         }
 
-        return { success: true, message: 'Davet kodu başarıyla uygulandı! Deneme süreniz +7 gün uzatıldı.' };
+        return { success: true, message: 'Referral code applied! Trial extended by 7 days.' };
     };
 
     const rewardAdWatched = (): { success: boolean; message: string } => {
         if (state.plan !== 'free') {
-            return { success: false, message: 'Bu özellik sadece ücretsiz plandaki kullanıcılar içindir.' };
+            return { success: false, message: 'This feature is only for free plan users.' };
         }
 
         // Basic cooldown check implementation if needed again here, 
@@ -612,7 +621,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                 'subscription.lastAdWatchTime': new Date().toISOString()
             });
         }
-        return { success: true, message: 'Reklam izlendi! +3 hak eklendi.' };
+        return { success: true, message: 'Ad watched! +3 actions added.' };
     };
 
     const downgradeToFree = async () => {

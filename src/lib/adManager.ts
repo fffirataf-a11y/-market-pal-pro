@@ -119,13 +119,13 @@ export const isAdSupportedForPlan = (plan: PlanType): boolean => {
 
 const shouldShowForcedAd = (plan: PlanType): boolean => {
   const result = FORCED_AD_PLANS.includes(plan);
-  console.log(`[Ads] shouldShowForcedAd(${plan}) = ${result}`);
+  console.log(`[Ads] shouldShowInterstitial(plan=${plan}) → ${result}`);
   return result;
 };
 
 const shouldShowRewardedAd = (plan: PlanType): boolean => {
   const result = REWARDED_AD_PLANS.includes(plan);
-  console.log(`[Ads] shouldShowRewardedAd(${plan}) = ${result}`);
+  console.log(`[Ads] shouldShowRewardedAd(plan=${plan}) → ${result}`);
   return result;
 };
 
