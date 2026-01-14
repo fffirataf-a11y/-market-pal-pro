@@ -32,17 +32,6 @@ export const useFirebaseAuth = () => {
         throw new Error('No internet connection (navigator.onLine is false)');
       }
 
-      // 2. Debug Info for TestFlight
-      console.log('Environment Debug:', {
-        origin: window.location.origin,
-        host: window.location.host,
-        protocol: window.location.protocol,
-        userAgent: navigator.userAgent
-      });
-
-      // 3. Login Attempt (No artificial timeout, let Firebase handle it)
-      const userCredential = await signInWithEmailAndPassword(auth, email, password);
-      const user = userCredential.user;
       console.log('Login successful for:', user.email);
 
       // 🛑 EMAIL VERIFICATION KONTROLÜ (ZORUNLU)
@@ -155,7 +144,7 @@ export const useFirebaseAuth = () => {
       // Doğrulama emaili gönder
       try {
         await sendEmailVerification(user, {
-          url: window.location.origin + '/auth',
+          url: 'https://smartmarket-3a6bd.web.app/auth',
           handleCodeInApp: false,
         });
       } catch (emailError) {
@@ -175,7 +164,6 @@ export const useFirebaseAuth = () => {
         duration: 5000,
       });
 
-      return user;
 
       return user;
     } catch (error: any) {
@@ -214,7 +202,7 @@ export const useFirebaseAuth = () => {
       }
 
       await sendEmailVerification(user, {
-        url: window.location.origin + '/auth',
+        url: 'https://smartmarket-3a6bd.web.app/auth',
         handleCodeInApp: false,
       });
 
