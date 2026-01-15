@@ -116,6 +116,10 @@ export const usePurchases = (): UsePurchasesReturn => {
 
       return true;
     } catch (err: any) {
+      if (err.message && err.message.includes("configured")) {
+        console.error("Purchases not configured yet");
+        // Auto-retry or just fail gracefully
+      }
       if (!err.userCancelled) {
         setError(err.message);
         console.error('[RevenueCat] Purchase failed:', err);
@@ -126,13 +130,27 @@ export const usePurchases = (): UsePurchasesReturn => {
     }
   };
 
-  const purchasePremium = (period: 'monthly' | 'yearly' = 'monthly') =>
-    purchasePackage(period === 'monthly' ? '$rc_monthly' : '$rc_annual');
+  const purchasePremium = async (period: 'monthly' | 'yearly' = 'monthly') => {
+    if (isInitializing) {
+      console.warn("Purchases initializing, waiting...");
+      return false;
+    }
+    return purchasePackage(period === 'monthly' ? '$rc_monthly' : '$rc_annual');
+  }
 
-  const purchasePro = (period: 'monthly' | 'yearly' = 'monthly') =>
-    purchasePackage(period === 'monthly' ? 'pro_monthly' : 'pro_yearly');
+  const purchasePro = async (period: 'monthly' | 'yearly' = 'monthly') => {
+    if (isInitializing) {
+      console.warn("Purchases initializing, waiting...");
+      return false;
+    }
+    return purchasePackage(period === 'monthly' ? 'pro_monthly' : 'pro_yearly');
+  }
 
   const restorePurchases = async (): Promise<boolean> => {
+    if (isInitializing) {
+      console.warn("Purchases initializing, waiting...");
+      return false;
+    }
     try {
       setIsLoading(true);
       setError(null);
