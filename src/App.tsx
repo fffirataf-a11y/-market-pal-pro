@@ -19,20 +19,7 @@ const App = () => {
   // ✅ Gerçek zamanlı notification dinleyici
   useRealtimeNotifications();
 
-  // ✅ AdMob Initialize
-  useEffect(() => {
-    const setupAdMob = async () => {
-      try {
-        console.log('🎬 [App] Initializing AdMob...');
-        await initializeAdMob();
-        console.log('✅ [App] AdMob initialized successfully');
-      } catch (error) {
-        console.error('❌ [App] AdMob initialization failed:', error);
-      }
-    };
 
-    setupAdMob();
-  }, []);
 
   const { plan, upgradeToPremium, upgradeToPro, downgradeToFree } = useSubscription();
   const { customerInfo, isLoading: purchasesLoading } = usePurchases();

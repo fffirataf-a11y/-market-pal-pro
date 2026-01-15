@@ -171,9 +171,9 @@ export const showRewardedAd = async (
 ): Promise<void> => {
   const placement = options.placement ?? "generic";
 
-  console.log(`[Ads] 🎬 Rewarded ad requested`);
-  console.log(`[Ads] 📍 Placement: ${placement}`);
-  console.log(`[Ads] 👤 Plan: ${plan}`);
+  // console.log(`[Ads] 🎬 Rewarded ad requested`);
+  // console.log(`[Ads] 📍 Placement: ${placement}`);
+  // console.log(`[Ads] 👤 Plan: ${plan}`);
 
   if (!shouldShowRewardedAd(plan)) {
     console.log("[Ads] ⛔ Rewarded ad blocked - plan not eligible");
@@ -269,7 +269,7 @@ export const showRewardedAd = async (
 // ============================================
 
 export const showInterstitialAd = async (plan: PlanType): Promise<void> => {
-  console.log(`[Ads] 🎬 Interstitial ad requested for plan: ${plan}`);
+  // console.log(`[Ads] 🎬 Interstitial ad requested for plan: ${plan}`);
 
   if (!shouldShowForcedAd(plan)) {
     console.log("[Ads] ⛔ Interstitial ad blocked - plan not eligible");
