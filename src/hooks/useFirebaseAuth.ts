@@ -32,6 +32,10 @@ export const useFirebaseAuth = () => {
         throw new Error('No internet connection (navigator.onLine is false)');
       }
 
+
+      // 2. Login Attempt
+      const userCredential = await signInWithEmailAndPassword(auth, email, password);
+      const user = userCredential.user;
       console.log('Login successful for:', user.email);
 
       // 🛑 EMAIL VERIFICATION KONTROLÜ (ZORUNLU)
@@ -145,7 +149,15 @@ export const useFirebaseAuth = () => {
       try {
         await sendEmailVerification(user, {
           url: 'https://smartmarket-3a6bd.web.app/auth',
-          handleCodeInApp: false,
+          handleCodeInApp: true,
+          iOS: {
+            bundleId: 'com.lionx.smartmarket'
+          },
+          android: {
+            packageName: 'com.lionx.smartmarket',
+            installApp: true,
+            minimumVersion: '87'
+          }
         });
       } catch (emailError) {
         console.warn('Verification email send failed:', emailError);
@@ -203,7 +215,15 @@ export const useFirebaseAuth = () => {
 
       await sendEmailVerification(user, {
         url: 'https://smartmarket-3a6bd.web.app/auth',
-        handleCodeInApp: false,
+        handleCodeInApp: true,
+        iOS: {
+          bundleId: 'com.lionx.smartmarket'
+        },
+        android: {
+          packageName: 'com.lionx.smartmarket',
+          installApp: true,
+          minimumVersion: '87'
+        }
       });
 
       toast({
