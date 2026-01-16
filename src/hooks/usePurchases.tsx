@@ -30,6 +30,7 @@ export const usePurchases = (): UsePurchasesReturn => {
   const [customerInfo, setCustomerInfo] = useState<CustomerInfo | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isInitializing, setIsInitializing] = useState(true);
+  const [isConfigured, setIsConfigured] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -42,16 +43,26 @@ export const usePurchases = (): UsePurchasesReturn => {
         console.log('[RevenueCat] 🌐 WEB → FORCING FREE');
         setActivePlan('free');
         setIsInitializing(false);
+        setIsConfigured(true); // Web is always "configured"
         return;
       }
 
       try {
-        console.log('[RevenueCat] 🔄 RESET IDENTITY (LogOut)');
-        await Purchases.logOut(); // ZORUNLU KURAL 1: IDENTITY RESET
-
+        // 1. Configure FIRST (Critical Fix)
         const apiKey = platform === 'ios' ? REVENUECAT_API_KEY.ios : REVENUECAT_API_KEY.android;
         await Purchases.configure({ apiKey });
         await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+
+        // 2. Mark as Configured
+        setIsConfigured(true);
+
+        // 3. Now Safe to RESET IDENTITY (LogOut)
+        console.log('[RevenueCat] 🔄 RESET IDENTITY (LogOut)');
+        try {
+          await Purchases.logOut();
+        } catch (logoutErr) {
+          console.warn("[RevenueCat] Logout failed (non-fatal):", logoutErr);
+        }
 
         console.log('[RevenueCat] 👤 Fetching customer info...');
         const info = await Purchases.getCustomerInfo();
@@ -82,6 +93,8 @@ export const usePurchases = (): UsePurchasesReturn => {
         // Error handling forces FREE
         setActivePlan('free');
         setError(e.message || 'Initialization failed');
+        // If init failed heavily, we might NOT be configured properly
+        setIsConfigured(false);
       } finally {
         setIsInitializing(false);
       }
