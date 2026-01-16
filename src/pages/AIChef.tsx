@@ -29,43 +29,7 @@ interface RecipeIngredient {
   quantity: string;
 }
 
-const getApiConfig = () => {
-  const isIOS = Capacitor.getPlatform() === 'ios';
 
-  // Get API key from environment variables
-  const geminiKey = isIOS
-    ? (import.meta.env.VITE_IOS_API_KEY || import.meta.env.VITE_GEMINI_API_KEY)
-    : import.meta.env.VITE_GEMINI_API_KEY;
-
-  // Validation
-  if (!geminiKey) {
-    console.error('❌ Gemini API key not found in environment variables');
-    console.error('💡 Please create .env file with VITE_GEMINI_API_KEY');
-    throw new Error('API key not configured. Please check .env file.');
-  }
-
-  console.log('🔑 Platform:', Capacitor.getPlatform());
-  console.log('🔑 API Key exists:', !!geminiKey);
-  console.log('🔑 Key length:', geminiKey?.length || 0);
-
-  if (isIOS) {
-    return {
-      key: geminiKey,
-      headers: {
-        'X-Ios-Bundle-Identifier': 'com.lionx.smartmarket'
-      }
-    };
-  }
-
-  // Android Configuration
-  return {
-    key: geminiKey,
-    headers: {
-      'X-Android-Package': 'com.lionx.smartmarket',
-      'X-Android-Cert': 'C3B178ED4E381C2D2F7188D16B6A56BB60CB470D'
-    }
-  };
-}
 
 const AIChef = () => {
   const navigate = useNavigate();
@@ -159,6 +123,10 @@ const AIChef = () => {
     }
   };
 
+  // ✅ FIREBASE FUNCTIONS PROXY
+  import { httpsCallable } from "firebase/functions";
+  import { functions } from "@/config/firebase";
+
   const handleGenerateRecipe = async () => {
     if (!dishName.trim()) return;
 
@@ -171,13 +139,6 @@ const AIChef = () => {
     setGeneratedRecipe(null);
 
     try {
-      const { key: apiKey, headers: platformHeaders } = getApiConfig();
-
-      if (!apiKey) {
-        throw new Error('API key not found');
-      }
-
-      // ✅ DÜZELTME: Uygulama dilini kontrol et
       const isTurkish = i18n.language === 'tr';
 
       const prompt = isTurkish
@@ -190,43 +151,17 @@ const AIChef = () => {
 
 IMPORTANT: All text must be in ENGLISH!`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...platformHeaders
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: prompt
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.4,
-              maxOutputTokens: 2048,
-              topP: 0.8,
-              topK: 40
-            }
-          })
-        }
-      );
+      // 🔒 SECURE BACKEND CALL
+      const generateAIContent = httpsCallable(functions, 'generateAIContent');
+      const result = await generateAIContent({ prompt });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error Details:', errorData);
-        throw new Error(errorData.error?.message || `API failed: ${response.status}`);
+      const data = result.data as any; // Type assertion since we know the structure
+
+      if (!data.success || !data.data) {
+        throw new Error("Invalid response from chef");
       }
 
-      const data = await response.json();
-
-      if (!data.candidates?.[0]) {
-        throw new Error('No response from AI');
-      }
-
-      const candidate = data.candidates[0];
+      const candidate = data.data;
 
       let recipeText = '';
 
@@ -249,8 +184,6 @@ IMPORTANT: All text must be in ENGLISH!`;
       setGeneratedRecipe(recipe);
 
       incrementAction();
-
-      // ✅ YENİ: Reklam göster (sadece free için, her 5 işlemde bir)
       showAd();
 
       try {
@@ -261,13 +194,25 @@ IMPORTANT: All text must be in ENGLISH!`;
 
       toast({
         title: t('common.success'),
-        description: "Recipe generated successfully",
+        description: t('aichef.recipeGenerated'),
       });
+
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error('AI Proxy Error:', error);
+
+      // UX: Graceful Fallback
+      let userMessage = error.message || "Failed to generate recipe";
+      if (error.code === 'resource-exhausted' || error.message.includes('busy')) {
+        userMessage = isTurkish
+          ? "Şefimiz şu an çok yoğun. Lütfen 1 dakika sonra tekrar deneyin."
+          : "Our chef is very busy right now. Please try again in a minute.";
+      } else if (error.code === 'unauthenticated') {
+        userMessage = isTurkish ? "Lütfen giriş yapın." : "Please log in first.";
+      }
+
       toast({
         title: t('common.error'),
-        description: error.message || "Failed to generate recipe",
+        description: userMessage,
         variant: "destructive",
       });
     } finally {
@@ -287,13 +232,6 @@ IMPORTANT: All text must be in ENGLISH!`;
     setGeneratedRecipe(null);
 
     try {
-      const { key: apiKey, headers: platformHeaders } = getApiConfig();
-
-      if (!apiKey) {
-        throw new Error('API key not found');
-      }
-
-      // ✅ DÜZELTME: Uygulama dilini kontrol et
       const isTurkish = i18n.language === 'tr';
 
       const prompt = isTurkish
@@ -306,43 +244,16 @@ IMPORTANT: All text must be in ENGLISH!`;
 
 IMPORTANT: All text must be in ENGLISH!`;
 
-      const response = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            ...platformHeaders
-          },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{
-                text: prompt
-              }]
-            }],
-            generationConfig: {
-              temperature: 0.4,
-              maxOutputTokens: 2048,
-              topP: 0.8,
-              topK: 40
-            }
-          })
-        }
-      );
+      // 🔒 SECURE BACKEND CALL
+      const generateAIContent = httpsCallable(functions, 'generateAIContent');
+      const result = await generateAIContent({ prompt });
+      const data = result.data as any;
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        console.error('API Error Details:', errorData);
-        throw new Error(errorData.error?.message || `API failed: ${response.status}`);
+      if (!data.success || !data.data) {
+        throw new Error("Invalid response from chef");
       }
 
-      const data = await response.json();
-
-      if (!data.candidates?.[0]) {
-        throw new Error('No response from AI');
-      }
-
-      const candidate = data.candidates[0];
+      const candidate = data.data;
 
       let recipeText = '';
 
@@ -365,8 +276,6 @@ IMPORTANT: All text must be in ENGLISH!`;
       setGeneratedRecipe(recipe);
 
       incrementAction();
-
-      // ✅ YENİ: Reklam göster (sadece free için, her 5 işlemde bir)
       showAd();
 
       try {
@@ -377,13 +286,24 @@ IMPORTANT: All text must be in ENGLISH!`;
 
       toast({
         title: t('common.success'),
-        description: "Ideas generated successfully",
+        description: t('aichef.ideasGenerated'),
       });
     } catch (error: any) {
-      console.error('Error:', error);
+      console.error('AI Proxy Error:', error);
+
+      // UX: Graceful Fallback
+      let userMessage = error.message || "Failed to generate ideas";
+      // Handle Firebase Functions error codes if needed, though mostly they map to message.
+      const isTurkish = i18n.language === 'tr'; // accessing i18n from closure
+      if (error.code === 'resource-exhausted' || error.message.includes('busy')) {
+        userMessage = isTurkish
+          ? "Şefimiz şu an çok yoğun. Lütfen 1 dakika sonra tekrar deneyin."
+          : "Our chef is very busy right now. Please try again in a minute.";
+      }
+
       toast({
         title: t('common.error'),
-        description: error.message || "Failed to generate ideas",
+        description: userMessage,
         variant: "destructive",
       });
     } finally {
