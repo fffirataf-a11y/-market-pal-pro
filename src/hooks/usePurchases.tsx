@@ -10,6 +10,7 @@ interface UsePurchasesReturn {
   customerInfo: CustomerInfo | null;
   isLoading: boolean;
   isInitializing: boolean;
+  isConfigured: boolean;
   error: string | null;
   purchasePremium: (period?: 'monthly' | 'yearly') => Promise<boolean>;
   purchasePro: (period?: 'monthly' | 'yearly') => Promise<boolean>;
@@ -180,6 +181,7 @@ export const usePurchases = (): UsePurchasesReturn => {
     customerInfo,
     isLoading,
     isInitializing,
+    isConfigured,
     error,
     purchasePremium,
     purchasePro,

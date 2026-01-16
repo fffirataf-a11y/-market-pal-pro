@@ -72,6 +72,7 @@ const Settings = () => {
     customerInfo,
     isLoading: purchaseLoading,
     isInitializing,
+    isConfigured,
     error: purchaseError,
     offerings,
   } = usePurchases();
@@ -767,10 +768,10 @@ const Settings = () => {
                 <Button
                   className="w-full min-h-[44px]"
                   variant={plan.current ? "outline" : "default"}
-                  disabled={plan.current}
+                  disabled={plan.current || !isConfigured}
                   onClick={() => handleUpgrade(plan.id)}
                 >
-                  {plan.current ? t('subscription.currentPlan') : t('subscription.upgradeTo', { plan: plan.name })}
+                  {!isConfigured ? t('common.loading') : (plan.current ? t('subscription.currentPlan') : t('subscription.upgradeTo', { plan: plan.name }))}
                 </Button>
               </Card>
             ))}
