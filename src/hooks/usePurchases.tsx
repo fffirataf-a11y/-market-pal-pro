@@ -145,16 +145,17 @@ export const usePurchases = (): UsePurchasesReturn => {
   };
 
   const purchasePremium = async (period: 'monthly' | 'yearly' = 'monthly') => {
-    if (isInitializing) {
-      console.warn("Purchases initializing, waiting...");
+    if (!isConfigured) {
+      console.warn("Purchases NOT configured, cannot purchase.");
       return false;
     }
-    return purchasePackage(period === 'monthly' ? '$rc_monthly' : '$rc_annual');
+    // Updated to match Product IDs seen in screenshot (Premium_Monthly -> premium_monthly mapping)
+    return purchasePackage(period === 'monthly' ? 'premium_monthly' : 'premium_yearly');
   }
 
   const purchasePro = async (period: 'monthly' | 'yearly' = 'monthly') => {
-    if (isInitializing) {
-      console.warn("Purchases initializing, waiting...");
+    if (!isConfigured) {
+      console.warn("Purchases NOT configured, cannot purchase.");
       return false;
     }
     return purchasePackage(period === 'monthly' ? 'pro_monthly' : 'pro_yearly');
