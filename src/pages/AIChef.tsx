@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { httpsCallable } from "firebase/functions";
+import { functions } from "@/config/firebase";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,9 +125,7 @@ const AIChef = () => {
     }
   };
 
-  // ✅ FIREBASE FUNCTIONS PROXY
-  import { httpsCallable } from "firebase/functions";
-  import { functions } from "@/config/firebase";
+  // ✅ FIREBASE FUNCTIONS PROXY (Moved to top)
 
   const handleGenerateRecipe = async () => {
     if (!dishName.trim()) return;

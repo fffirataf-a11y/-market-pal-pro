@@ -14,9 +14,7 @@ export default defineConfig(({ mode }) => ({
   },
   // ✅ Environment variables'ı build'e inject et
   define: {
-    'import.meta.env.VITE_GEMINI_API_KEY': JSON.stringify(process.env.VITE_GEMINI_API_KEY || 'AIzaSyCpC993waGdgVHnwXp57zPLIRXclC2uWYA'),
-    'import.meta.env.VITE_GEMINI_BARCODE_API_KEY': JSON.stringify(process.env.VITE_GEMINI_BARCODE_API_KEY || 'AIzaSyCgyhdp-eY3mBZpXmiTlDVM6RWV8YcnKbg'),
-    'import.meta.env.VITE_IOS_API_KEY': JSON.stringify(process.env.VITE_IOS_API_KEY || 'AIzaSyDX1JXY1UCypEKk8cNF-qN-JMb2_YsWkZU'),
+    // Keys removed for security (Moved to Backend Proxy)
     'import.meta.env.VITE_FIREBASE_API_KEY': JSON.stringify(process.env.VITE_FIREBASE_API_KEY || 'AIzaSyCMnNJgknRgDpd16bW-J1xC3ba5rqOb0ys'),
     'import.meta.env.VITE_FIREBASE_AUTH_DOMAIN': JSON.stringify(process.env.VITE_FIREBASE_AUTH_DOMAIN || 'smartmarket-3a6bd.firebaseapp.com'),
     'import.meta.env.VITE_FIREBASE_PROJECT_ID': JSON.stringify(process.env.VITE_FIREBASE_PROJECT_ID || 'smartmarket-3a6bd'),
