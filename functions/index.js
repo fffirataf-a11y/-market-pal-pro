@@ -58,9 +58,9 @@ exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-centra
     // Assuming user meant 1.5-Flash (there is no 2.5 public yet, maybe they meant 2.0 experimental or just typo).
     // Let's use `gemini-1.5-flash` for "Fast & Cheap".
 
-    const targetModel = "gemini-1.5-flash";
+    const targetModel = "gemini-pro";
 
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1/models/${targetModel}:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [{
