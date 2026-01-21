@@ -154,23 +154,47 @@ IMPORTANT: All text must be in ENGLISH!`;
       // 🔒 SECURE BACKEND CALL
       const generateAIContent = httpsCallable(functions, 'generateAIContent');
       const result = await generateAIContent({ prompt });
+      const data = result.data as any;
 
-      const data = result.data as any; // Type assertion since we know the structure
+      // 🛡️ Client-Side Error Mapping (No Throws!)
+      if (!data.success) {
+        console.warn(`⚠️ Backend Error: ${data.errorCode} - ${data.message}`);
 
-      if (!data.success || !data.data) {
-        throw new Error("Invalid response from chef");
+        let userMessage = t('aichef.errorGeneric');
+        if (data.errorCode === 'RATE_LIMIT' || data.errorCode === 'QUOTA') {
+          userMessage = t('aichef.errorBusy');
+        } else if (data.errorCode === 'AUTH') {
+          userMessage = t('common.loginRequired');
+        } else if (data.errorCode === 'MODEL_NOT_FOUND') {
+          userMessage = "System update in progress. Please try again later.";
+        }
+
+        toast({
+          title: t('common.error'),
+          description: userMessage,
+          variant: "destructive",
+          duration: 4000
+        });
+
+        setLoading(false);
+        return; // ✅ Exit gracefully
       }
 
       const candidate = data.data;
 
+      // Extract text safely
       let recipeText = '';
-
       if (candidate.content?.parts?.[0]?.text) {
         recipeText = candidate.content.parts[0].text;
       } else if (candidate.text) {
         recipeText = candidate.text;
       } else {
-        throw new Error('No text in response');
+        // Only throw here if schema is violated (unexpected success but no data)
+        // But even better, handle it gracefully
+        console.error("⚠️ Invalid payload from successful response");
+        toast({ title: t('common.error'), description: t('aichef.errorInvalid'), variant: "destructive" });
+        setLoading(false);
+        return;
       }
 
       recipeText = recipeText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
@@ -180,40 +204,39 @@ IMPORTANT: All text must be in ENGLISH!`;
         recipeText = jsonMatch[0];
       }
 
-      const recipe = JSON.parse(recipeText);
-      setGeneratedRecipe(recipe);
-
-      incrementAction();
-      showAd();
-
       try {
-        const audio = new Audio('/sounds/success.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(() => { });
-      } catch { }
+        const recipe = JSON.parse(recipeText);
+        setGeneratedRecipe(recipe);
 
-      toast({
-        title: t('common.success'),
-        description: t('aichef.recipeGenerated'),
-      });
+        incrementAction();
+        showAd();
 
-    } catch (error: any) {
-      console.error('AI Proxy Error:', error);
+        try {
+          const audio = new Audio('/sounds/success.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(() => { });
+        } catch { }
 
-      // UX: Graceful Fallback
-      let userMessage = error.message || "Failed to generate recipe";
-      if (error.code === 'resource-exhausted' || error.message.includes('busy')) {
-        userMessage = isTurkish
-          ? "Şefimiz şu an çok yoğun. Lütfen 1 dakika sonra tekrar deneyin."
-          : "Our chef is very busy right now. Please try again in a minute.";
-      } else if (error.code === 'unauthenticated') {
-        userMessage = isTurkish ? "Lütfen giriş yapın." : "Please log in first.";
+        toast({
+          title: t('common.success'),
+          description: t('aichef.recipeGenerated'),
+        });
+      } catch (parseError) {
+        console.error("❌ JSON Parse Error:", parseError);
+        toast({
+          title: t('common.error'),
+          description: t('aichef.errorParse'),
+          variant: "destructive"
+        });
       }
 
+    } catch (error: any) {
+      // Catch-all for network failure (Connection lost etc)
+      console.error('❌ Network/Client Error:', error);
       toast({
         title: t('common.error'),
-        description: userMessage,
-        variant: "destructive",
+        description: t('common.networkError'),
+        variant: "destructive"
       });
     } finally {
       setLoading(false);

@@ -24,42 +24,42 @@ const apiKeySecret = defineSecret("GEMINI_API_KEY");
  * The Client NEVER sees the API Key.
  */
 exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-central1" }, async (request) => {
-  // 1. Security: Ensure user is authenticated
+  // 🛡️ 1. Security & Auth Guard
   if (!request.auth) {
-    console.warn("🚫 Unauthenticated attempt to access AI Chef");
-    throw new HttpsError("unauthenticated", "User must be logged in to use AI Chef.");
+    console.warn("🚫 Unauthenticated attempt.");
+    return {
+      success: false,
+      errorCode: "AUTH",
+      message: "User must be logged in."
+    };
   }
 
-  // 2. Extract payload
-  const { prompt, model = "gemini-2.5-flash" } = request.data; // Using faster flash model as requested
-
+  // 🛡️ 2. Input Validation
+  const { prompt } = request.data;
   if (!prompt) {
-    throw new HttpsError("invalid-argument", "Prompt is required.");
+    return {
+      success: false,
+      errorCode: "INVALID_ARGUMENT",
+      message: "Prompt is required."
+    };
   }
 
   try {
-    console.log(`👨‍🍳 AI Chef Request by: ${request.auth.uid}`);
+    console.log(`👨‍🍳 Request by: ${request.auth.uid}`);
 
-    // 3. Retrieve Secret Key (Serverside Only)
+    // 🔑 3. Key Retrieval
     const apiKey = apiKeySecret.value();
-
     if (!apiKey) {
-      console.error("❌ API Key is missing in secrets.");
-      throw new HttpsError("internal", "Server misconfiguration: API Key missing.");
+      console.error("❌ Critical: API Key missing in secrets.");
+      return {
+        success: false,
+        errorCode: "SERVER_CONFIG",
+        message: "API Key not configured."
+      };
     }
 
-    // 4. Call Gemini API (Server to Server)
-    // Using Gemini 1.5 Flash (latest stable fast model) or incoming model param
-    // Adjust endpoint for gemini version if needed.
-    // Since user asked for "gemini-2.5-flash" specifically in the prompt, google might not have released that specific version in public API yet, 
-    // usually it is 1.5-flash or 1.5-pro. I will stick to a robust default but allow overrides.
-    // NOTE: The previous code used `gemini-2.5-flash`. I will preserve that if valid, but fallback to 1.5-flash if needed. 
-    // Actually, let's verify if 2.5 exists. If not, we use 1.5-flash which is the current industry standard for "Fast & Cheap".
-    // Assuming user meant 1.5-Flash (there is no 2.5 public yet, maybe they meant 2.0 experimental or just typo).
-    // Let's use `gemini-1.5-flash` for "Fast & Cheap".
-
+    // 🤖 4. Model Configuration (LOCKED: gemini-pro / v1)
     const targetModel = "gemini-pro";
-
     const url = `https://generativelanguage.googleapis.com/v1/models/${targetModel}:generateContent?key=${apiKey}`;
 
     const payload = {
@@ -68,38 +68,57 @@ exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-centra
       }],
       generationConfig: {
         temperature: 0.4,
-        maxOutputTokens: 2048,
-        topP: 0.8,
-        topK: 40
+        maxOutputTokens: 2048
       }
     };
 
+    // 🌐 5. External API Call
     const response = await axios.post(url, payload, {
-      headers: {
-        "Content-Type": "application/json"
-      }
+      headers: { "Content-Type": "application/json" },
+      validateStatus: (status) => status < 500 // Handle 4xx gracefully
     });
 
-    // 5. Return Clean Data
-    // We strip away the complex structure and return what the client needs
-    const candidates = response.data.candidates;
-    if (!candidates || candidates.length === 0) {
-      throw new Error("No candidates returned from Gemini.");
+    // 🔍 6. Response Validation
+    if (response.status !== 200) {
+      console.error(`⚠️ Gemini API returned ${response.status}:`, response.data);
+
+      // Map Gemini Errors to Client ErrorCodes
+      let errorCode = "UNKNOWN";
+      if (response.status === 403) errorCode = "PERMISSION"; // Quota or Key
+      if (response.status === 404) errorCode = "MODEL_NOT_FOUND";
+      if (response.status === 429) errorCode = "RATE_LIMIT";
+
+      return {
+        success: false,
+        errorCode: errorCode,
+        message: `Gemini API Error: ${response.status}`
+      };
     }
 
+    const candidates = response.data.candidates;
+    if (!candidates || candidates.length === 0) {
+      console.error("⚠️ Gemini returned no candidates.");
+      return {
+        success: false,
+        errorCode: "NO_CONTENT",
+        message: "The chef could not come up with a recipe."
+      };
+    }
+
+    // ✅ 7. Success
     return {
       success: true,
       data: candidates[0]
     };
 
   } catch (error) {
-    console.error("❌ AI Chef Error:", error.response?.data || error.message);
+    console.error("❌ Fatal AI Chef Error:", error.message);
 
-    // Graceful Error Handling
-    if (error.response?.status === 429) {
-      throw new HttpsError("resource-exhausted", "Chef is too busy right now (Quota Exceeded).");
-    }
-
-    throw new HttpsError("internal", "The Chef encountered a problem in the kitchen.");
+    // Catch Axios Connection Errors / Timeouts
+    return {
+      success: false,
+      errorCode: "INTERNAL",
+      message: "The chef is having trouble communicating."
+    };
   }
 });
