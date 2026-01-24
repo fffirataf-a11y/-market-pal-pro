@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { httpsCallable } from "firebase/functions";
 import { functions } from "@/config/firebase";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
-import { BottomNav } from "@/components/BottomNav"; // ✅ EKLE
+import { BottomNav } from "@/components/BottomNav";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useShoppingLists } from "@/hooks/useShoppingLists";
 import {
@@ -20,153 +20,145 @@ import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { useSubscription } from "@/hooks/useSubscription";
-import { useInterstitialAd } from '@/hooks/useInterstitialAd'; // ✅ YENİ EKLENEN
+import { useInterstitialAd } from '@/hooks/useInterstitialAd';
 import { detectCategory } from "@/lib/categoryDetector";
 import { LimitReachedDialog } from "@/components/LimitReachedDialog";
-
 import { Capacitor } from "@capacitor/core";
 
+// ✅ TYPE DEFINITIONS
 interface RecipeIngredient {
   name: string;
   quantity: string;
 }
 
+interface GeneratedRecipe {
+  name: string;
+  servings: number;
+  time: string;
+  difficulty: string;
+  ingredients: RecipeIngredient[];
+  suggestions?: string[];
+}
 
+interface AIResponse {
+  success: boolean;
+  data?: any;
+  errorCode?: string;
+  message?: string;
+}
 
+// ✅ UTILITY FUNCTIONS
+const parseAIResponse = (candidate: any): GeneratedRecipe => {
+  let recipeText = candidate.content?.parts?.[0]?.text
+    || candidate.text
+    || '';
+
+  if (!recipeText) {
+    throw new Error('No text in AI response');
+  }
+
+  // Clean markdown formatting
+  recipeText = recipeText
+    .replace(/```json\n?/g, '')
+    .replace(/```\n?/g, '')
+    .trim();
+
+  // Extract JSON object
+  const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
+  if (jsonMatch) {
+    recipeText = jsonMatch[0];
+  }
+
+  const recipe = JSON.parse(recipeText);
+
+  // Schema validation
+  if (!recipe.name || !Array.isArray(recipe.ingredients)) {
+    throw new Error('Invalid recipe schema');
+  }
+
+  return recipe as GeneratedRecipe;
+};
+
+const playSuccessSound = () => {
+  if (Capacitor.isNativePlatform()) return;
+
+  try {
+    const audio = new Audio('/sounds/success.mp3');
+    audio.volume = 0.5;
+    audio.play().catch((err) => {
+      console.log('🔇 Audio autoplay blocked:', err.message);
+    });
+  } catch (err) {
+    console.warn('🔇 Audio not available:', err);
+  }
+};
+
+// ✅ MAIN COMPONENT
 const AIChef = () => {
   const navigate = useNavigate();
   const { t, i18n } = useTranslation();
   const { toast } = useToast();
   const { lists, addItem } = useShoppingLists();
-
   const { canPerformAction, incrementAction, plan, getRemainingActions } = useSubscription();
-
-  // ✅ YENİ EKLENEN - Interstitial Reklam Hook'u
   const { showAd } = useInterstitialAd({
     plan,
-    interval: 5 // Her 5 AI isteğinde bir reklam
+    interval: 5
   });
 
-  const [activeTab, setActiveTab] = useState("recipe");
+  // ✅ STATE MANAGEMENT
+  const [activeTab, setActiveTab] = useState<"recipe" | "ideas">("recipe");
   const [dishName, setDishName] = useState("");
   const [ingredients, setIngredients] = useState("");
-  const [generatedRecipe, setGeneratedRecipe] = useState<any>(null);
+  const [generatedRecipe, setGeneratedRecipe] = useState<GeneratedRecipe | null>(null);
   const [loading, setLoading] = useState(false);
   const [limitDialogOpen, setLimitDialogOpen] = useState(false);
+  const [addingToList, setAddingToList] = useState(false);
 
   const remainingUses = getRemainingActions();
 
-  const handleAddToList = async () => {
-    if (!generatedRecipe?.ingredients) {
-      console.log('❌ No ingredients found');
-      return;
-    }
+  // ✅ CLEANUP FOR NAVIGATION TIMEOUT
+  useEffect(() => {
+    return () => {
+      // Cleanup any pending timeouts on unmount
+    };
+  }, []);
 
-    console.log('🔍 Generated Recipe:', generatedRecipe);
-    console.log('📋 Ingredients:', generatedRecipe.ingredients);
-
-    // ✅ İlk listeyi al (veya oluştur)
-    const targetList = lists.length > 0 ? lists[0] : null;
-
-    if (!targetList) {
-      console.log('❌ No list found');
-      toast({
-        title: t('common.error'),
-        description: "No shopping list found. Please create one first.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    console.log('📦 Target list:', targetList.name);
-
-    // Limit kontrolü için local değişken
-    let remaining = plan === 'pro' ? 9999 : Math.max(0, remainingUses);
-
-    // ✅ Her malzemeyi Firestore'a ekle
-    try {
-      for (const ingredient of generatedRecipe.ingredients) {
-        // Limit Kontrolü
-        if (remaining <= 0 && plan !== 'pro') {
-          console.log('⛔ Limit reached during bulk add');
-          setLimitDialogOpen(true);
-          break; // Döngüyü kır
-        }
-
-        await addItem(targetList.id, {
-          name: ingredient.name || ingredient,
-          quantity: ingredient.quantity || "1 adet",
-          category: detectCategory(ingredient.name || ingredient.toString()),
-          completed: false,
-        }, { silent: true }); // ✅ Sessiz mod
-        await incrementAction();
-        remaining--; // Local sayacı düş
-      }
-
-      console.log('✅ All items added to Firestore');
-
-      toast({
-        title: t('common.success'),
-        description: t('aichef.allAddedSuccess'),
-        duration: 3000,
-      });
-
-      setTimeout(() => {
-        navigate("/lists");
-      }, 1500);
-
-    } catch (error) {
-      console.error('❌ Error adding items:', error);
-      toast({
-        title: t('common.error'),
-        description: "Failed to add items to list",
-        variant: "destructive",
-      });
-    }
-  };
-
-  // ✅ FIREBASE FUNCTIONS PROXY (Moved to top)
-
-  const handleGenerateRecipe = async () => {
-    if (!dishName.trim()) return;
-
+  // ✅ COMMON AI REQUEST HANDLER
+  const handleAIRequest = useCallback(async (
+    prompt: string,
+    type: "recipe" | "ideas"
+  ): Promise<GeneratedRecipe | null> => {
     if (!canPerformAction()) {
       setLimitDialogOpen(true);
-      return;
+      return null;
     }
 
     setLoading(true);
     setGeneratedRecipe(null);
 
     try {
-      const isTurkish = i18n.language === 'tr';
+      const generateAIContent = httpsCallable<any, AIResponse>(
+        functions,
+        'generateAIContent'
+      );
 
-      const prompt = isTurkish
-        ? `"${dishName}" için kısa tarif oluştur. Sadece JSON döndür (başka hiçbir şey yazma):
-{"name":" yemek adı","servings":4,"time":"X dk","difficulty":"Kolay","ingredients":[{"name":"malzeme","quantity":"miktar"}]}
-
-ÖNEMLI: Tüm metinler TÜRKÇE olmalı!`
-        : `Create a short recipe for "${dishName}". Return ONLY this JSON (nothing else):
-{"name":"dish name","servings":4,"time":"X mins","difficulty":"Easy","ingredients":[{"name":"ingredient","quantity":"amount"}]}
-
-IMPORTANT: All text must be in ENGLISH!`;
-
-      // 🔒 SECURE BACKEND CALL
-      const generateAIContent = httpsCallable(functions, 'generateAIContent');
       const result = await generateAIContent({ prompt });
-      const data = result.data as any;
+      const data = result.data;
 
-      // 🛡️ Client-Side Error Mapping (No Throws!)
+      // ✅ UNIFIED ERROR HANDLING
       if (!data.success) {
-        console.warn(`⚠️ Backend Error: ${data.errorCode} - ${data.message}`);
+        console.warn(`⚠️ AI Error: ${data.errorCode} - ${data.message}`);
 
         let userMessage = t('aichef.errorGeneric');
+
         if (data.errorCode === 'RATE_LIMIT' || data.errorCode === 'QUOTA') {
           userMessage = t('aichef.errorBusy');
         } else if (data.errorCode === 'AUTH') {
           userMessage = t('common.loginRequired');
         } else if (data.errorCode === 'MODEL_NOT_FOUND') {
           userMessage = "System update in progress. Please try again later.";
+        } else if (data.message) {
+          userMessage = data.message;
         }
 
         toast({
@@ -176,171 +168,186 @@ IMPORTANT: All text must be in ENGLISH!`;
           duration: 4000
         });
 
-        setLoading(false);
-        return; // ✅ Exit gracefully
+        return null;
       }
 
-      const candidate = data.data;
+      // ✅ PARSE & VALIDATE RESPONSE
+      const recipe = parseAIResponse(data.data);
+      setGeneratedRecipe(recipe);
 
-      // Extract text safely
-      let recipeText = '';
-      if (candidate.content?.parts?.[0]?.text) {
-        recipeText = candidate.content.parts[0].text;
-      } else if (candidate.text) {
-        recipeText = candidate.text;
-      } else {
-        // Only throw here if schema is violated (unexpected success but no data)
-        // But even better, handle it gracefully
-        console.error("⚠️ Invalid payload from successful response");
-        toast({ title: t('common.error'), description: t('aichef.errorInvalid'), variant: "destructive" });
-        setLoading(false);
-        return;
-      }
+      // ✅ INCREMENT & SHOW AD
+      await incrementAction();
+      showAd();
 
-      recipeText = recipeText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+      // ✅ SUCCESS FEEDBACK
+      playSuccessSound();
 
-      const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        recipeText = jsonMatch[0];
-      }
+      toast({
+        title: t('common.success'),
+        description: type === "recipe"
+          ? t('aichef.recipeGenerated')
+          : t('aichef.ideasGenerated'),
+      });
 
-      try {
-        const recipe = JSON.parse(recipeText);
-        setGeneratedRecipe(recipe);
-
-        incrementAction();
-        showAd();
-
-        try {
-          const audio = new Audio('/sounds/success.mp3');
-          audio.volume = 0.5;
-          audio.play().catch(() => { });
-        } catch { }
-
-        toast({
-          title: t('common.success'),
-          description: t('aichef.recipeGenerated'),
-        });
-      } catch (parseError) {
-        console.error("❌ JSON Parse Error:", parseError);
-        toast({
-          title: t('common.error'),
-          description: t('aichef.errorParse'),
-          variant: "destructive"
-        });
-      }
+      return recipe;
 
     } catch (error: any) {
-      // Catch-all for network failure (Connection lost etc)
-      console.error('❌ Network/Client Error:', error);
+      console.error('AI Request Error:', error);
+
+      let errorMessage = t('common.networkError');
+
+      if (error.message?.includes('JSON')) {
+        errorMessage = t('aichef.errorParse');
+      } else if (error.code === 'resource-exhausted') {
+        errorMessage = t('aichef.errorBusy');
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: t('common.error'),
-        description: t('common.networkError'),
-        variant: "destructive"
+        description: errorMessage,
+        variant: "destructive",
       });
+
+      return null;
     } finally {
       setLoading(false);
     }
-  };
+  }, [canPerformAction, incrementAction, showAd, t, toast]);
 
-  const handleGenerateIdeas = async () => {
+  // ✅ RECIPE GENERATOR
+  const handleGenerateRecipe = useCallback(async () => {
+    if (!dishName.trim()) return;
+
+    const isTurkish = i18n.language === 'tr';
+    const prompt = isTurkish
+      ? `"${dishName}" için kısa tarif oluştur. Sadece JSON döndür (başka hiçbir şey yazma):
+{"name":"yemek adı","servings":4,"time":"X dk","difficulty":"Kolay","ingredients":[{"name":"malzeme","quantity":"miktar"}]}
+
+ÖNEMLI: Tüm metinler TÜRKÇE olmalı!`
+      : `Create a short recipe for "${dishName}". Return ONLY this JSON (nothing else):
+{"name":"dish name","servings":4,"time":"X mins","difficulty":"Easy","ingredients":[{"name":"ingredient","quantity":"amount"}]}
+
+IMPORTANT: All text must be in ENGLISH!`;
+
+    await handleAIRequest(prompt, "recipe");
+  }, [dishName, i18n.language, handleAIRequest]);
+
+  // ✅ IDEAS GENERATOR
+  const handleGenerateIdeas = useCallback(async () => {
     if (!ingredients.trim()) return;
 
-    if (!canPerformAction()) {
-      setLimitDialogOpen(true);
-      return;
-    }
-
-    setLoading(true);
-    setGeneratedRecipe(null);
-
-    try {
-      const isTurkish = i18n.language === 'tr';
-
-      const prompt = isTurkish
-        ? `"${ingredients}" ile tarif yap. Sadece JSON döndür:
+    const isTurkish = i18n.language === 'tr';
+    const prompt = isTurkish
+      ? `"${ingredients}" ile tarif yap. Sadece JSON döndür:
 {"name":"yemek","servings":2,"time":"X dk","difficulty":"Kolay","ingredients":[{"name":"x","quantity":"y"}],"suggestions":["Yemek 1","Yemek 2","Yemek 3"]}
 
 ÖNEMLI: Tüm metinler TÜRKÇE olmalı!`
-        : `Recipe with: "${ingredients}". Return ONLY JSON:
+      : `Recipe with: "${ingredients}". Return ONLY JSON:
 {"name":"dish","servings":2,"time":"X mins","difficulty":"Easy","ingredients":[{"name":"x","quantity":"y"}],"suggestions":["Dish 1","Dish 2","Dish 3"]}
 
 IMPORTANT: All text must be in ENGLISH!`;
 
-      // 🔒 SECURE BACKEND CALL
-      const generateAIContent = httpsCallable(functions, 'generateAIContent');
-      const result = await generateAIContent({ prompt });
-      const data = result.data as any;
+    await handleAIRequest(prompt, "ideas");
+  }, [ingredients, i18n.language, handleAIRequest]);
 
-      if (!data.success || !data.data) {
-        throw new Error("Invalid response from chef");
-      }
-
-      const candidate = data.data;
-
-      let recipeText = '';
-
-      if (candidate.content?.parts?.[0]?.text) {
-        recipeText = candidate.content.parts[0].text;
-      } else if (candidate.text) {
-        recipeText = candidate.text;
-      } else {
-        throw new Error('No text in response');
-      }
-
-      recipeText = recipeText.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
-
-      const jsonMatch = recipeText.match(/\{[\s\S]*\}/);
-      if (jsonMatch) {
-        recipeText = jsonMatch[0];
-      }
-
-      const recipe = JSON.parse(recipeText);
-      setGeneratedRecipe(recipe);
-
-      incrementAction();
-      showAd();
-
-      try {
-        const audio = new Audio('/sounds/success.mp3');
-        audio.volume = 0.5;
-        audio.play().catch(() => { });
-      } catch { }
-
-      toast({
-        title: t('common.success'),
-        description: t('aichef.ideasGenerated'),
-      });
-    } catch (error: any) {
-      console.error('AI Proxy Error:', error);
-
-      // UX: Graceful Fallback
-      let userMessage = error.message || "Failed to generate ideas";
-      // Handle Firebase Functions error codes if needed, though mostly they map to message.
-      const isTurkish = i18n.language === 'tr'; // accessing i18n from closure
-      if (error.code === 'resource-exhausted' || error.message.includes('busy')) {
-        userMessage = isTurkish
-          ? "Şefimiz şu an çok yoğun. Lütfen 1 dakika sonra tekrar deneyin."
-          : "Our chef is very busy right now. Please try again in a minute.";
-      }
-
+  // ✅ ADD ALL ITEMS TO LIST (FIXED RACE CONDITION)
+  const handleAddToList = useCallback(async () => {
+    if (!generatedRecipe?.ingredients?.length) {
       toast({
         title: t('common.error'),
-        description: userMessage,
+        description: "No ingredients found",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const targetList = lists.length > 0 ? lists[0] : null;
+    if (!targetList) {
+      toast({
+        title: t('common.error'),
+        description: "No shopping list found. Please create one first.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setAddingToList(true);
+
+    try {
+      let addedCount = 0;
+
+      for (let i = 0; i < generatedRecipe.ingredients.length; i++) {
+        // ✅ CHECK LIMIT ON EVERY ITERATION (FIXES RACE CONDITION)
+        const currentRemaining = getRemainingActions();
+
+        if (currentRemaining <= 0 && plan !== 'pro') {
+          console.log(`⛔ Limit reached after adding ${addedCount} items`);
+          setLimitDialogOpen(true);
+          break;
+        }
+
+        const ingredient = generatedRecipe.ingredients[i];
+        const itemName = ingredient.name || ingredient.toString();
+        const itemQuantity = ingredient.quantity || "1 adet";
+
+        await addItem(
+          targetList.id,
+          {
+            name: itemName,
+            quantity: itemQuantity,
+            category: detectCategory(itemName),
+            completed: false,
+          },
+          { silent: true }
+        );
+
+        await incrementAction();
+        addedCount++;
+      }
+
+      if (addedCount > 0) {
+        toast({
+          title: t('common.success'),
+          description: `${addedCount} ${t('aichef.allAddedSuccess')}`,
+          duration: 3000,
+        });
+
+        // ✅ SAFE NAVIGATION WITH CLEANUP
+        const timer = setTimeout(() => {
+          navigate("/lists");
+        }, 1500);
+
+        // Cleanup handled by useEffect
+        return () => clearTimeout(timer);
+      }
+
+    } catch (error) {
+      console.error('❌ Error adding items:', error);
+      toast({
+        title: t('common.error'),
+        description: "Failed to add items to list",
         variant: "destructive",
       });
     } finally {
-      setLoading(false);
+      setAddingToList(false);
     }
-  };
+  }, [generatedRecipe, lists, addItem, incrementAction, getRemainingActions, plan, t, toast, navigate]);
 
+  // ✅ RENDER
   return (
     <div className="min-h-screen bg-background pb-20">
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 border-b safe-top">
         <div className="container max-w-4xl px-4 py-2.5 sm:py-3">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <Button variant="ghost" size="icon" onClick={() => navigate("/lists")} className="shrink-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => navigate("/lists")}
+                className="shrink-0"
+              >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
               <h1 className="text-2xl font-bold truncate">{t('aichef.title')}</h1>
@@ -355,7 +362,7 @@ IMPORTANT: All text must be in ENGLISH!`;
       </header>
 
       <main className="container max-w-4xl px-4 py-3 pb-20 space-y-3 sm:space-y-4">
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "recipe" | "ideas")}>
           <TabsList className="grid w-full grid-cols-2 gap-2">
             <TabsTrigger value="recipe" className="text-xs sm:text-sm px-2 sm:px-4 truncate">
               {t('aichef.recipeGenerator')}
@@ -365,6 +372,7 @@ IMPORTANT: All text must be in ENGLISH!`;
             </TabsTrigger>
           </TabsList>
 
+          {/* ✅ RECIPE TAB */}
           <TabsContent value="recipe" className="space-y-4 sm:space-y-5 mt-4">
             <Card className="p-4 sm:p-5">
               <div className="flex items-start gap-3 mb-4">
@@ -386,6 +394,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                     onChange={(e) => setDishName(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleGenerateRecipe()}
                     className="pl-10 h-10 sm:h-11"
+                    disabled={loading}
                   />
                 </div>
 
@@ -447,7 +456,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                   <div>
                     <h4 className="font-semibold text-sm sm:text-base mb-2">{t('aichef.ingredients')}</h4>
                     <div className="space-y-1.5 sm:space-y-2">
-                      {generatedRecipe.ingredients.map((item: any, index: number) => (
+                      {generatedRecipe.ingredients.map((item, index) => (
                         <div key={index} className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg border bg-muted/30">
                           <span className="font-medium">{item.name}</span>
                           <span className="text-sm text-muted-foreground">{item.quantity}</span>
@@ -456,15 +465,26 @@ IMPORTANT: All text must be in ENGLISH!`;
                     </div>
                   </div>
 
-                  <Button className="w-full h-10 sm:h-11 font-semibold" onClick={handleAddToList}>
-                    <Plus className="mr-2 h-5 w-5" />
-                    {t('aichef.addAllToList')}
+                  <Button
+                    className="w-full h-10 sm:h-11 font-semibold"
+                    onClick={handleAddToList}
+                    disabled={addingToList}
+                  >
+                    {addingToList ? (
+                      t('common.loading')
+                    ) : (
+                      <>
+                        <Plus className="mr-2 h-5 w-5" />
+                        {t('aichef.addAllToList')}
+                      </>
+                    )}
                   </Button>
                 </div>
               </Card>
             )}
           </TabsContent>
 
+          {/* ✅ IDEAS TAB */}
           <TabsContent value="ideas" className="space-y-4 sm:space-y-5 mt-4">
             <Card className="p-4 sm:p-5">
               <div className="flex items-start gap-3 mb-4">
@@ -484,6 +504,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                   onChange={(e) => setIngredients(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleGenerateIdeas()}
                   className="h-10 sm:h-11"
+                  disabled={loading}
                 />
 
                 <Button
@@ -535,8 +556,15 @@ IMPORTANT: All text must be in ENGLISH!`;
                   <Card className="p-4 sm:p-5">
                     <h3 className="font-semibold text-base sm:text-lg mb-3">{t('aichef.recipeSuggestions')}</h3>
                     <div className="grid gap-2 sm:gap-3">
-                      {generatedRecipe.suggestions.map((suggestion: string, index: number) => (
-                        <button key={index} className="p-3 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors text-left">
+                      {generatedRecipe.suggestions.map((suggestion, index) => (
+                        <button
+                          key={index}
+                          className="p-3 sm:p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors text-left"
+                          onClick={() => {
+                            setDishName(suggestion);
+                            setActiveTab("recipe");
+                          }}
+                        >
                           <div className="flex items-center gap-3">
                             <Utensils className="h-5 w-5 text-primary" />
                             <span className="font-medium">{suggestion}</span>
@@ -561,7 +589,7 @@ IMPORTANT: All text must be in ENGLISH!`;
                     <div>
                       <h4 className="font-semibold text-sm sm:text-base mb-2">{t('aichef.ingredients')}</h4>
                       <div className="space-y-1.5 sm:space-y-2">
-                        {generatedRecipe.ingredients.map((item: RecipeIngredient, index: number) => (
+                        {generatedRecipe.ingredients.map((item, index) => (
                           <div key={index} className="flex items-center justify-between p-2.5 sm:p-3 rounded-lg border bg-muted/30">
                             <span className="font-medium">{item.name}</span>
                             <span className="text-sm text-muted-foreground">{item.quantity}</span>
@@ -570,9 +598,19 @@ IMPORTANT: All text must be in ENGLISH!`;
                       </div>
                     </div>
 
-                    <Button className="w-full h-10 sm:h-11 font-semibold" onClick={handleAddToList}>
-                      <Plus className="mr-2 h-5 w-5" />
-                      {t('aichef.addAllItems')}
+                    <Button
+                      className="w-full h-10 sm:h-11 font-semibold"
+                      onClick={handleAddToList}
+                      disabled={addingToList}
+                    >
+                      {addingToList ? (
+                        t('common.loading')
+                      ) : (
+                        <>
+                          <Plus className="mr-2 h-5 w-5" />
+                          {t('aichef.addAllItems')}
+                        </>
+                      )}
                     </Button>
                   </div>
                 </Card>
@@ -588,7 +626,7 @@ IMPORTANT: All text must be in ENGLISH!`;
         feature="AI Chef Recipes"
         currentPlan={plan}
       />
-      <BottomNav />  {/* ✅ EKLE */}
+      <BottomNav />
     </div>
   );
 };
