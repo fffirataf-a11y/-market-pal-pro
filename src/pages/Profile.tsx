@@ -422,7 +422,7 @@ const Profile = () => {
 
       {/* Fixed Bottom Save Button */}
       {hasChanges && (
-        <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg">
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t shadow-lg z-50">
           <div className="container max-w-4xl py-4">
             <div className="flex items-center justify-between gap-4">
               <div>
@@ -441,6 +441,60 @@ const Profile = () => {
                 </Button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* DANGER ZONE - DELETE ACCOUNT */}
+      {!hasChanges && (
+        <div className="container max-w-4xl mt-8 mb-8 pb-8">
+          <div className="border-t pt-8">
+            <h3 className="text-lg font-bold text-destructive mb-2">Danger Zone</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Once you delete your account, there is no going back. Please be certain.
+            </p>
+            <Button
+              variant="destructive"
+              className="w-full sm:w-auto"
+              onClick={() => {
+                const confirmed = window.confirm(
+                  "Are you sure you want to delete your account? This action cannot be undone."
+                );
+                if (confirmed) {
+                  const currentUser = auth.currentUser;
+                  if (currentUser) {
+                    // Try to delete
+                    currentUser.delete()
+                      .then(() => {
+                        toast({
+                          title: "Account Deleted",
+                          description: "Your account has been successfully deleted.",
+                        });
+                        navigate("/login");
+                      })
+                      .catch((error) => {
+                        console.error("Delete error", error);
+                        if (error.code === 'auth/requires-recent-login') {
+                          toast({
+                            title: "Security Check Required",
+                            description: "Please log out and log in again to delete your account.",
+                            variant: "destructive"
+                          });
+                        } else {
+                          toast({
+                            title: "Error",
+                            description: "Failed to delete account. Please try again later.",
+                            variant: "destructive"
+                          });
+                        }
+                      });
+                  }
+                }
+              }}
+            >
+              <UserX className="h-4 w-4 mr-2" />
+              Delete Account
+            </Button>
           </div>
         </div>
       )}
