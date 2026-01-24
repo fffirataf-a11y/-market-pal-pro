@@ -122,3 +122,77 @@ exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-centra
     };
   }
 });
+
+/**
+ * Trigger: New Friend Request
+ * Sends a notification to the recipient when a new friend request is created.
+ */
+const { onDocumentCreated, onDocumentUpdated } = require("firebase-functions/v2/firestore");
+
+exports.onFriendRequestCreated = onDocumentCreated("friendRequests/{requestId}", async (event) => {
+  const snapshot = event.data;
+  if (!snapshot) return;
+
+  const request = snapshot.data();
+  const toUserId = request.toUserId;
+  const fromUserName = request.fromUserName;
+
+  try {
+    const userDoc = await admin.firestore().collection("users").doc(toUserId).get();
+    const fcmToken = userDoc.data()?.fcmToken;
+
+    if (fcmToken) {
+      await admin.messaging().send({
+        token: fcmToken,
+        notification: {
+          title: "New Friend Request! \uD83D\uDC4B",
+          body: `${fromUserName} wants to be your friend.`,
+        },
+        data: {
+          type: "friend_request",
+          url: "/profile"
+        }
+      });
+      console.log(`\uD83D\uDD14 Notification sent to ${toUserId}`);
+    }
+  } catch (error) {
+    console.error("\u274C Notification error:", error);
+  }
+});
+
+/**
+ * Trigger: Friend Request Accepted
+ * Sends a notification to the sender when their request is accepted.
+ */
+exports.onFriendRequestAccepted = onDocumentUpdated("friendRequests/{requestId}", async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+
+  // Only run if status changed to 'accepted'
+  if (before.status !== 'accepted' && after.status === 'accepted') {
+    const fromUserId = after.fromUserId;
+    const toUserName = after.toUserName; // Use toUserName stored in request
+
+    try {
+      const userDoc = await admin.firestore().collection("users").doc(fromUserId).get();
+      const fcmToken = userDoc.data()?.fcmToken;
+
+      if (fcmToken) {
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: {
+            title: "Friend Request Accepted! \uD83C\uDF89",
+            body: `${toUserName} accepted your friend request.`,
+          },
+          data: {
+            type: "friend_accepted",
+            url: "/profile"
+          }
+        });
+        console.log(`\uD83D\uDD14 Notification sent to ${fromUserId}`);
+      }
+    } catch (error) {
+      console.error("\u274C Notification error:", error);
+    }
+  }
+});

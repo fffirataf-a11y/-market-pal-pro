@@ -49,6 +49,7 @@ export const useShoppingLists = () => {
   const [lists, setLists] = useState<ShoppingList[]>([]);
   const [loading, setLoading] = useState(true);
   const [currentUser, setCurrentUser] = useState(auth.currentUser);
+  const [friendIds, setFriendIds] = useState<string[]>([]);
 
   // Auth durumunu dinle
   useEffect(() => {
@@ -73,72 +74,95 @@ export const useShoppingLists = () => {
 
     setLoading(true);
 
-    // QUERY 1: Kendi listeleri
-    const ownListsQuery = query(
-      collection(db, 'shoppingLists'),
-      where('ownerId', '==', currentUser.uid)
-    );
-
-    // QUERY 2: Paylaşılan listeler
-    const sharedListsQuery = query(
-      collection(db, 'shoppingLists'),
-      where('sharedWith', 'array-contains', currentUser.uid)
-    );
-
-    const allLists = new Map<string, ShoppingList>();
-
-    // Listener 1: Kendi listeleri dinle
-    const unsubscribe1 = onSnapshot(
-      ownListsQuery,
-      (snapshot) => {
-        snapshot.forEach((docSnapshot) => {
-          allLists.set(docSnapshot.id, {
-            id: docSnapshot.id,
-            ...docSnapshot.data(),
-          } as ShoppingList);
-        });
-        updateLists();
-      },
-      (error) => {
-        console.error('Own lists listener error:', error);
+    // Friends list listener to get friend IDs
+    const userDocRef = doc(db, 'users', currentUser.uid);
+    const unsubscribeUser = onSnapshot(userDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        const friends = docSnap.data().friends || [];
+        setFriendIds(friends);
+        setupListListeners(friends);
+      } else {
+        setFriendIds([]);
+        setupListListeners([]);
       }
-    );
+    });
 
-    // Listener 2: Paylaşılan listeleri dinle
-    const unsubscribe2 = onSnapshot(
-      sharedListsQuery,
-      (snapshot) => {
-        snapshot.forEach((docSnapshot) => {
-          allLists.set(docSnapshot.id, {
-            id: docSnapshot.id,
-            ...docSnapshot.data(),
-          } as ShoppingList);
+    let unsubscribeOwn: () => void;
+    let unsubscribeShared: () => void;
+    let unsubscribeFriends: () => void;
+
+    const setupListListeners = (currentFriendIds: string[]) => {
+      // Clean up previous listeners if they exist
+      if (unsubscribeOwn) unsubscribeOwn();
+      if (unsubscribeShared) unsubscribeShared();
+      if (unsubscribeFriends) unsubscribeFriends();
+
+      // QUERY 1: Kendi listeleri
+      const ownListsQuery = query(
+        collection(db, 'shoppingLists'),
+        where('ownerId', '==', currentUser.uid)
+      );
+
+      // QUERY 2: Paylaşılan listeler (Explicitly shared)
+      const sharedListsQuery = query(
+        collection(db, 'shoppingLists'),
+        where('sharedWith', 'array-contains', currentUser.uid)
+      );
+
+      const allLists = new Map<string, ShoppingList>();
+
+      const mergeAndSetLists = () => {
+        const userLists = Array.from(allLists.values());
+        // Client-side sıralama
+        userLists.sort((a, b) => {
+          const aTime = a.updatedAt?.toMillis?.() || 0;
+          const bTime = b.updatedAt?.toMillis?.() || 0;
+          return bTime - aTime;
         });
-        updateLists();
-      },
-      (error) => {
-        console.error('Shared lists listener error:', error);
+        setLists(userLists);
+        setLoading(false);
+      };
+
+      // Listener 1: Kendi listeleri
+      unsubscribeOwn = onSnapshot(ownListsQuery, (snapshot) => {
+        snapshot.forEach((doc) => {
+          allLists.set(doc.id, { id: doc.id, ...doc.data() } as ShoppingList);
+        });
+        mergeAndSetLists();
+      }, (error) => console.error('Own lists error:', error));
+
+      // Listener 2: Paylaşılan listeler
+      unsubscribeShared = onSnapshot(sharedListsQuery, (snapshot) => {
+        snapshot.forEach((doc) => {
+          allLists.set(doc.id, { id: doc.id, ...doc.data() } as ShoppingList);
+        });
+        mergeAndSetLists();
+      }, (error) => console.error('Shared lists error:', error));
+
+      // QUERY 3: Arkadaşların listeleri (Implicit sharing)
+      if (currentFriendIds.length > 0) {
+        // Firestore 'in' query supports max 10 values.
+        const friendsListsQuery = query(
+          collection(db, 'shoppingLists'),
+          where('ownerId', 'in', currentFriendIds)
+        );
+
+        unsubscribeFriends = onSnapshot(friendsListsQuery, (snapshot) => {
+          snapshot.forEach((doc) => {
+            allLists.set(doc.id, { id: doc.id, ...doc.data() } as ShoppingList);
+          });
+          mergeAndSetLists();
+        }, (error) => console.error('Friends lists error:', error));
+      } else {
+        mergeAndSetLists();
       }
-    );
-
-    // Listeleri güncelle ve sırala
-    const updateLists = () => {
-      const userLists = Array.from(allLists.values());
-
-      // Client-side sıralama
-      userLists.sort((a, b) => {
-        const aTime = a.updatedAt?.toMillis?.() || 0;
-        const bTime = b.updatedAt?.toMillis?.() || 0;
-        return bTime - aTime;
-      });
-
-      setLists(userLists);
-      setLoading(false);
     };
 
     return () => {
-      unsubscribe1();
-      unsubscribe2();
+      unsubscribeUser();
+      if (unsubscribeOwn) unsubscribeOwn();
+      if (unsubscribeShared) unsubscribeShared();
+      if (unsubscribeFriends) unsubscribeFriends();
     };
   }, [currentUser]);
 
@@ -234,7 +258,10 @@ export const useShoppingLists = () => {
     if (!list) return;
 
     // ✅ İZİN KONTROLÜ
-    if (list.ownerId !== currentUser.uid) {
+    const isOwner = list.ownerId === currentUser.uid;
+    const isFriend = friendIds.includes(list.ownerId);
+
+    if (!isOwner && !isFriend) {
       // Paylaşılan liste - izni kontrol et
       const userPermission = list.permissions[currentUser.uid];
       if (userPermission !== 'edit') {
@@ -301,7 +328,10 @@ export const useShoppingLists = () => {
     if (!list) return;
 
     // ✅ İZİN KONTROLÜ
-    if (list.ownerId !== currentUser.uid) {
+    const isOwner = list.ownerId === currentUser.uid;
+    const isFriend = friendIds.includes(list.ownerId);
+
+    if (!isOwner && !isFriend) {
       const userPermission = list.permissions[currentUser.uid];
       if (userPermission !== 'edit') {
         toast({
@@ -342,7 +372,10 @@ export const useShoppingLists = () => {
     if (!list) return;
 
     // ✅ İZİN KONTROLÜ
-    if (list.ownerId !== currentUser.uid) {
+    const isOwner = list.ownerId === currentUser.uid;
+    const isFriend = friendIds.includes(list.ownerId);
+
+    if (!isOwner && !isFriend) {
       const userPermission = list.permissions[currentUser.uid];
       if (userPermission !== 'edit') {
         toast({
@@ -384,11 +417,14 @@ export const useShoppingLists = () => {
     const list = lists.find(l => l.id === listId);
     if (!list) return;
 
-    // ✅ İZİN KONTROLÜ (Sadece owner silebilir)
-    if (list.ownerId !== currentUser.uid) {
+    // ✅ İZİN KONTROLÜ (Sadece owner ve arkadaşlar silebilir)
+    const isOwner = list.ownerId === currentUser.uid;
+    const isFriend = friendIds.includes(list.ownerId);
+
+    if (!isOwner && !isFriend) {
       toast({
         title: t('common.error'),
-        description: "Only the list owner can delete all items",
+        description: "Only the list owner or friends can delete all items",
         variant: "destructive",
         duration: 2000,
       });
@@ -457,7 +493,7 @@ export const useShoppingLists = () => {
     }
   };
 
-  // Paylaşımı kaldır
+  // Paylaşımı kaldır (Sadece explicit paylaşımları kaldırır, implicit arkadaşlık erişimini kaldırmak için arkadaştan çıkarmak gerekir)
   const unshareList = async (listId: string, friendId: string) => {
     try {
       const list = lists.find(l => l.id === listId);

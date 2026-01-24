@@ -77,16 +77,13 @@ export const initializeAdMob = async (): Promise<void> => {
       }
     }
 
-    // CRITICAL FIX: Always use test ads until AdMob account fully approved
-    // TODO: Change to false after AdMob account approval confirmed
-    const useTestAds = true;
-
+    // REAL ADS ENABLED
     console.log(`[Ads] 🎯 Environment: ${import.meta.env.MODE}`);
-    console.log(`[Ads] 🧪 Test mode: FORCED ENABLED (waiting AdMob approval)`);
+    console.log(`[Ads] 🧪 Test mode: DISABLED (Real Ads)`);
 
     await AdMob.initialize({
-      testingDevices: [], // Add device ID here if needed
-      initializeForTesting: true, // Force test mode
+      testingDevices: [],
+      initializeForTesting: false,
     });
 
     // iOS ses ayarları (optional)
@@ -132,9 +129,8 @@ const shouldShowRewardedAd = (plan: PlanType): boolean => {
 const getAdUnitId = (adType: 'interstitial' | 'rewarded'): string => {
   const platform = Capacitor.getPlatform() as 'ios' | 'android';
 
-  // CRITICAL FIX: Always use test ads until AdMob account fully approved
-  // TODO: Change to false after AdMob account approval confirmed
-  const useTestAds = true;
+  // Production Ads Requested
+  const useTestAds = false;
 
   // Test mode - use Google test IDs
   if (useTestAds) {
