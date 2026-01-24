@@ -30,6 +30,7 @@ target 'App' do
   pod 'Firebase/Core'
   pod 'Firebase/Auth'
   pod 'Firebase/Messaging'
+  pod 'Firebase/DynamicLinks'
 end
 
 post_install do |installer|

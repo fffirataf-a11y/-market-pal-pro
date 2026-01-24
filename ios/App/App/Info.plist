@@ -12,6 +12,17 @@
 	<string>We need access to your camera to scan receipts.</string>
 	<key>CFBundleDisplayName</key>
 	<string>SmartMarket</string>
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleURLName</key>
+			<string>com.lionx.smartmarket</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.lionx.smartmarket</string>
+			</array>
+		</dict>
+	</array>
 	<key>FirebaseAppDelegateProxyEnabled</key>
 	<false/>
 	<key>NSAppTransportSecurity</key>
