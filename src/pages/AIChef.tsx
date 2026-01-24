@@ -80,7 +80,7 @@ const parseAIResponse = (candidate: any): GeneratedRecipe => {
 };
 
 const playSuccessSound = () => {
-  if (Capacitor.isNativePlatform()) return;
+  // if (Capacitor.isNativePlatform()) return; // Removed to allow sound on native
 
   try {
     const audio = new Audio('/sounds/success.mp3');

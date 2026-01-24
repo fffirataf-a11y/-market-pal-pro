@@ -59,8 +59,8 @@ exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-centra
     }
 
     // 🤖 4. Model Configuration (LOCKED: gemini-pro / v1)
-    const targetModel = "gemini-pro";
-    const url = `https://generativelanguage.googleapis.com/v1/models/${targetModel}:generateContent?key=${apiKey}`;
+    const targetModel = "gemini-flash-latest";
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${targetModel}:generateContent?key=${apiKey}`;
 
     const payload = {
       contents: [{
@@ -80,7 +80,7 @@ exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-centra
 
     // 🔍 6. Response Validation
     if (response.status !== 200) {
-      console.error(`⚠️ Gemini API returned ${response.status}:`, response.data);
+      console.error(`⚠️ Gemini API returned ${response.status}:`, JSON.stringify(response.data, null, 2));
 
       // Map Gemini Errors to Client ErrorCodes
       let errorCode = "UNKNOWN";

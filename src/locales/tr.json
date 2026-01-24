@@ -184,7 +184,9 @@
     "recipeSuggestions": "Tarif Önerileri",
     "addAllToList": "Tümünü Listeye Ekle",
     "addAllItems": "Tümünü Listeye Ekle",
-    "allAddedSuccess": "Tüm ürünler başarıyla eklendi"
+    "allAddedSuccess": "Tüm ürünler başarıyla eklendi",
+    "recipeGenerated": "Tarif başarıyla oluşturuldu! 👨‍🍳",
+    "ideasGenerated": "Yemek fikirleri hazır! 💡"
   },
   "ads": {
     "rewardedTitle": "Ek Özellikler için Reklam İzle",

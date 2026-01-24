@@ -184,7 +184,9 @@
     "recipeSuggestions": "Recipe Suggestions",
     "addAllToList": "Add All to List",
     "addAllItems": "Add All to List",
-    "allAddedSuccess": "All items added successfully"
+    "allAddedSuccess": "All items added successfully",
+    "recipeGenerated": "Recipe generated successfully! 👨‍🍳",
+    "ideasGenerated": "Cooking ideas are ready! 💡"
   },
   "ads": {
     "rewardedTitle": "Watch Ad for Extra Features",
