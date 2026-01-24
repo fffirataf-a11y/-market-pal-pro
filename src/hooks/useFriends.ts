@@ -41,14 +41,22 @@ export const useFriends = () => {
   const [friendRequests, setFriendRequests] = useState<FriendRequest[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const currentUser = auth.currentUser;
+  // Auth State Listener
+  const [user, setUser] = useState<any>(auth.currentUser);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((u) => {
+      setUser(u);
+    });
+    return () => unsubscribe();
+  }, []);
 
   // Arkadaş listesini gerçek zamanlı dinle
   useEffect(() => {
-    if (!currentUser) return;
+    if (!user) return;
 
     const unsubscribe = onSnapshot(
-      doc(db, 'users', currentUser.uid),
+      doc(db, 'users', user.uid),
       (docSnapshot) => {
         console.log('🔄 Friends listener triggered!', docSnapshot.data());
         if (docSnapshot.exists()) {
@@ -63,15 +71,15 @@ export const useFriends = () => {
     );
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [user]);
 
   // Arkadaş isteklerini gerçek zamanlı dinle (Gelen)
   useEffect(() => {
-    if (!currentUser) return;
+    if (!user) return;
 
     const q = query(
       collection(db, 'friendRequests'),
-      where('toUserId', '==', currentUser.uid),
+      where('toUserId', '==', user.uid),
       where('status', '==', 'pending')
     );
 
@@ -93,17 +101,17 @@ export const useFriends = () => {
     );
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [user]);
 
   // Giden arkadaşlık isteklerini dinle (Outgoing)
   const [outgoingRequests, setOutgoingRequests] = useState<string[]>([]);
 
   useEffect(() => {
-    if (!currentUser) return;
+    if (!user) return;
 
     const q = query(
       collection(db, 'friendRequests'),
-      where('fromUserId', '==', currentUser.uid),
+      where('fromUserId', '==', user.uid),
       where('status', '==', 'pending')
     );
 
@@ -116,7 +124,7 @@ export const useFriends = () => {
     });
 
     return () => unsubscribe();
-  }, [currentUser]);
+  }, [user]);
 
   // Arkadaşları yükle (Parallel - Optimized)
   const loadFriends = async (friendIds: string[]) => {
@@ -174,7 +182,7 @@ export const useFriends = () => {
         const userData = docSnapshot.data() as User;
 
         // Kendisi değilse, zaten arkadaşı değilse VE daha önce eklenmemişse
-        if (userData.uid !== currentUser?.uid &&
+        if (userData.uid !== user?.uid &&
           !friends.find(f => f.uid === userData.uid) &&
           !seenUids.has(userData.uid) &&
           userData.email && !seenEmails.has(userData.email)) {
@@ -202,7 +210,7 @@ export const useFriends = () => {
 
   // Arkadaşlık isteği gönder
   const sendFriendRequest = async (toUser: User) => {
-    if (!currentUser) {
+    if (!user) {
       toast({
         title: "Error",
         description: "You must be logged in",
@@ -226,7 +234,7 @@ export const useFriends = () => {
       // Mevcut istek var mı kontrol et
       const existingRequestQuery = query(
         collection(db, 'friendRequests'),
-        where('fromUserId', '==', currentUser.uid),
+        where('fromUserId', '==', user.uid),
         where('toUserId', '==', toUser.uid),
         where('status', '==', 'pending')
       );
@@ -245,7 +253,7 @@ export const useFriends = () => {
       const reverseRequestQuery = query(
         collection(db, 'friendRequests'),
         where('fromUserId', '==', toUser.uid),
-        where('toUserId', '==', currentUser.uid),
+        where('toUserId', '==', user.uid),
         where('status', '==', 'pending')
       );
 
@@ -261,9 +269,9 @@ export const useFriends = () => {
 
       // Yeni istek oluştur
       await addDoc(collection(db, 'friendRequests'), {
-        fromUserId: currentUser.uid,
-        fromUserName: currentUser.displayName || 'User',
-        fromUserPhoto: currentUser.photoURL || '',
+        fromUserId: user.uid,
+        fromUserName: user.displayName || 'User',
+        fromUserPhoto: user.photoURL || '',
         toUserId: toUser.uid,
         toUserName: toUser.displayName,
         status: 'pending',
@@ -287,7 +295,7 @@ export const useFriends = () => {
   };
 
   const acceptFriendRequest = async (request: FriendRequest) => {
-    if (!currentUser) return;
+    if (!user) return;
 
     console.log('🔵 Accepting request:', request);
     setLoading(true);
@@ -296,15 +304,15 @@ export const useFriends = () => {
         status: 'accepted',
       });
 
-      const currentUserRef = doc(db, 'users', currentUser.uid);
+      const userRef = doc(db, 'users', user.uid);
       const friendUserRef = doc(db, 'users', request.fromUserId);
 
-      await updateDoc(currentUserRef, {
+      await updateDoc(userRef, {
         friends: arrayUnion(request.fromUserId),
       });
 
       await updateDoc(friendUserRef, {
-        friends: arrayUnion(currentUser.uid),
+        friends: arrayUnion(user.uid),
       });
 
       toast({
@@ -349,19 +357,19 @@ export const useFriends = () => {
 
   // Arkadaşı kaldır
   const removeFriend = async (friendId: string) => {
-    if (!currentUser) return;
+    if (!user) return;
 
     setLoading(true);
     try {
-      const currentUserRef = doc(db, 'users', currentUser.uid);
+      const userRef = doc(db, 'users', user.uid);
       const friendUserRef = doc(db, 'users', friendId);
 
-      await updateDoc(currentUserRef, {
+      await updateDoc(userRef, {
         friends: arrayRemove(friendId),
       });
 
       await updateDoc(friendUserRef, {
-        friends: arrayRemove(currentUser.uid),
+        friends: arrayRemove(user.uid),
       });
 
       toast({
