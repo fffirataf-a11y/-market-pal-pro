@@ -12,7 +12,28 @@
           "package_name": "com.lionx.smartmarket"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "425083044183-3vq1hasp5esjrbsmesj7u2mfcrtgju3g.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lionx.smartmarket",
+            "certificate_hash": "1b8bfe80900e1ff6d3b9b1f518ee39aa43b1fbe6"
+          }
+        },
+        {
+          "client_id": "425083044183-6v9lk0rj48nboqq6ttjnv6dcd0j2r67t.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lionx.smartmarket",
+            "certificate_hash": "6900a6bbb48bd3f7efaa22c35bd8acbf942609a0"
+          }
+        },
+        {
+          "client_id": "425083044183-9rec3eek7d9dhb2pmknisb6fpp7amabt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyCx9YDMABsCc3wzCfAPbKEOXzWRk7vi5ss"
@@ -20,7 +41,63 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "425083044183-9rec3eek7d9dhb2pmknisb6fpp7amabt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "425083044183-ln69ot16n7hlb5uvfsmskgahviclpbgu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lionx.smartmarket"
+              }
+            }
+          ]
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:425083044183:android:a83cc01e67330279b8be12",
+        "android_client_info": {
+          "package_name": "com.lionx.smartmarketpro"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "425083044183-ggksec8jf9ssqjh5hnfkl7u3pj1lf3kb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.lionx.smartmarketpro",
+            "certificate_hash": "1b8bfe80900e1ff6d3b9b1f518ee39aa43b1fbe6"
+          }
+        },
+        {
+          "client_id": "425083044183-9rec3eek7d9dhb2pmknisb6fpp7amabt.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCx9YDMABsCc3wzCfAPbKEOXzWRk7vi5ss"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "425083044183-9rec3eek7d9dhb2pmknisb6fpp7amabt.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "425083044183-ln69ot16n7hlb5uvfsmskgahviclpbgu.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.lionx.smartmarket"
+              }
+            }
+          ]
         }
       }
     }

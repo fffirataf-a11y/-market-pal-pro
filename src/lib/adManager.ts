@@ -43,7 +43,19 @@ const TEST_AD_UNIT_IDS = {
   banner: "ca-app-pub-3940256099942544/6300978111",
 };
 
+// Ad State Management
 let adMobInitialized = false;
+let isRewardedAdLoaded = false;
+let isInterstitialAdLoaded = false;
+let isRewardEarned = false;
+
+// Global Listeners State
+let rewardAdLoadedListener: any = null;
+let rewardAdFailedListener: any = null;
+let rewardAdEarnedListener: any = null;
+let rewardAdDismissedListener: any = null;
+let interstitialAdLoadedListener: any = null;
+let interstitialAdDismissedListener: any = null;
 
 // ============================================
 // INITIALIZATION
@@ -63,46 +75,117 @@ export const initializeAdMob = async (): Promise<void> => {
   try {
     const platform = Capacitor.getPlatform();
     console.log(`[Ads] 📱 Initializing AdMob for ${platform}...`);
+    console.log(`[Ads] 🧪 Environment: ${import.meta.env.MODE}`);
 
-    // iOS 14+ için tracking izni iste
+    // iOS 14+ için tracking izni iste - BU KRİTİK!
     if (platform === "ios") {
       try {
+        console.log("[Ads] 📱 Requesting iOS ATT authorization...");
         const admobAny = AdMob as any;
         if (admobAny.requestTrackingAuthorization) {
           const result = await admobAny.requestTrackingAuthorization();
-          console.log("[Ads] 📱 Tracking authorization result:", result);
+          console.log("[Ads] 📱 ATT authorization result:", JSON.stringify(result));
+          // result.status: 'authorized', 'denied', 'restricted', 'notDetermined'
+        } else {
+          console.log("[Ads] ⚠️ requestTrackingAuthorization not available");
         }
-      } catch (trackingError) {
-        console.log("[Ads] ⚠️ Tracking authorization failed:", trackingError);
+      } catch (trackingError: any) {
+        console.log("[Ads] ⚠️ ATT authorization error:", trackingError?.message || trackingError);
+        // ATT başarısız olsa bile devam et - personalized ads olmayacak ama reklamlar yine gösterilir
       }
     }
 
-    // REAL ADS ENABLED
-    console.log(`[Ads] 🎯 Environment: ${import.meta.env.MODE}`);
-    console.log(`[Ads] 🧪 Test mode: DISABLED (Real Ads)`);
-
+    // Initialize AdMob - PRODUCTION MODE
+    console.log(`[Ads] 🎯 Initializing with PRODUCTION settings`);
     await AdMob.initialize({
       testingDevices: [],
       initializeForTesting: false,
     });
 
-    // iOS ses ayarları (optional)
+    // iOS ses ayarları
     if (platform === "ios") {
       try {
         const admobAny = AdMob as any;
         if (admobAny.setAppMuted) await admobAny.setAppMuted({ value: false });
         if (admobAny.setAppVolume) await admobAny.setAppVolume({ value: 1.0 });
+        console.log("[Ads] 🔊 iOS audio settings configured");
       } catch (audioError) {
         console.log("[Ads] ⚠️ Audio settings not available");
       }
     }
 
     adMobInitialized = true;
-    console.log("[Ads] ✅ AdMob initialized successfully");
-    console.log(`[Ads] 🧪 Test mode: ${isDevelopment ? 'ENABLED' : 'DISABLED'}`);
-  } catch (error) {
-    console.error("[Ads] ❌ AdMob initialization error:", error);
+    console.log("[Ads] ✅ AdMob initialized successfully for", platform);
+
+    // Setup Global Listeners immediately after initialization
+    setupGlobalListeners();
+
+  } catch (error: any) {
+    console.error("[Ads] ❌ AdMob initialization error:", error?.message || error);
     throw error;
+  }
+};
+
+const setupGlobalListeners = async () => {
+  try {
+    // --- REWARDED AD LISTENERS ---
+
+    // 1. Loaded
+    if (rewardAdLoadedListener) await rewardAdLoadedListener.remove();
+    rewardAdLoadedListener = await AdMob.addListener('onRewardedVideoAdLoaded', (info) => {
+      console.log("[Ads] ✅ Rewarded Ad LOADED via Global Listener", info);
+      isRewardedAdLoaded = true;
+      // Dispatch custom window event for UI updates
+      window.dispatchEvent(new Event('rewardedAdLoaded'));
+    });
+
+    // 2. Failed to Load
+    if (rewardAdFailedListener) await rewardAdFailedListener.remove();
+    rewardAdFailedListener = await AdMob.addListener('onRewardedVideoAdFailedToLoad', (error) => {
+      console.error("[Ads] ❌ Rewarded Ad FAILED to load via Global Listener", error);
+      isRewardedAdLoaded = false;
+      // Retry logic could go here globally if needed
+    });
+
+    // 3. Reward Earned (CRITICAL)
+    if (rewardAdEarnedListener) await rewardAdEarnedListener.remove();
+    rewardAdEarnedListener = await AdMob.addListener('onRewardedVideoAdReward', (reward) => {
+      console.log("[Ads] 🎁 REWARD EARNED via Global Listener:", reward);
+      isRewardEarned = true;
+    });
+
+    // 4. Dismissed (Closed)
+    if (rewardAdDismissedListener) await rewardAdDismissedListener.remove();
+    rewardAdDismissedListener = await AdMob.addListener('onRewardedVideoAdDismissed', () => {
+      console.log("[Ads] ❎ Rewarded Ad Dismissed. Earned status:", isRewardEarned);
+      isRewardedAdLoaded = false; // Need to reload for next time
+
+      // Immediately start preloading the next one
+      preloadRewardedAd();
+    });
+
+    // --- INTERSTITIAL AD LISTENERS ---
+
+    // 1. Loaded
+    if (interstitialAdLoadedListener) await interstitialAdLoadedListener.remove();
+    interstitialAdLoadedListener = await AdMob.addListener('onInterstitialAdLoaded', () => {
+      console.log("[Ads] ✅ Interstitial Ad LOADED via Global Listener");
+      isInterstitialAdLoaded = true;
+    });
+
+    // 2. Dismissed
+    if (interstitialAdDismissedListener) await interstitialAdDismissedListener.remove();
+    interstitialAdDismissedListener = await AdMob.addListener('onInterstitialAdDismissed', () => {
+      console.log("[Ads] ❎ Interstitial Ad Dismissed");
+      isInterstitialAdLoaded = false;
+      // Preload next one
+      preloadInterstitialAd();
+    });
+
+    console.log("[Ads] 👂 Global listeners set up successfully");
+
+  } catch (e) {
+    console.error("[Ads] ⚠️ Error setting up global listeners:", e);
   }
 };
 
@@ -148,8 +231,27 @@ const getAdUnitId = (adType: 'interstitial' | 'rewarded'): string => {
 };
 
 // ============================================
-// REWARDED ADS
+// REWARDED ADS (PRELOAD MECHANISM)
 // ============================================
+
+export const getRewardedAdStatus = () => isRewardedAdLoaded;
+
+export const preloadRewardedAd = async () => {
+  if (!Capacitor.isNativePlatform()) return;
+  if (isRewardedAdLoaded) {
+    console.log("[Ads] ⚡ Rewarded ad already loaded, skipping preload");
+    return;
+  }
+
+  try {
+    await initializeAdMob();
+    const adUnitId = getAdUnitId('rewarded');
+    console.log("[Ads] ⏳ Preloading Rewarded Ad...");
+    await AdMob.prepareRewardVideoAd({ adId: adUnitId });
+  } catch (error) {
+    console.error("[Ads] ❌ Error preloading rewarded ad:", error);
+  }
+};
 
 const showRewardedAdPlaceholder = async (
   plan: PlanType,
@@ -165,15 +267,11 @@ export const showRewardedAd = async (
   plan: PlanType,
   options: RewardedAdOptions = {}
 ): Promise<void> => {
-  const placement = options.placement ?? "generic";
-
-  // console.log(`[Ads] 🎬 Rewarded ad requested`);
-  // console.log(`[Ads] 📍 Placement: ${placement}`);
-  // console.log(`[Ads] 👤 Plan: ${plan}`);
+  console.log(`[Ads] 🎬 Show Rewarded Ad Requested`);
 
   if (!shouldShowRewardedAd(plan)) {
-    console.log("[Ads] ⛔ Rewarded ad blocked - plan not eligible");
-    options.onFailed?.({ message: 'Plan not eligible for rewarded ads' });
+    console.log("[Ads] ⛔ Blocked - plan not eligible");
+    options.onFailed?.({ message: 'Plan not eligible' });
     return;
   }
 
@@ -182,124 +280,98 @@ export const showRewardedAd = async (
     return;
   }
 
+  // Check if loaded
+  if (!isRewardedAdLoaded) {
+    console.log("[Ads] ⚠️ Ad not ready yet. Triggering load and informing user.");
+    // Fallback: Try to load it now
+    preloadRewardedAd();
+    options.onFailed?.({ message: 'Ad is loading, please try again in a moment.' });
+    return;
+  }
+
   try {
-    await initializeAdMob();
+    // Reset Earned Flag before showing
+    isRewardEarned = false;
 
-    const platform = Capacitor.getPlatform();
-    const adUnitId = getAdUnitId('rewarded');
+    console.log("[Ads] 🎬 Showing PRELOADED rewarded ad...");
+    await AdMob.showRewardVideoAd();
 
-    console.log(`[Ads] 📱 Platform: ${platform}`);
-    console.log(`[Ads] 🎯 Ad Unit ID: ${adUnitId}`);
+    // We wait for the dismissal to know when to check for reward
+    // The checking logic happens in the caller or we can adapt this function
+    // With the new architecture, the global listener handles the 'earned' state.
+    // BUT we need to bridge that back to the options.onComplete callback.
 
-    const admobAny = AdMob as any;
+    // Strategy: We can't await `showRewardVideoAd` to return the result of "Did user finish?".
+    // It returns when the ad opens (usually).
+    // So we need to poll or wait for the dismiss event.
 
-    // Timeout wrapper function
-    const withTimeout = <T,>(promise: Promise<T>, timeoutMs: number, errorMsg: string): Promise<T> => {
-      return Promise.race([
-        promise,
-        new Promise<T>((_, reject) =>
-          setTimeout(() => reject(new Error(errorMsg)), timeoutMs)
-        ),
-      ]);
-    };
-
-    // Retry configuration for ad loading
-    const maxRetries = 3;
-    let retryCount = 0;
-    let lastAdError: any = null;
-
-    while (retryCount < maxRetries) {
-      try {
-        console.log(`[Ads] 📡 Ad load attempt ${retryCount + 1}/${maxRetries}...`);
-
-        // Load and show rewarded ad (v7.2.0 API - CORRECTED)
-        console.log("[Ads] ⏳ Preparing rewarded ad...");
-        await withTimeout(
-          AdMob.prepareRewardVideoAd({ adId: adUnitId }),
-          15000,
-          'Rewarded ad preparation timeout'
-        );
-
-        console.log("[Ads] 🎬 Showing rewarded ad...");
-        const rewardResult = await withTimeout(
-          AdMob.showRewardVideoAd(),
-          30000,
-          'Rewarded ad show timeout'
-        );
-
-        console.log("[Ads] ✅ Rewarded ad completed:", rewardResult);
-        options.onComplete?.();
-
-        // Success - break retry loop
-        break;
-
-      } catch (adError: any) {
-        lastAdError = adError;
-        retryCount++;
-
-        console.error(`[Ads] ❌ Attempt ${retryCount} failed:`, adError);
-
-        if (retryCount < maxRetries) {
-          // Exponential backoff: 1s, 2s
-          const backoffMs = Math.pow(2, retryCount - 1) * 1000;
-          console.log(`[Ads] ⏳ Retrying in ${backoffMs}ms...`);
-          await new Promise(resolve => setTimeout(resolve, backoffMs));
-        } else {
-          // All retries failed
-          console.error("[Ads] ❌ All ad retry attempts failed");
-          throw lastAdError;
-        }
-      }
-    }
+    checkRewardAfterDismiss(options.onComplete);
 
   } catch (error: any) {
-    console.error("[Ads] ❌ Rewarded ad error:", error);
-    console.error("[Ads] ❌ Error details:", JSON.stringify(error, null, 2));
-
+    console.error("[Ads] ❌ Error showing rewarded ad:", error);
     options.onFailed?.(error);
   }
 };
 
+const checkRewardAfterDismiss = (onComplete?: () => void) => {
+  // Check every 500ms if the ad is dismissed
+  const checkInterval = setInterval(() => {
+    // If ad is no longer loaded, it means it was dismissed (logic in global listener)
+    // OR we can rely on a simpler flag.
+    // Let's rely on isRewardedAdLoaded becoming false, which happens on dismiss.
+
+    if (!isRewardedAdLoaded) { // Ad was dismissed
+      clearInterval(checkInterval);
+      console.log("[Ads] 🕵️ Ad closed. Checking reward status...", isRewardEarned);
+
+      if (isRewardEarned) {
+        console.log("[Ads] 💰 Granting Reward!");
+        onComplete?.();
+      } else {
+        console.log("[Ads] ❌ Ad closed but no reward earned.");
+      }
+    }
+  }, 1000);
+};
+
 // ============================================
-// INTERSTITIAL ADS
+// INTERSTITIAL ADS (PRELOAD MECHANISM)
 // ============================================
+
+export const preloadInterstitialAd = async () => {
+  if (!Capacitor.isNativePlatform()) return;
+  if (isInterstitialAdLoaded) return;
+
+  try {
+    await initializeAdMob();
+    const adUnitId = getAdUnitId('interstitial');
+    console.log("[Ads] ⏳ Preloading Interstitial Ad...");
+    await AdMob.prepareInterstitial({ adId: adUnitId });
+  } catch (error) {
+    console.error("[Ads] ❌ Error preloading interstitial:", error);
+  }
+};
 
 export const showInterstitialAd = async (plan: PlanType): Promise<void> => {
-  // console.log(`[Ads] 🎬 Interstitial ad requested for plan: ${plan}`);
-
-  if (!shouldShowForcedAd(plan)) {
-    console.log("[Ads] ⛔ Interstitial ad blocked - plan not eligible");
-    return;
-  }
+  if (!shouldShowForcedAd(plan)) return;
 
   if (!Capacitor.isNativePlatform()) {
     console.log("[Ads] 🌐 Web platform - interstitial disabled");
     return;
   }
 
+  if (!isInterstitialAdLoaded) {
+    console.log("[Ads] ⚠️ Interstitial not ready. Triggering preload for next time.");
+    preloadInterstitialAd();
+    return;
+  }
+
   try {
-    await initializeAdMob();
-
-    const platform = Capacitor.getPlatform();
-    const adUnitId = getAdUnitId('interstitial');
-
-    console.log(`[Ads] 📱 Platform: ${platform}`);
-    console.log(`[Ads] 🎯 Ad Unit ID: ${adUnitId}`);
-
-    const admobAny = AdMob as any;
-
-    // Load and show interstitial ad (v7.2.0 API)
-    console.log("[Ads] ⏳ Preparing interstitial ad...");
-    await AdMob.prepareInterstitial({ adId: adUnitId });
-
-    console.log("[Ads] 🎬 Showing interstitial ad...");
+    console.log("[Ads] 🎬 Showing PRELOADED interstitial ad...");
     await AdMob.showInterstitial();
-
-    console.log("[Ads] ✅ Interstitial ad shown successfully");
-
+    // Global listener will handle state reset and next preload
   } catch (error) {
-    console.error("[Ads] ❌ Interstitial ad error:", error);
-    console.error("[Ads] ❌ Error details:", JSON.stringify(error, null, 2));
+    console.error("[Ads] ❌ Error showing interstitial:", error);
   }
 };
 

@@ -46,7 +46,7 @@ export function FriendRequests() {
                                 onClick={() => rejectFriendRequest(request)}
                                 disabled={loading}
                             >
-                                <X className="h-4 w-4" />
+                                <X className="h-4 w-4" strokeWidth={2.5} />
                             </Button>
                             <Button
                                 size="sm"

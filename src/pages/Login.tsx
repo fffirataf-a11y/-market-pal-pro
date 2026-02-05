@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -14,14 +15,15 @@ const Login = () => {
   const { loading, loginWithEmail } = useFirebaseAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { t, i18n } = useTranslation();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!email || !password) {
       toast({
-        title: "Error",
-        description: "Please fill in all fields",
+        title: i18n.language === 'tr' ? 'Hata' : 'Error',
+        description: i18n.language === 'tr' ? 'Lütfen tüm alanları doldurun' : 'Please fill in all fields',
         variant: "destructive",
       });
       return;
@@ -45,13 +47,13 @@ const Login = () => {
             alt="SmartMarket"
             className="w-20 h-20 rounded-2xl shadow-lg mb-4"
           />
-          <h1 className="text-3xl font-bold">Welcome Back</h1>
-          <p className="text-muted-foreground mt-2">Sign in to your account</p>
+          <h1 className="text-3xl font-bold">{i18n.language === 'tr' ? 'Tekrar Hoş Geldin' : 'Welcome Back'}</h1>
+          <p className="text-muted-foreground mt-2">{i18n.language === 'tr' ? 'Hesabına giriş yap' : 'Sign in to your account'}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email">{i18n.language === 'tr' ? 'E-posta' : 'Email'}</Label>
             <Input
               id="email"
               type="email"
@@ -63,7 +65,7 @@ const Login = () => {
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password">{i18n.language === 'tr' ? 'Şifre' : 'Password'}</Label>
             <Input
               id="password"
               type="password"
@@ -75,14 +77,16 @@ const Login = () => {
           </div>
 
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Signing in..." : "Sign In"}
+            {loading
+              ? (i18n.language === 'tr' ? 'Giriş yapılıyor...' : 'Signing in...')
+              : (i18n.language === 'tr' ? 'Giriş Yap' : 'Sign In')}
           </Button>
         </form>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
-          Don't have an account?{" "}
+          {i18n.language === 'tr' ? 'Hesabın yok mu?' : "Don't have an account?"}{" "}
           <Link to="/signup" className="text-primary hover:underline">
-            Sign up
+            {i18n.language === 'tr' ? 'Kayıt ol' : 'Sign up'}
           </Link>
         </p>
       </Card>

@@ -257,7 +257,7 @@ IMPORTANT: All text must be in ENGLISH!`;
     if (!generatedRecipe?.ingredients?.length) {
       toast({
         title: t('common.error'),
-        description: "No ingredients found",
+        description: i18n.language === 'tr' ? 'Malzeme bulunamadı' : 'No ingredients found',
         variant: "destructive",
       });
       return;
@@ -267,7 +267,7 @@ IMPORTANT: All text must be in ENGLISH!`;
     if (!targetList) {
       toast({
         title: t('common.error'),
-        description: "No shopping list found. Please create one first.",
+        description: i18n.language === 'tr' ? 'Alışveriş listesi bulunamadı. Lütfen önce bir liste oluşturun.' : 'No shopping list found. Please create one first.',
         variant: "destructive",
       });
       return;
@@ -327,7 +327,7 @@ IMPORTANT: All text must be in ENGLISH!`;
       console.error('❌ Error adding items:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to add items to list",
+        description: i18n.language === 'tr' ? 'Listeye ürün eklenemedi' : 'Failed to add items to list',
         variant: "destructive",
       });
     } finally {

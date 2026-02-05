@@ -17,6 +17,7 @@ import { db, auth } from '@/config/firebase';
 import { useToast } from '@/hooks/use-toast';
 import { onAuthStateChanged } from 'firebase/auth';
 import { useTranslation } from 'react-i18next';
+import i18n from '@/i18n';
 import { useSubscription } from '@/hooks/useSubscription';
 
 export interface ShoppingItem {
@@ -195,7 +196,7 @@ export const useShoppingLists = () => {
 
       toast({
         title: t('common.success'),
-        description: `List "${name}" created`,
+        description: i18n.language === 'tr' ? `"${name}" listesi oluşturuldu` : `List "${name}" created`,
         duration: 2000,
       });
 
@@ -204,7 +205,7 @@ export const useShoppingLists = () => {
       console.error('Create list error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to create list",
+        description: i18n.language === 'tr' ? 'Liste oluşturulamadı' : 'Failed to create list',
         variant: "destructive",
         duration: 2000,
       });
@@ -223,7 +224,7 @@ export const useShoppingLists = () => {
       console.error('Update list error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to update list",
+        description: i18n.language === 'tr' ? 'Liste güncellenemedi' : 'Failed to update list',
         variant: "destructive",
         duration: 2000,
       });
@@ -237,14 +238,14 @@ export const useShoppingLists = () => {
 
       toast({
         title: t('common.success'),
-        description: "List deleted",
+        description: i18n.language === 'tr' ? 'Liste silindi' : 'List deleted',
         duration: 2000,
       });
     } catch (error) {
       console.error('Delete list error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to delete list",
+        description: i18n.language === 'tr' ? 'Liste silinemedi' : 'Failed to delete list',
         variant: "destructive",
         duration: 2000,
       });
@@ -267,7 +268,7 @@ export const useShoppingLists = () => {
       if (userPermission !== 'edit') {
         toast({
           title: t('common.error'),
-          description: "You don't have permission to edit this list",
+          description: i18n.language === 'tr' ? 'Bu listeyi düzenleme izniniz yok' : "You don't have permission to edit this list",
           variant: "destructive",
           duration: 2000,
         });
@@ -314,7 +315,7 @@ export const useShoppingLists = () => {
       console.error('Add item error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to add item",
+        description: i18n.language === 'tr' ? 'Ürün eklenemedi' : 'Failed to add item',
         variant: "destructive",
         duration: 2000,
       });
@@ -336,7 +337,7 @@ export const useShoppingLists = () => {
       if (userPermission !== 'edit') {
         toast({
           title: t('common.error'),
-          description: "You don't have permission to edit this list",
+          description: i18n.language === 'tr' ? 'Bu listeyi düzenleme izniniz yok' : "You don't have permission to edit this list",
           variant: "destructive",
           duration: 2000,
         });
@@ -357,7 +358,7 @@ export const useShoppingLists = () => {
       console.error('Update item error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to update item",
+        description: i18n.language === 'tr' ? 'Ürün güncellenemedi' : 'Failed to update item',
         variant: "destructive",
         duration: 2000,
       });
@@ -404,7 +405,7 @@ export const useShoppingLists = () => {
       console.error('Delete item error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to delete item",
+        description: i18n.language === 'tr' ? 'Ürün silinemedi' : 'Failed to delete item',
         variant: "destructive",
         duration: 2000,
       });
@@ -424,7 +425,7 @@ export const useShoppingLists = () => {
     if (!isOwner && !isFriend) {
       toast({
         title: t('common.error'),
-        description: "Only the list owner or friends can delete all items",
+        description: i18n.language === 'tr' ? 'Sadece liste sahibi veya arkadaşlar tüm ürünleri silebilir' : 'Only the list owner or friends can delete all items',
         variant: "destructive",
         duration: 2000,
       });
@@ -439,14 +440,14 @@ export const useShoppingLists = () => {
 
       toast({
         title: t('common.success'),
-        description: "All items removed",
+        description: i18n.language === 'tr' ? 'Tüm ürünler silindi' : 'All items removed',
         duration: 2000,
       });
     } catch (error) {
       console.error('Delete all items error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to delete items",
+        description: i18n.language === 'tr' ? 'Ürünler silinemedi' : 'Failed to delete items',
         variant: "destructive",
         duration: 2000,
       });
@@ -468,8 +469,8 @@ export const useShoppingLists = () => {
       // Local notification göster
       try {
         if (Notification.permission === 'granted') {
-          new Notification('📋 List Shared', {
-            body: `You shared "${list.name}" successfully`,
+          new Notification(i18n.language === 'tr' ? '📋 Liste Paylaşıldı' : '📋 List Shared', {
+            body: i18n.language === 'tr' ? `"${list.name}" başarıyla paylaşıldı` : `You shared "${list.name}" successfully`,
             icon: '/logo.png',
           });
         }
@@ -479,14 +480,14 @@ export const useShoppingLists = () => {
 
       toast({
         title: t('common.success'),
-        description: "List shared successfully",
+        description: i18n.language === 'tr' ? 'Liste başarıyla paylaşıldı' : 'List shared successfully',
         duration: 2000,
       });
     } catch (error) {
       console.error('Share list error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to share list",
+        description: i18n.language === 'tr' ? 'Liste paylaşılamadı' : 'Failed to share list',
         variant: "destructive",
         duration: 2000,
       });
@@ -510,14 +511,14 @@ export const useShoppingLists = () => {
 
       toast({
         title: t('common.success'),
-        description: "Sharing removed",
+        description: i18n.language === 'tr' ? 'Paylaşım kaldırıldı' : 'Sharing removed',
         duration: 2000,
       });
     } catch (error) {
       console.error('Unshare list error:', error);
       toast({
         title: t('common.error'),
-        description: "Failed to remove sharing",
+        description: i18n.language === 'tr' ? 'Paylaşım kaldırılamadı' : 'Failed to remove sharing',
         variant: "destructive",
         duration: 2000,
       });

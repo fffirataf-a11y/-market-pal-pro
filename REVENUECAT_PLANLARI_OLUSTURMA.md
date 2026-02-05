@@ -28,7 +28,17 @@
    
 3. **"Create product"** butonuna tıkla
 
-### 1.3 Pro Monthly Product Oluştur
+### 1.3 Premium Yearly Product Oluştur
+
+1. **"+ New product"** butonuna tıkla
+2. **Product Details** formunu doldur:
+   - **Product ID:** `premium_yearly`
+   - **Product Type:** `Subscription` seç
+   - **Duration:** `1 Year` seç
+   - **Description:** "Premium Yearly Subscription"
+3. **"Create product"** butonuna tıkla
+
+### 1.4 Pro Monthly Product Oluştur
 
 1. Tekrar **"+ New product"** butonuna tıkla
 
@@ -43,10 +53,22 @@
    
 3. **"Create product"** butonuna tıkla
 
+### 1.5 Pro Yearly Product Oluştur
+
+1. **"+ New product"** butonuna tıkla
+2. **Product Details** formunu doldur:
+   - **Product ID:** `pro_yearly`
+   - **Product Type:** `Subscription` seç
+   - **Duration:** `1 Year` seç
+   - **Description:** "Pro Yearly Subscription"
+3. **"Create product"** butonuna tıkla
+
 ### ✅ Kontrol:
 Products sekmesinde şunlar olmalı:
 - `premium_monthly` (Subscription - 1 Month)
+- `premium_yearly` (Subscription - 1 Year)
 - `pro_monthly` (Subscription - 1 Month)
+- `pro_yearly` (Subscription - 1 Year)
 
 ---
 
@@ -71,6 +93,9 @@ Products sekmesinde şunlar olmalı:
    - Açılan sayfada **"Add product"** butonuna tıkla
    - `premium_monthly` product'ını seç
    - **"Add"** butonuna tıkla
+   - Tekrar **"Add product"** butonuna tıkla
+   - `premium_yearly` product'ını seç (varsa)
+   - **"Add"** butonuna tıkla
 
 ### 2.3 Pro Entitlement Oluştur
 
@@ -86,6 +111,9 @@ Products sekmesinde şunlar olmalı:
 4. **Product Ekleme:**
    - Açılan sayfada **"Add product"** butonuna tıkla
    - `pro_monthly` product'ını seç
+   - **"Add"** butonuna tıkla
+   - Tekrar **"Add product"** butonuna tıkla
+   - `pro_yearly` product'ını seç (varsa)
    - **"Add"** butonuna tıkla
 
 ### ✅ Kontrol:
@@ -121,11 +149,23 @@ Entitlements sekmesinde şunlar olmalı:
    - **Paywall template:** Herhangi birini seçebilirsiniz (veya "None")
    - **Save** veya **Add** butonuna tıkla
 
+   - **Save** veya **Add** butonuna tıkla
+
 3. **Package Oluştur - Pro:**
    - **"Add package"** butonuna tekrar tıkla
-   - **Identifier:** `pro_monthly` (⚠️ Bu isim önemli!)
+   - **Identifier:** `pro_monthly`
    - **Product:** `pro_monthly` seç
-   - **Paywall template:** Herhangi birini seçebilirsiniz (veya "None")
+   - **Paywall template:** Herhangi biri
+   - **Save** veya **Add** butonuna tıkla
+
+4. **Package Oluştur - Premium Yearly:**
+   - **Identifier:** `premium_yearly` (⚠️ Önemli!)
+   - **Product:** `premium_yearly` seç
+   - **Save** veya **Add** butonuna tıkla
+
+5. **Package Oluştur - Pro Yearly:**
+   - **Identifier:** `pro_yearly` (⚠️ Önemli!)
+   - **Product:** `pro_yearly` seç
    - **Save** veya **Add** butonuna tıkla
 
 #### Eğer Mevcut Packages Varsa:
@@ -138,6 +178,8 @@ Entitlements sekmesinde şunlar olmalı:
 4. **Product** kontrol edin:
    - `premium_monthly` package'ı → `premium_monthly` product'ı göstermeli
    - `pro_monthly` package'ı → `pro_monthly` product'ı göstermeli
+   - `premium_yearly` package'ı → `premium_yearly` product'ı göstermeli (varsa)
+   - `pro_yearly` package'ı → `pro_yearly` product'ı göstermeli (varsa)
 
 ### 3.4 Offering'i Aktif Hale Getir
 
@@ -150,6 +192,8 @@ Offerings sekmesinde:
 - `default` offering içinde:
   - Package: `premium_monthly` → Product: `premium_monthly`
   - Package: `pro_monthly` → Product: `pro_monthly`
+  - Package: `premium_yearly` → Product: `premium_yearly`
+  - Package: `pro_yearly` → Product: `pro_yearly`
 - Offering "current" olarak işaretlenmiş olmalı
 
 ---
@@ -256,6 +300,8 @@ Yapılandırmadan sonra şunlar olmalı:
 - [ ] `default` offering mevcut ve "current" olarak işaretlenmiş
 - [ ] Package: `premium_monthly` → Product: `premium_monthly`
 - [ ] Package: `pro_monthly` → Product: `pro_monthly`
+- [ ] Package: `premium_yearly` → Product: `premium_yearly`
+- [ ] Package: `pro_yearly` → Product: `pro_yearly`
 
 ---
 

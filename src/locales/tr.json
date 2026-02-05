@@ -216,6 +216,12 @@
     "contactEmail": "smartmarketttt@gmail.com",
     "sendEmail": "E-posta Gönder"
   },
+  "notifications": {
+    "permissionTitle": "Bildirimleri Aç",
+    "permissionDescription": "Arkadaşlık istekleri ve liste güncellemelerinden haberdar ol",
+    "allow": "İzin Ver",
+    "notNow": "Şimdi Değil"
+  },
   "subscription": {
     "title": "Abonelik Planları",
     "currentPlan": "Mevcut Plan",

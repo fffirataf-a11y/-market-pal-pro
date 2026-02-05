@@ -216,6 +216,12 @@
     "contactEmail": "smartmarketttt@gmail.com",
     "sendEmail": "Send Email"
   },
+  "notifications": {
+    "permissionTitle": "Enable Notifications",
+    "permissionDescription": "Stay updated on friend requests and list updates",
+    "allow": "Allow",
+    "notNow": "Not Now"
+  },
   "subscription": {
     "title": "Subscription Plans",
     "currentPlan": "Current Plan",

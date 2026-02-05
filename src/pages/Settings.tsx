@@ -76,8 +76,8 @@ const Settings = () => {
     error: purchaseError,
     offerings,
   } = usePurchases();
-  const { permission, loading: notificationLoading, requestPermission } = useNotifications();
-  const [notifications, setNotifications] = useState(true);
+  const { permission, loading: notificationLoading, requestPermission, disableNotifications, isSupported } = useNotifications();
+  const [notifications, setNotifications] = useState(permission === 'granted');
   const [subscriptionPlansOpen, setSubscriptionPlansOpen] = useState(false);
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
   const isYearly = billingCycle === 'yearly';
@@ -117,12 +117,14 @@ const Settings = () => {
   useEffect(() => {
     if (purchaseError) {
       toast({
-        title: "Satın alma hatası",
-        description: purchaseError,
+        title: i18n.language === 'tr' ? 'Satın alma hatası' : 'Purchase Error',
+        description: i18n.language === 'tr'
+          ? 'Satın alma işlemi sırasında bir hata oluştu.'
+          : purchaseError,
         variant: "destructive",
       });
     }
-  }, [purchaseError, toast]);
+  }, [purchaseError, toast, i18n.language]);
 
   // Sync RevenueCat state with local state (Upgrades & Downgrades)
   useEffect(() => {
@@ -188,7 +190,7 @@ const Settings = () => {
     }
   };
 
-  const handleLanguageChange = (value: string) => {
+  const handleLanguageChange = async (value: string) => {
     const messages: Record<string, string> = {
       en: "Language changed to English",
       tr: "Dil Türkçe olarak değiştirildi",
@@ -200,6 +202,22 @@ const Settings = () => {
 
     i18n.changeLanguage(value);
     localStorage.setItem("language", value);
+
+    // Sync language preference to Firestore for push notifications
+    try {
+      const { auth, db } = await import('@/config/firebase');
+      const { doc, updateDoc } = await import('firebase/firestore');
+      const user = auth.currentUser;
+      if (user) {
+        await updateDoc(doc(db, 'users', user.uid), {
+          preferredLanguage: value,
+        });
+        console.log('✅ Language preference synced to Firestore:', value);
+      }
+    } catch (error) {
+      console.error('❌ Failed to sync language to Firestore:', error);
+    }
+
     toast({
       title: t('common.success'),
       description: messages[value] ?? "Language preference updated",
@@ -207,10 +225,15 @@ const Settings = () => {
   };
 
   const handleNotificationToggle = async (checked: boolean) => {
-    if (checked && permission !== 'granted') {
-      await requestPermission();
+    if (checked) {
+      if (permission !== 'granted') {
+        await requestPermission();
+      }
+      setNotifications(true);
+    } else {
+      await disableNotifications();
+      setNotifications(false);
     }
-    setNotifications(checked && permission === 'granted');
   };
 
   const handleLogout = () => {
@@ -220,7 +243,7 @@ const Settings = () => {
 
     toast({
       title: t('common.success'),
-      description: "Logged out successfully",
+      description: i18n.language === 'tr' ? 'Başarıyla çıkış yapıldı' : 'Logged out successfully',
     });
 
     navigate("/auth", { replace: true });
@@ -321,8 +344,8 @@ const Settings = () => {
 
     if (planId === 'free') {
       toast({
-        title: "Info",
-        description: "You're on Free Trial",
+        title: i18n.language === 'tr' ? 'Bilgi' : 'Info',
+        description: i18n.language === 'tr' ? 'Ücretsiz plan kullanıyorsunuz' : "You're on Free Trial",
       });
       return;
     }
@@ -553,7 +576,7 @@ const Settings = () => {
                       : 'text-muted-foreground hover:bg-background/80'
                       }`}
                   >
-                    Monthly
+                    {i18n.language === 'tr' ? 'Aylık' : 'Monthly'}
                   </button>
                   <button
                     onClick={() => setBillingCycle('yearly')}
@@ -562,7 +585,7 @@ const Settings = () => {
                       : 'text-muted-foreground hover:bg-background/80'
                       }`}
                   >
-                    Yearly
+                    {i18n.language === 'tr' ? 'Yıllık' : 'Yearly'}
                     <span className="text-[10px] bg-green-500/20 text-green-700 dark:text-green-300 px-1 rounded">
                       -8.5%
                     </span>
@@ -636,7 +659,7 @@ const Settings = () => {
                       console.error('❌ [Settings] Error processing reward:', error);
                       toast({
                         title: i18n.language === 'tr' ? 'Hata' : 'Error',
-                        description: 'Failed to process reward',
+                        description: i18n.language === 'tr' ? 'Ödül işlenemedi' : 'Failed to process reward',
                         variant: 'destructive',
                       });
                     }
@@ -661,8 +684,8 @@ const Settings = () => {
 
 
           </div>
-        </div>
-      </main>
+        </div >
+      </main >
 
       <BottomNav />
 
@@ -674,7 +697,7 @@ const Settings = () => {
               {t('subscription.title')}
             </DialogTitle>
             <DialogDescription className="text-center mb-6">
-              Choose the plan that works best for you
+              {i18n.language === 'tr' ? 'Size en uygun planı seçin' : 'Choose the plan that works best for you'}
             </DialogDescription>
           </DialogHeader>
 
@@ -691,17 +714,15 @@ const Settings = () => {
 
               <button
                 onClick={() => setBillingCycle('monthly')}
-                className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full min-h-[44px] ${!isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full min-h-[44px] ${!isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                Monthly
+                {i18n.language === 'tr' ? 'Aylık' : 'Monthly'}
               </button>
               <button
                 onClick={() => setBillingCycle('yearly')}
-                className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full flex items-center gap-2 min-h-[44px] ${isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'
-                  }`}
+                className={`relative z-10 px-6 sm:px-8 py-2.5 text-sm font-bold transition-colors duration-200 rounded-full flex items-center gap-2 min-h-[44px] ${isYearly ? 'text-foreground' : 'text-muted-foreground hover:text-foreground'}`}
               >
-                Yearly
+                {i18n.language === 'tr' ? 'Yıllık' : 'Yearly'}
                 <span className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-[10px] px-2 py-0.5 rounded-full shadow-sm animate-pulse-slow">
                   -8.5%
                 </span>

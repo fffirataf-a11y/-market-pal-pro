@@ -479,7 +479,7 @@ const Lists = () => {
                           // setShowUpgradeDialog(true); // Basit bir toast ile başlayalım
                           toast({
                             title: t('common.limitReached'),
-                            description: "Upgrade to see more items!",
+                            description: i18n.language === 'tr' ? "Daha fazla ürün görmek için yükseltin!" : "Upgrade to see more items!",
                             variant: "destructive"
                           });
                         }}>
@@ -570,17 +570,62 @@ const Lists = () => {
               <AddFriendDialog />
             </div>
 
-            <Card className="p-8 text-center">
-              <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="font-semibold text-lg mb-2">{t('lists.noSharedLists')}</h3>
-              <p className="text-muted-foreground mb-4">
-                {t('lists.inviteFriends')}
-              </p>
-              <Button onClick={() => setIsShareDialogOpen(true)}>
-                <Share2 className="h-4 w-4 mr-2" />
-                {t('lists.shareList')}
-              </Button>
-            </Card>
+            {/* Paylaşılan listeleri filtrele ve göster */}
+            {(() => {
+              const sharedLists = lists.filter(list => list.ownerId !== currentUserId);
+
+              if (sharedLists.length === 0) {
+                return (
+                  <Card className="p-8 text-center">
+                    <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="font-semibold text-lg mb-2">{t('lists.noSharedLists')}</h3>
+                    <p className="text-muted-foreground mb-4">
+                      {t('lists.inviteFriends')}
+                    </p>
+                    <Button onClick={() => setIsShareDialogOpen(true)}>
+                      <Share2 className="h-4 w-4 mr-2" />
+                      {t('lists.shareList')}
+                    </Button>
+                  </Card>
+                );
+              }
+
+              return (
+                <div className="space-y-3">
+                  {sharedLists.map((list) => (
+                    <Card
+                      key={list.id}
+                      className="p-4 cursor-pointer hover:bg-muted/50 transition-colors"
+                      onClick={() => {
+                        // Paylaşılan listeye tıklandığında my-lists sekmesine geç ve o listeyi seç
+                        // İleride selectedList state'i dinamik yapılabilir
+                        navigate(`/lists?listId=${list.id}`);
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
+                            <ShoppingCart className="h-5 w-5 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-medium">{list.name}</h4>
+                            <p className="text-sm text-muted-foreground">
+                              {i18n.language === 'tr' ? 'Paylaşan:' : 'Shared by:'} {list.ownerName}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="text-right">
+                          <span className="text-sm font-medium">{list.items?.length || 0}</span>
+                          <p className="text-xs text-muted-foreground">
+                            {i18n.language === 'tr' ? 'ürün' : 'items'}
+                          </p>
+                        </div>
+                      </div>
+                    </Card>
+                  ))}
+                </div>
+              );
+            })()}
           </TabsContent>
         </Tabs>
       </main>

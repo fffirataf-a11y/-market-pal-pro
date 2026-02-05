@@ -8,7 +8,10 @@ import { useToast } from "@/hooks/use-toast";
 import {
   isAdSupportedForPlan,
   showRewardedAd,
+  getRewardedAdStatus,
+  preloadRewardedAd
 } from "@/lib/adManager";
+import { useEffect } from "react";
 
 type RewardedStatus = "idle" | "loading" | "completed";
 
@@ -27,8 +30,29 @@ const RewardedAdSlot = ({
 }: RewardedAdSlotProps) => {
   const { t } = useTranslation();
   const { toast } = useToast();
-  const [status, setStatus] = useState<RewardedStatus>("idle");
+  // Start with loading state if on mobile, idle if on web
+  const [status, setStatus] = useState<RewardedStatus>("loading");
   const [lastSimulated, setLastSimulated] = useState<Date | null>(null);
+
+  useEffect(() => {
+    // 1. Check initial status
+    const isLoaded = getRewardedAdStatus();
+    if (isLoaded) {
+      setStatus("idle");
+    } else {
+      // Trigger generic preload if not ready (just in case)
+      preloadRewardedAd();
+    }
+
+    // 2. Listen for "Loaded" event
+    const handleAdLoaded = () => {
+      console.log("🔔 UI: Ad Loaded Event Received!");
+      setStatus("idle");
+    };
+
+    window.addEventListener('rewardedAdLoaded', handleAdLoaded);
+    return () => window.removeEventListener('rewardedAdLoaded', handleAdLoaded);
+  }, []);
 
   if (!isAdSupportedForPlan(plan)) {
     return null;
@@ -61,13 +85,14 @@ const RewardedAdSlot = ({
       console.error("[RewardedAd] ❌ Error message:", error.message);
       setStatus("idle");
 
-      // Show error toast to user
+      // Show error toast to user (bilingual)
       const errorMessage = error.message || 'Failed to load ad';
+      const isTurkish = localStorage.getItem('i18nextLng')?.startsWith('tr');
       toast({
-        title: "Ad Unavailable",
+        title: isTurkish ? "Reklam Yüklenemedi" : "Ad Unavailable",
         description: errorMessage.includes('timeout')
-          ? "Ad loading timed out. Please try again later."
-          : "Unable to load ad. Please check your connection.",
+          ? (isTurkish ? "Reklam yüklenirken zaman aşımı. Lütfen daha sonra tekrar deneyin." : "Ad loading timed out. Please try again later.")
+          : (isTurkish ? "Reklam yüklenemedi. Bağlantınızı kontrol edin." : "Unable to load ad. Please check your connection."),
         variant: "destructive"
       });
     }

@@ -10,10 +10,15 @@ import {
   updateProfile,
   sendEmailVerification,
   reload,
+  signInWithPopup,
+  signInAnonymously,
+  GoogleAuthProvider,
+  OAuthProvider,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/config/firebase';
 import { useToast } from '@/hooks/use-toast';
+import i18n from '@/i18n';
 
 export const useFirebaseAuth = () => {
   const { toast } = useToast();
@@ -76,8 +81,8 @@ export const useFirebaseAuth = () => {
       window.dispatchEvent(new Event('auth-change'));
 
       toast({
-        title: "Success",
-        description: "Logged in successfully",
+        title: i18n.language === 'tr' ? 'Başarılı' : 'Success',
+        description: i18n.language === 'tr' ? 'Giriş başarılı' : 'Logged in successfully',
       });
 
       return user;
@@ -171,8 +176,8 @@ export const useFirebaseAuth = () => {
       localStorage.removeItem('userToken');
 
       toast({
-        title: "Account Created",
-        description: "Please check your email to verify your account before logging in.",
+        title: i18n.language === 'tr' ? 'Hesap Oluşturuldu' : 'Account Created',
+        description: i18n.language === 'tr' ? 'Lütfen giriş yapmadan önce e-postanizi doğrulayIn.' : 'Please check your email to verify your account before logging in.',
         duration: 5000,
       });
 
@@ -227,8 +232,8 @@ export const useFirebaseAuth = () => {
       });
 
       toast({
-        title: "Success",
-        description: "Verification email sent! Please check your inbox.",
+        title: i18n.language === 'tr' ? 'Başarılı' : 'Success',
+        description: i18n.language === 'tr' ? 'Doğrulama e-postası gönderildi! Gelen kutunuzu kontrol edin.' : 'Verification email sent! Please check your inbox.',
       });
     } catch (error: any) {
       console.error('Resend email error:', error);
@@ -334,8 +339,8 @@ export const useFirebaseAuth = () => {
     try {
       await sendPasswordResetEmail(auth, email);
       toast({
-        title: "Success",
-        description: "Password reset email sent",
+        title: i18n.language === 'tr' ? 'Başarılı' : 'Success',
+        description: i18n.language === 'tr' ? 'Şifre sıfırlama e-postası gönderildi' : 'Password reset email sent',
       });
     } catch (error: any) {
       console.error('Password reset error:', error);
@@ -359,8 +364,8 @@ export const useFirebaseAuth = () => {
       window.dispatchEvent(new Event('auth-change'));
 
       toast({
-        title: "Success",
-        description: "Logged out successfully",
+        title: i18n.language === 'tr' ? 'Başarılı' : 'Success',
+        description: i18n.language === 'tr' ? 'Çıkış yapıldı' : 'Logged out successfully',
       });
     } catch (error) {
       console.error('Logout error:', error);
@@ -368,10 +373,193 @@ export const useFirebaseAuth = () => {
     }
   };
 
+  // Google ile giriş
+  const loginWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      // Firestore'a kullanıcı bilgilerini kaydet/güncelle
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const existingDoc = await getDoc(userDocRef);
+
+        if (!existingDoc.exists()) {
+          await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            fullName: user.displayName || 'User',
+            searchKey: (user.displayName || 'User').toLowerCase(),
+            displayName: user.displayName || 'User',
+            photoURL: user.photoURL || "https://api.dicebear.com/9.x/thumbs/svg?seed=Google",
+            createdAt: new Date().toISOString(),
+            friends: [],
+            provider: 'google',
+          });
+        }
+      } catch (fsError) {
+        console.warn('Firestore write failed:', fsError);
+      }
+
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || 'User',
+        fullName: user.displayName || 'User',
+        avatar: user.photoURL || "https://api.dicebear.com/9.x/thumbs/svg?seed=Google",
+      };
+
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('userToken', user.uid);
+      window.dispatchEvent(new Event('auth-change'));
+
+      toast({
+        title: i18n.language === 'tr' ? 'Başarılı' : 'Success',
+        description: i18n.language === 'tr' ? 'Google ile giriş yapıldı' : 'Logged in with Google',
+      });
+
+      return user;
+    } catch (error: any) {
+      console.error('Google login error:', error);
+
+      let errorMessage = "Google login failed";
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Login cancelled";
+      } else if (error.code === 'auth/popup-blocked') {
+        errorMessage = "Popup blocked. Please allow popups.";
+      }
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Apple ile giriş
+  const loginWithApple = async () => {
+    setLoading(true);
+    try {
+      const provider = new OAuthProvider('apple.com');
+      provider.addScope('email');
+      provider.addScope('name');
+
+      const userCredential = await signInWithPopup(auth, provider);
+      const user = userCredential.user;
+
+      // Firestore'a kullanıcı bilgilerini kaydet/güncelle
+      try {
+        const userDocRef = doc(db, 'users', user.uid);
+        const existingDoc = await getDoc(userDocRef);
+
+        if (!existingDoc.exists()) {
+          await setDoc(userDocRef, {
+            uid: user.uid,
+            email: user.email,
+            fullName: user.displayName || 'Apple User',
+            searchKey: (user.displayName || 'Apple User').toLowerCase(),
+            displayName: user.displayName || 'Apple User',
+            photoURL: user.photoURL || "https://api.dicebear.com/9.x/thumbs/svg?seed=Apple",
+            createdAt: new Date().toISOString(),
+            friends: [],
+            provider: 'apple',
+          });
+        }
+      } catch (fsError) {
+        console.warn('Firestore write failed:', fsError);
+      }
+
+      const userData = {
+        uid: user.uid,
+        email: user.email,
+        name: user.displayName || 'Apple User',
+        fullName: user.displayName || 'Apple User',
+        avatar: user.photoURL || "https://api.dicebear.com/9.x/thumbs/svg?seed=Apple",
+      };
+
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('userToken', user.uid);
+      window.dispatchEvent(new Event('auth-change'));
+
+      toast({
+        title: i18n.language === 'tr' ? 'Başarılı' : 'Success',
+        description: i18n.language === 'tr' ? 'Apple ile giriş yapıldı' : 'Logged in with Apple',
+      });
+
+      return user;
+    } catch (error: any) {
+      console.error('Apple login error:', error);
+
+      let errorMessage = "Apple login failed";
+      if (error.code === 'auth/popup-closed-by-user') {
+        errorMessage = "Login cancelled";
+      }
+
+      toast({
+        title: "Error",
+        description: errorMessage,
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Misafir olarak devam et
+  const continueAsGuest = async () => {
+    setLoading(true);
+    try {
+      // Anonim giriş yap (Firebase anonymous auth)
+      const userCredential = await signInAnonymously(auth);
+      const user = userCredential.user;
+
+      const userData = {
+        uid: user.uid,
+        email: null,
+        name: 'Guest',
+        fullName: 'Guest',
+        avatar: "https://api.dicebear.com/9.x/thumbs/svg?seed=Guest",
+        isGuest: true,
+      };
+
+      localStorage.setItem('user', JSON.stringify(userData));
+      localStorage.setItem('userToken', user.uid);
+      localStorage.setItem('isGuest', 'true');
+      window.dispatchEvent(new Event('auth-change'));
+
+      toast({
+        title: i18n.language === 'tr' ? 'Hoş Geldiniz!' : 'Welcome!',
+        description: i18n.language === 'tr' ? 'Misafir olarak göz atıyorsunuz. Bazı özellikler için giriş gereklidir.' : "You're browsing as a guest. Some features require login.",
+      });
+
+      return user;
+    } catch (error: any) {
+      console.error('Guest login error:', error);
+      toast({
+        title: "Error",
+        description: "Failed to continue as guest",
+        variant: "destructive",
+      });
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return {
     loading,
     loginWithEmail,
     signupWithEmail,
+    loginWithGoogle,
+    loginWithApple,
+    continueAsGuest,
     sendPhoneVerification,
     verifyPhoneCode,
     resetPassword,

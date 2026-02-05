@@ -1,10 +1,12 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useRealtimeNotifications } from "@/hooks/useNotifications";
-import { initializeAdMob } from "@/lib/adManager";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { initializeAdMob, preloadRewardedAd, preloadInterstitialAd } from "@/lib/adManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePurchases } from "@/hooks/usePurchases";
 import { useState, useEffect } from "react";
 import ErrorBoundary from "./components/ErrorBoundary";
+import NotificationPermissionDialog from "./components/NotificationPermissionDialog";
 import Welcome from "./pages/Welcome";
 import Auth from "./pages/Auth";
 import Lists from "./pages/Lists";
@@ -16,8 +18,12 @@ import Checkout from "./pages/Checkout";
 import DebugAudit from "./pages/DebugAudit";
 
 const App = () => {
-  // ✅ Gerçek zamanlı notification dinleyici
+  // ✅ Gerçek zamanlı notification dinleyici (Web)
   useRealtimeNotifications();
+
+  // ✅ Native Push Notifications (iOS/Android)
+  usePushNotifications();
+
 
 
 
@@ -71,10 +77,24 @@ const App = () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("auth-change", handleStorageChange);
     };
+    // Initialize Ads and Preload
+    const initAds = async () => {
+      try {
+        await initializeAdMob();
+        // Start preloading immediately
+        preloadRewardedAd();
+        preloadInterstitialAd();
+      } catch (e) {
+        console.error("Failed to init ads:", e);
+      }
+    };
+    initAds();
+
   }, []);
 
   return (
     <ErrorBoundary>
+      <NotificationPermissionDialog />
       <Routes>
         {/* Onboarding - sadece ilk kez */}
         <Route

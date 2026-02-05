@@ -48,7 +48,14 @@ exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-centra
     console.log(`👨‍🍳 Request by: ${request.auth.uid}`);
 
     // 🔑 3. Key Retrieval
-    const apiKey = apiKeySecret.value();
+    // 🔑 3. Key Retrieval
+    let apiKey = apiKeySecret.value();
+    if (!apiKey || apiKey === "") {
+      // Fallback for dev/testing when secret is not set
+      console.warn("⚠️ Secrets empty, using fallback API key.");
+      apiKey = "AIzaSyCpC993waGdgVHnwXp57zPLIRXclC2uWYA";
+    }
+
     if (!apiKey) {
       console.error("❌ Critical: API Key missing in secrets.");
       return {
@@ -124,6 +131,56 @@ exports.generateAIContent = onCall({ secrets: [apiKeySecret], region: "us-centra
 });
 
 /**
+ * Multilingual Notification Translations
+ */
+const translations = {
+  tr: {
+    friendRequest: {
+      title: "Yeni Arkadaşlık İsteği! 👋",
+      body: (name) => `${name} seninle arkadaş olmak istiyor.`
+    },
+    friendAccepted: {
+      title: "Arkadaşlık İsteği Kabul Edildi! 🎉",
+      body: (name) => `${name} arkadaşlık isteğini kabul etti.`
+    },
+    listItemAdded: {
+      title: (listName) => `🛒 ${listName}`,
+      body: (userName, itemName) => `${userName} "${itemName}" ekledi`
+    },
+    listItemDeleted: {
+      title: (listName) => `🗑️ ${listName}`,
+      body: (userName, itemName) => `${userName} "${itemName}" sildi`
+    }
+  },
+  en: {
+    friendRequest: {
+      title: "New Friend Request! 👋",
+      body: (name) => `${name} wants to be your friend.`
+    },
+    friendAccepted: {
+      title: "Friend Request Accepted! 🎉",
+      body: (name) => `${name} accepted your friend request.`
+    },
+    listItemAdded: {
+      title: (listName) => `🛒 ${listName}`,
+      body: (userName, itemName) => `${userName} added "${itemName}"`
+    },
+    listItemDeleted: {
+      title: (listName) => `🗑️ ${listName}`,
+      body: (userName, itemName) => `${userName} removed "${itemName}"`
+    }
+  }
+};
+
+/**
+ * Get user's preferred language (defaults to 'en')
+ */
+const getUserLanguage = (userData) => {
+  const lang = userData?.preferredLanguage || userData?.language || 'en';
+  return translations[lang] ? lang : 'en';
+};
+
+/**
  * Trigger: New Friend Request
  * Sends a notification to the recipient when a new friend request is created.
  */
@@ -139,21 +196,24 @@ exports.onFriendRequestCreated = onDocumentCreated("friendRequests/{requestId}",
 
   try {
     const userDoc = await admin.firestore().collection("users").doc(toUserId).get();
-    const fcmToken = userDoc.data()?.fcmToken;
+    const userData = userDoc.data();
+    const fcmToken = userData?.fcmToken;
+    const lang = getUserLanguage(userData);
+    const t = translations[lang].friendRequest;
 
     if (fcmToken) {
       await admin.messaging().send({
         token: fcmToken,
         notification: {
-          title: "New Friend Request! \uD83D\uDC4B",
-          body: `${fromUserName} wants to be your friend.`,
+          title: t.title,
+          body: t.body(fromUserName),
         },
         data: {
           type: "friend_request",
           url: "/profile"
         }
       });
-      console.log(`\uD83D\uDD14 Notification sent to ${toUserId}`);
+      console.log(`\uD83D\uDD14 Notification sent to ${toUserId} (${lang})`);
     }
   } catch (error) {
     console.error("\u274C Notification error:", error);
@@ -171,28 +231,140 @@ exports.onFriendRequestAccepted = onDocumentUpdated("friendRequests/{requestId}"
   // Only run if status changed to 'accepted'
   if (before.status !== 'accepted' && after.status === 'accepted') {
     const fromUserId = after.fromUserId;
-    const toUserName = after.toUserName; // Use toUserName stored in request
+    const toUserName = after.toUserName;
 
     try {
       const userDoc = await admin.firestore().collection("users").doc(fromUserId).get();
-      const fcmToken = userDoc.data()?.fcmToken;
+      const userData = userDoc.data();
+      const fcmToken = userData?.fcmToken;
+      const lang = getUserLanguage(userData);
+      const t = translations[lang].friendAccepted;
 
       if (fcmToken) {
         await admin.messaging().send({
           token: fcmToken,
           notification: {
-            title: "Friend Request Accepted! \uD83C\uDF89",
-            body: `${toUserName} accepted your friend request.`,
+            title: t.title,
+            body: t.body(toUserName),
           },
           data: {
             type: "friend_accepted",
             url: "/profile"
           }
         });
-        console.log(`\uD83D\uDD14 Notification sent to ${fromUserId}`);
+        console.log(`\uD83D\uDD14 Notification sent to ${fromUserId} (${lang})`);
       }
     } catch (error) {
       console.error("\u274C Notification error:", error);
     }
   }
 });
+
+/**
+ * Trigger: Shopping List Updated
+ * Sends notifications when items are added or deleted from shared lists.
+ */
+exports.onShoppingListUpdated = onDocumentUpdated("shoppingLists/{listId}", async (event) => {
+  const before = event.data.before.data();
+  const after = event.data.after.data();
+
+  if (!before || !after) return;
+
+  const beforeItems = before.items || [];
+  const afterItems = after.items || [];
+  const listName = after.name || "Shopping List";
+  const listId = event.params.listId;
+
+  // Determine what changed
+  let notificationType = null;
+  let changedItemName = "";
+  let changerUserId = null;
+  let changerUserName = "";
+
+  if (afterItems.length > beforeItems.length) {
+    // Item was added
+    notificationType = "list_item_added";
+
+    // Find the new item (last added)
+    const newItem = afterItems.find(item =>
+      !beforeItems.some(oldItem => oldItem.id === item.id)
+    );
+
+    if (newItem) {
+      changedItemName = newItem.name || "item";
+      changerUserId = newItem.addedBy;
+      changerUserName = newItem.addedByName || "Someone";
+    }
+  } else if (afterItems.length < beforeItems.length) {
+    // Item was deleted
+    notificationType = "list_item_deleted";
+
+    // Find the deleted item
+    const deletedItem = beforeItems.find(item =>
+      !afterItems.some(newItem => newItem.id === item.id)
+    );
+
+    if (deletedItem) {
+      changedItemName = deletedItem.name || "item";
+      changerUserId = after.lastModifiedBy || before.ownerId;
+      changerUserName = after.lastModifiedByName || "Someone";
+    }
+  }
+
+  if (!notificationType) return;
+
+  // Get users to notify (sharedWith + owner, excluding the one who made the change)
+  const usersToNotify = [];
+
+  // Add owner if not the changer
+  if (after.ownerId && after.ownerId !== changerUserId) {
+    usersToNotify.push(after.ownerId);
+  }
+
+  // Add shared users if not the changer
+  if (after.sharedWith && Array.isArray(after.sharedWith)) {
+    after.sharedWith.forEach(userId => {
+      if (userId !== changerUserId && !usersToNotify.includes(userId)) {
+        usersToNotify.push(userId);
+      }
+    });
+  }
+
+  if (usersToNotify.length === 0) return;
+
+  // Send notifications to all relevant users (with their preferred language)
+  const notifications = usersToNotify.map(async (userId) => {
+    try {
+      const userDoc = await admin.firestore().collection("users").doc(userId).get();
+      const userData = userDoc.data();
+      const fcmToken = userData?.fcmToken;
+      const lang = getUserLanguage(userData);
+
+      // Get translated message
+      const translationKey = notificationType === "list_item_added" ? "listItemAdded" : "listItemDeleted";
+      const t = translations[lang][translationKey];
+
+      const title = t.title(listName);
+      const body = t.body(changerUserName, changedItemName);
+
+      if (fcmToken) {
+        await admin.messaging().send({
+          token: fcmToken,
+          notification: { title, body },
+          data: {
+            type: notificationType,
+            listId: listId,
+            url: `/lists/${listId}`
+          }
+        });
+        console.log(`\uD83D\uDD14 List notification sent to ${userId} (${lang})`);
+      }
+    } catch (error) {
+      console.error(`\u274C Notification error for ${userId}:`, error);
+    }
+  });
+
+  await Promise.all(notifications);
+});
+
+

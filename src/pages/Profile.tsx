@@ -51,7 +51,7 @@ interface User {
 
 const Profile = () => {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { toast } = useToast();
 
   // ✅ Firebase Friends Hook
@@ -141,7 +141,7 @@ const Profile = () => {
     if (!userData.name.trim()) {
       toast({
         title: t("common.error"),
-        description: "Name cannot be empty",
+        description: i18n.language === 'tr' ? 'İsim boş olamaz' : 'Name cannot be empty',
         variant: "destructive",
       });
       return;
@@ -151,7 +151,7 @@ const Profile = () => {
     if (!emailRegex.test(userData.email)) {
       toast({
         title: t("common.error"),
-        description: "Please enter a valid email",
+        description: i18n.language === 'tr' ? 'Geçerli bir e-posta girin' : 'Please enter a valid email',
         variant: "destructive",
       });
       return;
@@ -178,13 +178,13 @@ const Profile = () => {
 
       toast({
         title: t("common.success"),
-        description: "Profile updated successfully",
+        description: i18n.language === 'tr' ? 'Profil başarıyla güncellendi' : 'Profile updated successfully',
       });
     } catch (error) {
       console.error('Profile update error:', error);
       toast({
         title: t("common.error"),
-        description: "Failed to update profile",
+        description: i18n.language === 'tr' ? 'Profil güncellenemedi' : 'Failed to update profile',
         variant: "destructive",
       });
     }
@@ -195,8 +195,8 @@ const Profile = () => {
     setUserData(originalUserData);
     setHasChanges(false);
     toast({
-      title: "Changes discarded",
-      description: "Your changes have been discarded",
+      title: i18n.language === 'tr' ? 'Değişiklikler iptal edildi' : 'Changes discarded',
+      description: i18n.language === 'tr' ? 'Yaptığınız değişiklikler geri alındı' : 'Your changes have been discarded',
     });
   };
 
@@ -218,7 +218,7 @@ const Profile = () => {
                 size="icon"
                 onClick={() => {
                   if (hasChanges) {
-                    if (confirm("You have unsaved changes. Discard them?")) {
+                    if (confirm(i18n.language === 'tr' ? 'Kaydedilmemiş değişiklikler var. İptal etmek istiyor musunuz?' : 'You have unsaved changes. Discard them?')) {
                       navigate("/settings");
                     }
                   } else {
@@ -228,7 +228,7 @@ const Profile = () => {
               >
                 <ArrowLeft className="h-5 w-5" />
               </Button>
-              <h1 className="text-2xl font-bold">Profile</h1>
+              <h1 className="text-2xl font-bold">{i18n.language === 'tr' ? 'Profil' : 'Profile'}</h1>
             </div>
 
             {/* Bildirim Badge */}
@@ -240,7 +240,7 @@ const Profile = () => {
                 onClick={() => setShowFriendRequests(true)}
               >
                 <Bell className="h-4 w-4 mr-2" />
-                Requests
+                {i18n.language === 'tr' ? 'İstekler' : 'Requests'}
                 <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[10px] font-bold text-destructive-foreground">
                   {friendRequests.length}
                 </span>
@@ -251,12 +251,12 @@ const Profile = () => {
             {hasChanges && (
               <div className="flex gap-2">
                 <Button variant="outline" size="sm" onClick={handleDiscardChanges}>
-                  <X className="h-4 w-4 mr-2" />
-                  Discard
+                  <X className="h-4 w-4 mr-2" strokeWidth={2.5} />
+                  {i18n.language === 'tr' ? 'İptal' : 'Discard'}
                 </Button>
                 <Button size="sm" onClick={handleSaveChanges}>
                   <Save className="h-4 w-4 mr-2" />
-                  Save
+                  {i18n.language === 'tr' ? 'Kaydet' : 'Save'}
                 </Button>
               </div>
             )}
@@ -293,36 +293,36 @@ const Profile = () => {
 
         {/* Personal Info */}
         <Card className="p-6 space-y-4">
-          <h3 className="font-semibold text-lg">Personal Information</h3>
+          <h3 className="font-semibold text-lg">{i18n.language === 'tr' ? 'Kişisel Bilgiler' : 'Personal Information'}</h3>
 
           {/* Name */}
           <div className="space-y-2">
-            <Label>Full Name</Label>
+            <Label>{i18n.language === 'tr' ? 'Ad Soyad' : 'Full Name'}</Label>
             <Input
               value={userData.name}
               onChange={(e) => setUserData({ ...userData, name: e.target.value })}
-              placeholder="Enter your name"
+              placeholder={i18n.language === 'tr' ? 'Adınızı girin' : 'Enter your name'}
             />
           </div>
 
           {/* Username */}
           <div className="space-y-2">
-            <Label>Username</Label>
+            <Label>{i18n.language === 'tr' ? 'Kullanıcı Adı' : 'Username'}</Label>
             <Input
               value={userData.username}
               onChange={(e) => setUserData({ ...userData, username: e.target.value })}
-              placeholder="Enter username"
+              placeholder={i18n.language === 'tr' ? 'Kullanıcı adı girin' : 'Enter username'}
             />
           </div>
 
           {/* Email */}
           <div className="space-y-2">
-            <Label>Email</Label>
+            <Label>{i18n.language === 'tr' ? 'E-posta' : 'Email'}</Label>
             <Input
               type="email"
               value={userData.email}
               onChange={(e) => setUserData({ ...userData, email: e.target.value })}
-              placeholder="Enter email"
+              placeholder={i18n.language === 'tr' ? 'E-posta girin' : 'Enter email'}
             />
           </div>
         </Card>
@@ -342,12 +342,12 @@ const Profile = () => {
                 </div>
                 <div>
                   <p className="font-semibold text-base">
-                    {friendRequests.length} New Friend Request{friendRequests.length > 1 ? 's' : ''}!
+                    {friendRequests.length} {i18n.language === 'tr' ? 'Yeni Arkadaşlık İsteği' : 'New Friend Request'}{friendRequests.length > 1 ? (i18n.language === 'tr' ? '' : 's') : ''}!
                   </p>
                   <p className="text-sm text-muted-foreground">
                     {friendRequests[0].fromUserName}
-                    {friendRequests.length > 1 && ` and ${friendRequests.length - 1} other${friendRequests.length > 2 ? 's' : ''}`}
-                    {' '}wants to be your friend
+                    {friendRequests.length > 1 && ` ${i18n.language === 'tr' ? 've' : 'and'} ${friendRequests.length - 1} ${i18n.language === 'tr' ? 'kişi daha' : (friendRequests.length > 2 ? 'others' : 'other')}`}
+                    {i18n.language === 'tr' ? ' arkadaş olmak istiyor' : ' wants to be your friend'}
                   </p>
                 </div>
               </div>
@@ -356,7 +356,7 @@ const Profile = () => {
                 size="sm"
                 className="flex-shrink-0"
               >
-                View
+                {i18n.language === 'tr' ? 'Görüntüle' : 'View'}
               </Button>
             </div>
           </Card>
@@ -366,19 +366,19 @@ const Profile = () => {
         <Card className="p-6 space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg">
-              Shopping Friends ({friends.length}/1)
+              {i18n.language === 'tr' ? 'Alışveriş Arkadaşları' : 'Shopping Friends'} ({friends.length}/1)
             </h3>
             <Button onClick={() => setIsAddingFriend(true)} size="sm">
               <UserPlus className="h-4 w-4 mr-2" />
-              Add Friend
+              {i18n.language === 'tr' ? 'Arkadaş Ekle' : 'Add Friend'}
             </Button>
           </div>
 
           {friends.length === 0 ? (
             <div className="text-center py-8 text-muted-foreground">
               <UserPlus className="h-12 w-12 mx-auto mb-2 opacity-50" />
-              <p>No friends added yet</p>
-              <p className="text-sm">Add friends to share shopping lists (Limit: 1)</p>
+              <p>{i18n.language === 'tr' ? 'Henüz arkadaş eklenmedi' : 'No friends added yet'}</p>
+              <p className="text-sm">{i18n.language === 'tr' ? 'Alışveriş listelerini paylaşmak için arkadaş ekle (Limit: 1)' : 'Add friends to share shopping lists (Limit: 1)'}</p>
             </div>
           ) : (
             <div className="space-y-2">
@@ -405,13 +405,13 @@ const Profile = () => {
                     size="sm"
                     className="gap-2"
                     onClick={() => {
-                      if (confirm(`Remove ${friend.displayName} from friends?`)) {
+                      if (confirm(i18n.language === 'tr' ? `${friend.displayName} arkadaşlıktan çıkarılsın mı?` : `Remove ${friend.displayName} from friends?`)) {
                         removeFriend(friend.uid);
                       }
                     }}
                   >
                     <UserX className="h-4 w-4" />
-                    Remove
+                    {i18n.language === 'tr' ? 'Çıkar' : 'Remove'}
                   </Button>
                 </div>
               ))}
@@ -426,18 +426,18 @@ const Profile = () => {
           <div className="container max-w-4xl py-4">
             <div className="flex items-center justify-between gap-4">
               <div>
-                <p className="font-semibold">Unsaved Changes</p>
+                <p className="font-semibold">{i18n.language === 'tr' ? 'Kaydedilmemiş Değişiklikler' : 'Unsaved Changes'}</p>
                 <p className="text-sm text-muted-foreground">
-                  Don't forget to save your changes
+                  {i18n.language === 'tr' ? 'Değişikliklerinizi kaydetmeyi unutmayın' : "Don't forget to save your changes"}
                 </p>
               </div>
               <div className="flex gap-2">
                 <Button variant="outline" onClick={handleDiscardChanges}>
-                  Discard
+                  {i18n.language === 'tr' ? 'İptal' : 'Discard'}
                 </Button>
                 <Button onClick={handleSaveChanges} size="lg">
                   <Save className="h-4 w-4 mr-2" />
-                  Save Changes
+                  {i18n.language === 'tr' ? 'Değişiklikleri Kaydet' : 'Save Changes'}
                 </Button>
               </div>
             </div>
@@ -449,16 +449,18 @@ const Profile = () => {
       {!hasChanges && (
         <div className="container max-w-4xl mt-8 mb-8 pb-8">
           <div className="border-t pt-8">
-            <h3 className="text-lg font-bold text-destructive mb-2">Danger Zone</h3>
+            <h3 className="text-lg font-bold text-destructive mb-2">{i18n.language === 'tr' ? 'Tehlikeli Bölge' : 'Danger Zone'}</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Once you delete your account, there is no going back. Please be certain.
+              {i18n.language === 'tr' ? 'Hesabınızı sildiğinizde geri alınamaz. Lütfen emin olun.' : 'Once you delete your account, there is no going back. Please be certain.'}
             </p>
             <Button
               variant="destructive"
               className="w-full sm:w-auto"
               onClick={() => {
                 const confirmed = window.confirm(
-                  "Are you sure you want to delete your account? This action cannot be undone."
+                  i18n.language === 'tr'
+                    ? 'Hesabınızı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.'
+                    : 'Are you sure you want to delete your account? This action cannot be undone.'
                 );
                 if (confirmed) {
                   const currentUser = auth.currentUser;
@@ -467,8 +469,8 @@ const Profile = () => {
                     currentUser.delete()
                       .then(() => {
                         toast({
-                          title: "Account Deleted",
-                          description: "Your account has been successfully deleted.",
+                          title: i18n.language === 'tr' ? 'Hesap Silindi' : 'Account Deleted',
+                          description: i18n.language === 'tr' ? 'Hesabınız başarıyla silindi.' : 'Your account has been successfully deleted.',
                         });
                         navigate("/login");
                       })
@@ -476,14 +478,14 @@ const Profile = () => {
                         console.error("Delete error", error);
                         if (error.code === 'auth/requires-recent-login') {
                           toast({
-                            title: "Security Check Required",
-                            description: "Please log out and log in again to delete your account.",
+                            title: i18n.language === 'tr' ? 'Güvenlik Kontrolü Gerekli' : 'Security Check Required',
+                            description: i18n.language === 'tr' ? 'Hesabınızı silmek için çıkış yapıp tekrar giriş yapın.' : 'Please log out and log in again to delete your account.',
                             variant: "destructive"
                           });
                         } else {
                           toast({
-                            title: "Error",
-                            description: "Failed to delete account. Please try again later.",
+                            title: i18n.language === 'tr' ? 'Hata' : 'Error',
+                            description: i18n.language === 'tr' ? 'Hesap silinemedi. Lütfen tekrar deneyin.' : 'Failed to delete account. Please try again later.',
                             variant: "destructive"
                           });
                         }
@@ -493,7 +495,7 @@ const Profile = () => {
               }}
             >
               <UserX className="h-4 w-4 mr-2" />
-              Delete Account
+              {i18n.language === 'tr' ? 'Hesabı Sil' : 'Delete Account'}
             </Button>
           </div>
         </div>
@@ -503,9 +505,9 @@ const Profile = () => {
       <Dialog open={isSelectingAvatar} onOpenChange={setIsSelectingAvatar}>
         <DialogContent className="max-w-2xl">
           <DialogHeader>
-            <DialogTitle>Choose Your Avatar</DialogTitle>
+            <DialogTitle>{i18n.language === 'tr' ? 'Avatar Seç' : 'Choose Your Avatar'}</DialogTitle>
             <DialogDescription>
-              Select a cute cartoon avatar for your profile
+              {i18n.language === 'tr' ? 'Profiliniz için sevimli bir avatar seçin' : 'Select a cute cartoon avatar for your profile'}
             </DialogDescription>
           </DialogHeader>
           <div className="grid grid-cols-5 gap-4 py-4 max-h-96 overflow-y-auto">
@@ -546,22 +548,22 @@ const Profile = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserPlus className="h-5 w-5" />
-              Add Shopping Friend
+              {i18n.language === 'tr' ? 'Alışveriş Arkadaşı Ekle' : 'Add Shopping Friend'}
             </DialogTitle>
             <DialogDescription>
-              Start typing to search for friends
+              {i18n.language === 'tr' ? 'Arkadaş aramak için yazmaya başlayın' : 'Start typing to search for friends'}
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-4">
             {/* Arama Input - Sadece input, buton yok */}
             <div className="space-y-2">
-              <Label>Search by Name</Label>
+              <Label>{i18n.language === 'tr' ? 'İsme Göre Ara' : 'Search by Name'}</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="text"
-                  placeholder="Type a name... (e.g., 'S', 'Ser')"
+                  placeholder={i18n.language === 'tr' ? "İsim yazın... (örn. 'A', 'Ali')" : "Type a name... (e.g., 'S', 'Ser')"}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-9"
@@ -572,7 +574,7 @@ const Profile = () => {
                 )}
               </div>
               <p className="text-xs text-muted-foreground">
-                Start typing to see matching users
+                {i18n.language === 'tr' ? 'Eşleşen kullanıcıları görmek için yazmaya başlayın' : 'Start typing to see matching users'}
               </p>
             </div>
 
@@ -582,12 +584,12 @@ const Profile = () => {
                 {searching ? (
                   <div className="text-center py-8">
                     <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Searching...</p>
+                    <p className="text-sm text-muted-foreground">{i18n.language === 'tr' ? 'Aranıyor...' : 'Searching...'}</p>
                   </div>
                 ) : searchResults.length > 0 ? (
                   <>
                     <p className="text-sm font-semibold text-muted-foreground px-1">
-                      {searchResults.length} user{searchResults.length > 1 ? 's' : ''} found
+                      {searchResults.length} {i18n.language === 'tr' ? 'kullanıcı bulundu' : (searchResults.length > 1 ? 'users found' : 'user found')}
                     </p>
                     {searchResults.map((user) => (
                       <div
@@ -614,7 +616,7 @@ const Profile = () => {
                           className="flex-shrink-0"
                         >
                           <UserPlus className="h-4 w-4 mr-1" />
-                          Add
+                          {i18n.language === 'tr' ? 'Ekle' : 'Add'}
                         </Button>
                       </div>
                     ))}
@@ -622,9 +624,9 @@ const Profile = () => {
                 ) : (
                   <div className="text-center py-8">
                     <Search className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-2" />
-                    <p className="text-muted-foreground">No users found</p>
+                    <p className="text-muted-foreground">{i18n.language === 'tr' ? 'Kullanıcı bulunamadı' : 'No users found'}</p>
                     <p className="text-xs text-muted-foreground mt-1">
-                      Try a different search term
+                      {i18n.language === 'tr' ? 'Farklı bir arama terimi deneyin' : 'Try a different search term'}
                     </p>
                   </div>
                 )}
@@ -635,9 +637,9 @@ const Profile = () => {
             {searchQuery.length < 2 && !searching && searchResults.length === 0 && (
               <div className="text-center py-8">
                 <UserPlus className="h-12 w-12 mx-auto text-muted-foreground opacity-50 mb-2" />
-                <p className="text-muted-foreground">Start typing to search</p>
+                <p className="text-muted-foreground">{i18n.language === 'tr' ? 'Aramak için yazmaya başlayın' : 'Start typing to search'}</p>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Type at least 2 characters
+                  {i18n.language === 'tr' ? 'En az 2 karakter yazın' : 'Type at least 2 characters'}
                 </p>
               </div>
             )}
@@ -651,17 +653,17 @@ const Profile = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bell className="h-5 w-5" />
-              Friend Requests ({friendRequests.length})
+              {i18n.language === 'tr' ? 'Arkadaşlık İstekleri' : 'Friend Requests'} ({friendRequests.length})
             </DialogTitle>
             <DialogDescription>
-              Accept or reject pending friend requests
+              {i18n.language === 'tr' ? 'Bekleyen arkadaşlık isteklerini kabul veya reddet' : 'Accept or reject pending friend requests'}
             </DialogDescription>
           </DialogHeader>
 
           {friendRequests.length === 0 ? (
             <div className="py-12 text-center">
               <UserCheck className="h-12 w-12 mx-auto text-muted-foreground mb-3 opacity-50" />
-              <p className="text-muted-foreground">No pending requests</p>
+              <p className="text-muted-foreground">{i18n.language === 'tr' ? 'Bekleyen istek yok' : 'No pending requests'}</p>
             </div>
           ) : (
             <div className="space-y-3 py-4 overflow-y-auto">
@@ -682,7 +684,7 @@ const Profile = () => {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold truncate">{request.fromUserName}</p>
                       <p className="text-xs text-muted-foreground">
-                        Sent {new Date(request.createdAt?.toDate?.() || Date.now()).toLocaleDateString()}
+                        {i18n.language === 'tr' ? 'Gönderilme' : 'Sent'} {new Date(request.createdAt?.toDate?.() || Date.now()).toLocaleDateString()}
                       </p>
                     </div>
                   </div>
@@ -694,7 +696,7 @@ const Profile = () => {
                       disabled={friendsLoading}
                       className="hover:bg-destructive/10 hover:text-destructive hover:border-destructive"
                     >
-                      <X className="h-4 w-4" />
+                      <X className="h-4 w-4" strokeWidth={2.5} />
                     </Button>
                     <Button
                       size="sm"
@@ -708,7 +710,7 @@ const Profile = () => {
                       className="bg-primary hover:bg-primary/90"
                     >
                       <Check className="h-4 w-4 mr-1" />
-                      Accept
+                      {i18n.language === 'tr' ? 'Kabul Et' : 'Accept'}
                     </Button>
                   </div>
                 </div>

@@ -1,5 +1,5 @@
-import { useRef, useCallback } from 'react';
-import { showInterstitialAd } from '@/lib/adManager';
+import { useRef, useCallback, useEffect } from 'react';
+import { showInterstitialAd, preloadInterstitialAd } from '@/lib/adManager';
 import type { PlanType } from '@/types/subscription';
 
 interface UseInterstitialAdOptions {
@@ -21,10 +21,10 @@ interface UseInterstitialAdOptions {
  *   showAd();
  * };
  */
-export const useInterstitialAd = ({ plan, interval = 3 }: UseInterstitialAdOptions) => {
+export const useInterstitialAd = ({ plan, interval = 5 }: UseInterstitialAdOptions) => {
     const actionCount = useRef(0);
     const lastAdShownAt = useRef(0);
-    const MIN_AD_INTERVAL_MS = 30000; // Minimum 30 saniye aralık
+    const MIN_AD_INTERVAL_MS = 60000; // Minimum 60 saniye aralık (profesyonel ayar)
 
     const showAd = useCallback(() => {
         // İşlem sayacını artır
@@ -48,6 +48,11 @@ export const useInterstitialAd = ({ plan, interval = 3 }: UseInterstitialAdOptio
             showInterstitialAd(plan);
         }
     }, [plan, interval]);
+
+    // Initial preload check
+    useEffect(() => {
+        preloadInterstitialAd();
+    }, []);
 
     const resetCounter = useCallback(() => {
         actionCount.current = 0;

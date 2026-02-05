@@ -189,16 +189,30 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
                     // Günlük Limit Reset Kontrolü (DB'de saklanan lastResetDate ile)
                     if (checkIfNewDay(subData.lastResetDate)) {
+                        // Check REAL trial status based on date
+                        const trialStillValid = subData.trialEndDate ? isTrialStillActive(subData.trialEndDate) : false;
+
                         let newLimit = 0;
-                        if (plan === 'pro') newLimit = -1;
-                        else if (plan === 'premium') newLimit = 30;
-                        else if (plan === 'free' && isTrialActive) newLimit = 10;
-                        else newLimit = 0; // Free + Expired = 0
+                        let newIsTrialActive = isTrialActive;
+
+                        if (plan === 'pro') {
+                            newLimit = -1;
+                        } else if (plan === 'premium') {
+                            newLimit = 30;
+                        } else if (plan === 'free' && trialStillValid) {
+                            newLimit = 10;
+                            newIsTrialActive = true;
+                        } else {
+                            // Free + Expired = 0 (must watch ad or purchase)
+                            newLimit = 0;
+                            newIsTrialActive = false;
+                        }
 
                         await updateDoc(userRef, {
                             'subscription.dailyUsed': 0,
                             'subscription.adRewardCount': 0,
                             'subscription.dailyLimit': newLimit,
+                            'subscription.isTrialActive': newIsTrialActive,
                             'subscription.lastResetDate': new Date().toDateString()
                         });
                         // State update triggers automatically via onSnapshot cycle
@@ -316,16 +330,31 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
     const isExpired = getDaysRemaining() === 0;
 
+    // DYNAMIC TRIAL CHECK: Always check trialEndDate, not just stored flag
+    const isTrialReallyActive = (): boolean => {
+        if (state.plan !== 'free') return false; // Only applies to free plan
+        if (!state.trialEndDate) return false;
+        return isTrialStillActive(state.trialEndDate);
+    };
+
     const currentDailyLimit = state.plan === 'pro' ? -1 : (
         state.plan === 'premium' ? 30 : (
-            // If trial active, 10. If not (expired/free-tier-only), 0 in theory, 
-            // but we rely on state.dailyLimit to be accurate.
-            10 // Base limit for display/reference if needed, but strict limit comes from state
+            // STRICT MODE: If free plan and trial NOT active => 0 limit (blocked)
+            // If free plan and trial ACTIVE => 10 limit
+            (state.plan === 'free' && !isTrialReallyActive()) ? 0 : 10
         )
     );
 
     const canPerformAction = (): boolean => {
-        // if (isExpired) return false; // REMOVED: Allow Ad rewards to work
+        // STRICT: Block if free plan and trial expired (checks actual date)
+        if (state.plan === 'free' && !isTrialReallyActive()) {
+            // Allow if they have ad rewards remaining
+            if (state.dailyLimit > 0 && state.dailyUsed < state.dailyLimit) {
+                return true;
+            }
+            return false;
+        }
+
         if (state.plan === 'pro') return true;
 
         // Use state.dailyLimit which includes Ad Rewards

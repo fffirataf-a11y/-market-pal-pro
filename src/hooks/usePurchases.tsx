@@ -21,7 +21,7 @@ interface UsePurchasesReturn {
 
 const REVENUECAT_API_KEY = {
   ios: 'appl_pMUUgJTRkfJqIQXitaAgTgSSBLV',
-  android: 'goog_VeKdfhekIaXDfJyinZIRPzlqHON',
+  android: 'goog_VeKdfhekIaXDfJyinZIRpzlqHON',
 };
 
 export const usePurchases = (): UsePurchasesReturn => {
