@@ -37,6 +37,7 @@ jobs:
           # create variables
           CERTIFICATE_PATH=$RUNNER_TEMP/build_certificate.p12
           PP_PATH=$RUNNER_TEMP/build_pp.mobileprovision
+          PP_PLIST=$RUNNER_TEMP/profile.plist
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
           # import certificate and provisioning profile from secrets
@@ -55,6 +56,23 @@ jobs:
           # Debugging: Check file size and hash
           ls -l $CERTIFICATE_PATH
           md5 $CERTIFICATE_PATH
+          ls -l $PP_PATH
+
+          # Decode provisioning profile to plist (required for reliable UUID extraction)
+          security cms -D -i "$PP_PATH" -o "$PP_PLIST"
+          if [ ! -f "$PP_PLIST" ]; then
+            echo "::error::Provisioning profile decode failed. Check that profile_V2_base64.txt is valid base64 and a valid .mobileprovision file."
+            exit 1
+          fi
+          UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" "$PP_PLIST" 2>/dev/null || true)
+          NAME=$(/usr/libexec/PlistBuddy -c "Print Name" "$PP_PLIST" 2>/dev/null || true)
+          if [ -z "$UUID" ]; then
+            echo "::error::Provisioning profile is missing UUID. Ensure the profile is an App Store distribution profile downloaded from Apple Developer, and that it includes 'Sign in with Apple' capability (App ID must have Sign in with Apple enabled, then regenerate the profile)."
+            exit 1
+          fi
+          echo "PROVISIONING_PROFILE_UUID=$UUID" >> $GITHUB_ENV
+          echo "PROVISIONING_PROFILE_NAME=$NAME" >> $GITHUB_ENV
+          echo "Using profile: $NAME ($UUID)"
 
           # create temporary keychain
           security create-keychain -p "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
@@ -65,15 +83,9 @@ jobs:
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-          # apply provisioning profile
+          # apply provisioning profile (must be in standard location with correct name for Xcode)
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
-          
-          # extract uuid and name for xcodebuild
-          UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" /dev/stdin <<< $(security cms -D -i $PP_PATH))
-          NAME=$(/usr/libexec/PlistBuddy -c "Print Name" /dev/stdin <<< $(security cms -D -i $PP_PATH))
-          echo "PROVISIONING_PROFILE_UUID=$UUID" >> $GITHUB_ENV
-          echo "PROVISIONING_PROFILE_NAME=$NAME" >> $GITHUB_ENV
+          cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
 
       - name: Sync Capacitor
         run: npx cap sync ios
@@ -82,7 +94,8 @@ jobs:
         env:
           scheme: "App"
         run: |
-          # Inject provisioning profile info into project file associated with the App target
+          # Inject provisioning profile into Release config only (do not touch Debug/Automatic)
+          echo "Injecting Profile UUID: $PROVISIONING_PROFILE_UUID"
           sed -i '' "s/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Manual; PROVISIONING_PROFILE = \"$PROVISIONING_PROFILE_UUID\"; CODE_SIGN_IDENTITY = \"iPhone Distribution\";/" ios/App/App.xcodeproj/project.pbxproj
 
           cd ios
