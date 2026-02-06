@@ -49,7 +49,7 @@ jobs:
           tr -d '\r\n ' < cert_secret_b64.txt | base64 -D -o $CERTIFICATE_PATH
           
           # BYPASSING SECRET: Read Profile from repo file
-          cat profile_FINAL_v1_base64_PURE.txt > profile_secret_b64.txt
+          cat profile_V2_base64.txt > profile_secret_b64.txt
           tr -d '\r\n ' < profile_secret_b64.txt | base64 -D -o $PP_PATH
           
           # Debugging: Check file size and hash
