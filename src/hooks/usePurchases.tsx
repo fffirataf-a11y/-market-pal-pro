@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Purchases, LOG_LEVEL, PurchasesOfferings, CustomerInfo } from '@revenuecat/purchases-capacitor';
+import { useToast } from '@/hooks/use-toast';
 import { Capacitor } from '@capacitor/core';
 
 export type PurchaseStatus = 'idle' | 'loading' | 'success' | 'error';
@@ -35,6 +36,9 @@ export const usePurchases = (): UsePurchasesReturn => {
 
   useEffect(() => {
     const initialize = async () => {
+      // Safety guard against double-init
+      if (isConfigured) return;
+
       const platform = Capacitor.getPlatform();
       console.log('[RevenueCat] 🎯 Platform:', platform);
 
@@ -43,21 +47,31 @@ export const usePurchases = (): UsePurchasesReturn => {
         console.log('[RevenueCat] 🌐 WEB → FORCING FREE');
         setActivePlan('free');
         setIsInitializing(false);
-        setIsConfigured(true); // Web is always "configured"
+        setIsConfigured(true);
         return;
       }
 
       try {
-        // 1. Configure FIRST (Critical Fix)
+        // 1. Configure FIRST
         const apiKey = platform === 'ios' ? REVENUECAT_API_KEY.ios : REVENUECAT_API_KEY.android;
-        await Purchases.configure({ apiKey });
-        await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+
+        try {
+          await Purchases.configure({ apiKey });
+          await Purchases.setLogLevel({ level: LOG_LEVEL.DEBUG });
+        } catch (configErr: any) {
+          // If already configured, just continue
+          if (configErr.message && configErr.message.includes('configured')) {
+            console.log('[RevenueCat] Already configured, continuing...');
+          } else {
+            throw configErr;
+          }
+        }
 
         // 2. Mark as Configured
         setIsConfigured(true);
 
         // 3. Now Safe to RESET IDENTITY (LogOut)
-        console.log('[RevenueCat] 🔄 RESET IDENTITY (LogOut)');
+        // ... rest of logic
         try {
           await Purchases.logOut();
         } catch (logoutErr) {
@@ -90,18 +104,26 @@ export const usePurchases = (): UsePurchasesReturn => {
 
       } catch (e: any) {
         console.error('[RevenueCat] ❌ ERROR → FREE', e);
-        // Error handling forces FREE
+        // Error handling forces FREE but DOES NOT THROW to App
         setActivePlan('free');
         setError(e.message || 'Initialization failed');
         // If init failed heavily, we might NOT be configured properly
+        // But we set isConfigured=true only if we want to bypass checks, 
+        // here we leave it or set false. Setting false is safer for preventing purchase attempts.
         setIsConfigured(false);
       } finally {
         setIsInitializing(false);
       }
     };
 
-    initialize();
+    // Call init safely
+    initialize().catch(err => {
+      console.error('[RevenueCat] Fatal Init Error caught:', err);
+      setIsInitializing(false);
+    });
   }, []);
+
+  const { toast } = useToast(); // Import toast
 
   const purchasePackage = async (packageIdentifier: string): Promise<boolean> => {
     try {
@@ -134,7 +156,23 @@ export const usePurchases = (): UsePurchasesReturn => {
         console.error("Purchases not configured yet");
         // Auto-retry or just fail gracefully
       }
-      if (!err.userCancelled) {
+
+      // ✅ GLOBAL CANCELLATION FEEDBACK
+      if (err.userCancelled) {
+        console.log('[RevenueCat] User cancelled purchase');
+        toast({
+          title: "İptal Edildi", // Hardcoded per user preference for TR context usually, or use t() if available.
+          // Since this hook doesn't have useTranslation loaded in the snippet I saw, let's check imports.
+          // It doesn't have useTranslation. I will use generic English or try to add translation if easy.
+          // Actually, let's stick to the plan: "Info" / "Purchase cancelled".
+          // Better: Use a neutral message or check if I can use t().
+          // Auth.tsx uses t. Settings.tsx uses t.
+          // I'll stick to a safe hardcoded string or simple conditional if possible, 
+          // but for now let's use a clear message.
+          description: "Satın alma işlemi iptal edildi",
+          variant: "destructive", // As requested "Hata ekranı gibi olsun"
+        });
+      } else {
         setError(err.message);
         console.error('[RevenueCat] Purchase failed:', err);
       }

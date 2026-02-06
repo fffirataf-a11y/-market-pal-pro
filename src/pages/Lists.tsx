@@ -397,7 +397,19 @@ const Lists = () => {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl font-bold">{t('lists.title')}</h1>
             <div className="flex gap-2">
-              <Button variant="outline" size="icon" onClick={() => setIsShareDialogOpen(true)}>
+              <Button variant="outline" size="icon" onClick={() => {
+                if (auth.currentUser?.isAnonymous) {
+                  toast({
+                    title: i18n.language === 'tr' ? 'Misafir Modu' : 'Guest Mode',
+                    description: i18n.language === 'tr'
+                      ? 'Listeleri paylaşmak için lütfen giriş yapın veya kayıt olun.'
+                      : 'Please login or sign up to share lists.',
+                    variant: "destructive"
+                  });
+                  return;
+                }
+                setIsShareDialogOpen(true);
+              }}>
                 <Share2 className="h-4 w-4" />
               </Button>
               <Button onClick={() => setIsAddDialogOpen(true)}>
@@ -634,7 +646,19 @@ const Lists = () => {
 
       <ShareList
         open={isShareDialogOpen}
-        onOpenChange={setIsShareDialogOpen}
+        onOpenChange={(open) => {
+          if (open && auth.currentUser?.isAnonymous) {
+            toast({
+              title: i18n.language === 'tr' ? 'Misafir Modu' : 'Guest Mode',
+              description: i18n.language === 'tr'
+                ? 'Listeleri paylaşmak için lütfen giriş yapın veya kayıt olun.'
+                : 'Please login or sign up to share lists.',
+              variant: "destructive"
+            });
+            return;
+          }
+          setIsShareDialogOpen(open);
+        }}
         listId={selectedList?.id || ""}
       />
 

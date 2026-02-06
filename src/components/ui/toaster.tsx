@@ -7,8 +7,14 @@ export function Toaster() {
   return (
     <ToastProvider>
       {toasts.map(function ({ id, title, description, action, ...props }) {
+        // ✅ SMART DURATION:
+        // Errors (destructive) -> 2500ms
+        // Standard -> 2000ms
+        // Custom override -> props.duration
+        const duration = props.duration || (props.variant === "destructive" ? 2500 : 2000);
+
         return (
-          <Toast key={id} duration={2500} {...props}>
+          <Toast key={id} duration={duration} {...props}>
             <div className="grid gap-1">
               {title && <ToastTitle>{title}</ToastTitle>}
               {description && <ToastDescription>{description}</ToastDescription>}

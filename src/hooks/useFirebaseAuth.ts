@@ -14,11 +14,15 @@ import {
   signInAnonymously,
   GoogleAuthProvider,
   OAuthProvider,
+  signInWithCredential,
 } from 'firebase/auth';
 import { doc, setDoc, getDoc } from 'firebase/firestore';
 import { auth, db } from '@/config/firebase';
 import { useToast } from '@/hooks/use-toast';
 import i18n from '@/i18n';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
+import { SignInWithApple } from '@capacitor-community/apple-sign-in';
 
 export const useFirebaseAuth = () => {
   const { toast } = useToast();
@@ -374,12 +378,23 @@ export const useFirebaseAuth = () => {
   };
 
   // Google ile giriş
+  // Google ile giriş
   const loginWithGoogle = async () => {
     setLoading(true);
     try {
-      const provider = new GoogleAuthProvider();
-      const userCredential = await signInWithPopup(auth, provider);
-      const user = userCredential.user;
+      let user;
+
+      if (Capacitor.isNativePlatform()) {
+        const googleUser = await GoogleAuth.signIn();
+        const idToken = googleUser.authentication.idToken;
+        const credential = GoogleAuthProvider.credential(idToken);
+        const userCredential = await signInWithCredential(auth, credential);
+        user = userCredential.user;
+      } else {
+        const provider = new GoogleAuthProvider();
+        const userCredential = await signInWithPopup(auth, provider);
+        user = userCredential.user;
+      }
 
       // Firestore'a kullanıcı bilgilerini kaydet/güncelle
       try {
@@ -425,7 +440,7 @@ export const useFirebaseAuth = () => {
       console.error('Google login error:', error);
 
       let errorMessage = "Google login failed";
-      if (error.code === 'auth/popup-closed-by-user') {
+      if (error.code === 'auth/popup-closed-by-user' || error.message === 'Canceled') {
         errorMessage = "Login cancelled";
       } else if (error.code === 'auth/popup-blocked') {
         errorMessage = "Popup blocked. Please allow popups.";
@@ -443,15 +458,38 @@ export const useFirebaseAuth = () => {
   };
 
   // Apple ile giriş
+  // Apple ile giriş
   const loginWithApple = async () => {
     setLoading(true);
     try {
-      const provider = new OAuthProvider('apple.com');
-      provider.addScope('email');
-      provider.addScope('name');
+      let user;
 
-      const userCredential = await signInWithPopup(auth, provider);
-      const user = userCredential.user;
+      if (Capacitor.isNativePlatform()) {
+        const { response } = await SignInWithApple.authorize({
+          clientId: 'com.lionx.smartmarket',
+          redirectURI: 'https://smartmarket-3a6bd.firebaseapp.com/__/auth/handler',
+          scopes: 'name email',
+        });
+
+        const idToken = response.identityToken;
+        const nonce = response.nonce; // Raw nonce from plugin
+
+        const provider = new OAuthProvider('apple.com');
+        const credential = provider.credential({
+          idToken: idToken,
+          rawNonce: nonce, // Important for Firebase Auth
+        });
+
+        const userCredential = await signInWithCredential(auth, credential);
+        user = userCredential.user;
+      } else {
+        const provider = new OAuthProvider('apple.com');
+        provider.addScope('email');
+        provider.addScope('name');
+
+        const userCredential = await signInWithPopup(auth, provider);
+        user = userCredential.user;
+      }
 
       // Firestore'a kullanıcı bilgilerini kaydet/güncelle
       try {
@@ -497,7 +535,7 @@ export const useFirebaseAuth = () => {
       console.error('Apple login error:', error);
 
       let errorMessage = "Apple login failed";
-      if (error.code === 'auth/popup-closed-by-user') {
+      if (error.code === 'auth/popup-closed-by-user' || (error.error && error.error.includes('Canceled'))) {
         errorMessage = "Login cancelled";
       }
 

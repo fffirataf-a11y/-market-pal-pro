@@ -36,6 +36,16 @@
       "androidScaleType": "FIT_CENTER",
       "iosSpinnerStyle": "small",
       "spinnerColor": "#999999"
+    },
+    "GoogleAuth": {
+      "scopes": [
+        "profile",
+        "email"
+      ],
+      "serverClientId": "425083044183-9rec3eek7d9dhb2pmknisb6fpp7amabt.apps.googleusercontent.com",
+      "iosClientId": "425083044183-ln69ot16n7hlb5uvfsmskgahviclpbgu.apps.googleusercontent.com",
+      "androidClientId": "425083044183-ggksec8jf9ssqjh5hnfkl7u3pj1lf3kb.apps.googleusercontent.com",
+      "forceCodeForRefreshToken": true
     }
   }
 }

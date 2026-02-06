@@ -37,6 +37,10 @@
       "title": "Ürünlerinizi Takip Edin",
       "description": "Alışveriş yaparken ürünleri işaretleyin ve listelerinizi düzenli tutun."
     },
+    "step5": {
+      "title": "Sana Uygun Planı Seç",
+      "description": "• Free: 10 İşlem/Gün\n• Premium: 30 İşlem/Gün\n• Pro: Sınırsız! ✨\nTeklif: Yıllık planlarda %8,5 indirim."
+    },
     "step3": {
       "title": "Ailenizle Paylaşın",
       "description": "Listelerinizi aile ve arkadaşlarınızla gerçek zamanlı paylaşın."
@@ -68,7 +72,18 @@
     "welcomeBack": "Tekrar hoş geldiniz!",
     "accountCreated": "Hesap oluşturuldu!",
     "successfullyLoggedIn": "Başarıyla giriş yapıldı",
-    "accountCreatedSuccess": "Hesabınız başarıyla oluşturuldu"
+    "accountCreatedSuccess": "Hesabınız başarıyla oluşturuldu",
+    "checkEmailTitle": "E-postanızı Kontrol Edin",
+    "verificationSent": "Doğrulama linki gönderdik:",
+    "spamWarningTitle": "⚠️ E-postayı bulamadınız mı?",
+    "spamWarning1": "🗑️ SPAM/GEREKSİZ klasörünü kontrol edin - doğrulama e-postaları genelde oraya düşer",
+    "spamWarning2": "⏳ Birkaç dakika bekleyin - e-postaların gelmesi zaman alabilir",
+    "spamWarning3": "✉️ E-posta adresini doğru girdiğinizden emin olun",
+    "nextSteps": "📬 Sonraki adımlar:",
+    "step1": "E-posta gelen kutunuzu açın",
+    "step2": "Doğrulama linkine tıklayın",
+    "step3": "Geri dönüp giriş yapın",
+    "backToLogin": "Girişe Dön"
   },
   "lists": {
     "title": "Alışveriş Listeleri",

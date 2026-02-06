@@ -297,11 +297,12 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
                     }
 
                     // Firestore'a ilk kez yaz
-                    await updateDoc(userRef, {
+                    // Eğer kullanıcı dökümanı yoksa (exists=false), updateDoc hata verir. 
+                    // Bu yüzden setDoc ile merge: true kullanarak oluşturuyoruz/güncelliyoruz.
+                    await setDoc(userRef, {
                         subscription: initialSub
-                    }).catch(async (err) => {
-                        // Eğer döküman yoksa setDoc gerekir (nadir durum)
-                        console.error("Error updating sub, trying setDoc fallback", err);
+                    }, { merge: true }).catch((err) => {
+                        console.error("Error initializing user subscription:", err);
                     });
                 }
             }
@@ -337,41 +338,40 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         return isTrialStillActive(state.trialEndDate);
     };
 
-    const currentDailyLimit = state.plan === 'pro' ? -1 : (
-        state.plan === 'premium' ? 30 : (
-            // STRICT MODE: If free plan and trial NOT active => 0 limit (blocked)
-            // If free plan and trial ACTIVE => 10 limit
-            (state.plan === 'free' && !isTrialReallyActive()) ? 0 : 10
-        )
-    );
+    // ✅ FIX: Calculate Daily Limit Dynamically (Source of Truth = Plan + AdRewards)
+    // This prevents the "Stuck at 30" bug if DB has stale data.
+    const calculateCurrentDailyLimit = (): number => {
+        if (state.plan === 'pro') return -1;
+        if (state.plan === 'premium') return 30 + (state.adRewardCount * 3);
 
-    const canPerformAction = (): boolean => {
-        // STRICT: Block if free plan and trial expired (checks actual date)
-        if (state.plan === 'free' && !isTrialReallyActive()) {
-            // Allow if they have ad rewards remaining
-            if (state.dailyLimit > 0 && state.dailyUsed < state.dailyLimit) {
-                return true;
-            }
-            return false;
+        // Free Plan Logic
+        // If Trial Active: 10 + Rewards
+        if (isTrialReallyActive()) {
+            return 10 + (state.adRewardCount * 3);
         }
 
+        // If Trial Expired: 0 + Rewards (User must watch ads to get actions)
+        return 0 + (state.adRewardCount * 3);
+    };
+
+    const currentDailyLimit = calculateCurrentDailyLimit();
+
+    const canPerformAction = (): boolean => {
         if (state.plan === 'pro') return true;
 
-        // Use state.dailyLimit which includes Ad Rewards
-        return state.dailyUsed < state.dailyLimit;
+        // Use calculated limit
+        return state.dailyUsed < currentDailyLimit;
     };
 
     const getRemainingActions = (): number => {
-        // if (isExpired) return 0; // REMOVED: Allow Ad rewards to work
         if (state.plan === 'pro') return -1;
-        return Math.max(0, state.dailyLimit - state.dailyUsed);
+        return Math.max(0, currentDailyLimit - state.dailyUsed);
     };
 
     const getUsagePercentage = (): number => {
-        // if (isExpired) return 100; // REMOVED: Allow Ad rewards to work
         if (state.plan === 'pro') return 0;
-        if (state.dailyLimit === 0) return 100;
-        return (state.dailyUsed / state.dailyLimit) * 100;
+        if (currentDailyLimit === 0) return 100;
+        return (state.dailyUsed / currentDailyLimit) * 100;
     };
 
     // Actions update Firestore now
@@ -411,7 +411,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         setState(prev => ({
             ...prev,
             plan: 'premium',
-            dailyLimit: 30,
+            dailyLimit: 30, // Updated for local state, but calculations use plan
             dailyUsed: 0,
             trialStartDate: null,
             trialEndDate: null,
@@ -628,7 +628,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
     const rewardAdWatched = (): { success: boolean; message: string } => {
         if (state.plan !== 'free') {
-            return { success: false, message: 'This feature is only for free plan users.' };
+            return { success: false, message: i18n.language === 'tr' ? 'Bu özellik sadece ücretsiz plan içindir.' : 'This feature is only for free plan users.' };
         }
 
         // Basic cooldown check implementation if needed again here, 
@@ -637,7 +637,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
         setState(prev => ({
             ...prev,
-            dailyLimit: prev.dailyLimit + 3,
+            // dailyLimit is derived now, so we just update adRewardCount
             adRewardCount: prev.adRewardCount + 1,
             lastAdWatchTime: new Date().toISOString(),
         }));
@@ -645,12 +645,17 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
         if (currentUserId) {
             const userRef = doc(db, 'users', currentUserId);
             updateDoc(userRef, {
+                // We still increment dailyLimit in DB for legacy reasons/backup, 
+                // but our logic relies on adRewardCount
                 'subscription.dailyLimit': increment(3),
                 'subscription.adRewardCount': increment(1),
                 'subscription.lastAdWatchTime': new Date().toISOString()
             });
         }
-        return { success: true, message: 'Ad watched! +3 actions added.' };
+        return {
+            success: true,
+            message: i18n.language === 'tr' ? 'Reklam izlendi! +3 hak eklendi.' : 'Ad watched! +3 actions added.'
+        };
     };
 
     const downgradeToFree = async () => {
@@ -667,7 +672,7 @@ export const SubscriptionProvider = ({ children }: { children: ReactNode }) => {
 
     const value = {
         plan: state?.plan || 'free',
-        dailyLimit: state?.dailyLimit ?? 10,
+        dailyLimit: currentDailyLimit, // ✅ USE CALCULATED LIMIT
         dailyUsed: state?.dailyUsed ?? 0,
         isTrialActive: state?.isTrialActive ?? false,
         referralCode: state?.referralCode,

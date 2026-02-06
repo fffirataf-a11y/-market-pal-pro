@@ -38,8 +38,8 @@
   <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
   <style>
     body {
-      background-color: #14b8a6;
-      /* Turquoise to match Native Splash */
+      background-color: #1a1d23;
+      /* Dark background to match Native Splash & App Theme */
       margin: 0;
       padding: 0;
       /* overflow: hidden; Removed to fix scroll issue */
@@ -62,8 +62,8 @@
       justify-content: center;
       z-index: -1;
       /* Behind root so React can cover it */
-      background-color: #14b8a6;
-      /* Match the turquoise */
+      background-color: #1a1d23;
+      /* Match the dark background */
     }
 
     .web-splash img {
@@ -83,11 +83,15 @@
   </div>
 
   <script>
-    // Remove splash when app loads (optional, React usually covers it)
-    // But we can listen for a custom event if we want precise control
     window.addEventListener('load', () => {
-      // Fallback: If React crashes, we stay here.
-      console.log('Window loaded');
+      // Hide web splash once loaded
+      const splash = document.getElementById('web-splash');
+      if (splash) {
+        splash.style.opacity = '0';
+        setTimeout(() => {
+          splash.remove();
+        }, 500);
+      }
     });
   </script>
 

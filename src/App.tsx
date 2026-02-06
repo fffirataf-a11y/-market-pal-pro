@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useRealtimeNotifications } from "@/hooks/useNotifications";
 import { usePushNotifications } from "@/hooks/usePushNotifications";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
 import { initializeAdMob, preloadRewardedAd, preloadInterstitialAd } from "@/lib/adManager";
 import { useSubscription } from "@/hooks/useSubscription";
 import { usePurchases } from "@/hooks/usePurchases";
@@ -23,6 +24,9 @@ const App = () => {
 
   // ✅ Native Push Notifications (iOS/Android)
   usePushNotifications();
+
+  // ✅ Global Network Status Monitoring
+  useNetworkStatus();
 
 
 

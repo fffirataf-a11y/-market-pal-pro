@@ -6,11 +6,13 @@ import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from "@/components/ui/label";
-import { ShoppingCart, Loader2, Mail, CheckCircle, AlertCircle, ArrowRight } from "lucide-react";
+import { ShoppingCart, Loader2, Mail, CheckCircle, AlertCircle, ArrowRight, WifiOff } from "lucide-react";
 import { useFirebaseAuth } from "@/hooks/useFirebaseAuth";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useToast } from "@/hooks/use-toast";
 import { Capacitor } from "@capacitor/core";
+import { useNetworkStatus } from "@/hooks/useNetworkStatus";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const Auth = () => {
   const navigate = useNavigate();
@@ -26,6 +28,7 @@ const Auth = () => {
     resetPassword
   } = useFirebaseAuth();
   const { applyReferralCode } = useSubscription();
+  const isOnline = useNetworkStatus();
 
   // Email/Password states
   const [email, setEmail] = useState("");
@@ -164,43 +167,42 @@ const Auth = () => {
             <div className="space-y-2">
               <div className="flex items-center justify-center gap-2">
                 <CheckCircle className="w-6 h-6 text-success" />
-                <h2 className="text-2xl font-bold">{i18n.language === 'tr' ? 'E-postaınızı Kontrol Edin' : 'Check Your Email'}</h2>
+                <h2 className="text-2xl font-bold">{t('auth.checkEmailTitle')}</h2>
               </div>
               <p className="text-muted-foreground">
-                {i18n.language === 'tr' ? 'Doğrulama linki gönderdik:' : "We've sent a verification link to:"}
+                {t('auth.verificationSent')}
               </p>
               <p className="font-semibold text-primary">{verificationEmail}</p>
             </div>
 
             <div className="bg-muted/50 p-4 rounded-lg space-y-2">
               <p className="text-sm font-semibold text-foreground">
-                {i18n.language === 'tr' ? '📬 Sonraki adımlar:' : '📬 Next steps:'}
+                {t('auth.nextSteps')}
               </p>
               <ol className="text-sm text-muted-foreground text-left space-y-2 list-decimal list-inside">
-                <li>{i18n.language === 'tr' ? 'E-posta gelen kutunuzu açın' : 'Open your email inbox'}</li>
-                <li>{i18n.language === 'tr' ? 'Doğrulama linkine tıklayın' : 'Click the verification link'}</li>
-                <li>{i18n.language === 'tr' ? 'Geri dönüp giriş yapın' : 'Come back and log in'}</li>
+                <li>{t('auth.step1')}</li>
+                <li>{t('auth.step2')}</li>
+                <li>{t('auth.step3')}</li>
               </ol>
             </div>
 
             {/* Spam Uyarısı */}
             <div className="bg-warning/10 border border-warning/30 p-4 rounded-lg">
               <p className="text-sm font-semibold text-warning-foreground mb-2 flex items-center justify-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                {i18n.language === 'tr' ? '⚠️ E-postayı bulamadınız mı?' : "⚠️ Can't find the email?"}
+                {t('auth.spamWarningTitle')}
               </p>
               <ul className="text-xs text-muted-foreground space-y-1 text-left">
                 <li className="flex items-start gap-2">
                   <span className="text-warning">•</span>
-                  <span><strong>{i18n.language === 'tr' ? 'SPAM/JUNK klasörünüzü kontrol edin' : 'Check your SPAM/JUNK folder'}</strong> - {i18n.language === 'tr' ? 'doğrulama e-postaları genellikle oraya düşer' : 'verification emails often end up there'}</span>
+                  <span>{t('auth.spamWarning1')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-warning">•</span>
-                  <span>{i18n.language === 'tr' ? 'Birkaç dakika bekleyin - e-postalar zaman alabilir' : 'Wait a few minutes - emails can take time to arrive'}</span>
+                  <span>{t('auth.spamWarning2')}</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-warning">•</span>
-                  <span>{i18n.language === 'tr' ? 'Doğru e-posta adresini girdiğinizi kontrol edin' : 'Check if you entered the correct email address'}</span>
+                  <span>{t('auth.spamWarning3')}</span>
                 </li>
               </ul>
             </div>
@@ -211,13 +213,25 @@ const Auth = () => {
                 setShowVerificationNotice(false);
               }}
             >
-              {i18n.language === 'tr' ? 'Girişe Dön' : 'Back to Login'}
+              {t('auth.backToLogin')}
             </Button>
           </div>
         </Card>
       ) : (
         <Card className="w-full max-w-md p-8 shadow-2xl">
-          {/* Logo */}
+          {/* Offline Alert */}
+          {!isOnline && (
+            <Alert variant="destructive" className="mb-6 animate-in fade-in slide-in-from-top-2">
+              <WifiOff className="h-4 w-4" />
+              <AlertTitle>{i18n.language === 'tr' ? 'İnternet Yok' : 'No Internet Connection'}</AlertTitle>
+              <AlertDescription>
+                {i18n.language === 'tr'
+                  ? 'Lütfen bağlantınızı kontrol edip tekrar deneyin.'
+                  : 'Please check your connection and try again.'}
+              </AlertDescription>
+            </Alert>
+          )}
+
           {/* Logo */}
           <div className="flex items-center justify-center gap-3 mb-8">
             <img

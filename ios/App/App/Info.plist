@@ -12,6 +12,7 @@
 	<string>We need access to your camera to scan receipts.</string>
 	<key>CFBundleDisplayName</key>
 	<string>SmartMarket</string>
+	</array>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -20,6 +21,14 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>com.lionx.smartmarket</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>com.googleusercontent.apps.425083044183-ln69ot16n7hlb5uvfsmskgahviclpbgu</string>
 			</array>
 		</dict>
 	</array>
@@ -60,7 +69,7 @@
 	<key>CFBundleShortVersionString</key>
 	<string>1.1</string>
 	<key>CFBundleVersion</key>
-	<string>100</string>
+	<string>101</string>
 	<key>LSRequiresIPhoneOS</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

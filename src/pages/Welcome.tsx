@@ -10,6 +10,8 @@ import welcomeHero from "@/assets/welcome-hero.png";
 import onboarding1 from "@/assets/onboarding-1.png";
 import onboarding2 from "@/assets/onboarding-2.png";
 import onboarding3 from "@/assets/onboarding-3.png";
+import onboarding4 from "@/assets/onboarding-4.png";
+import { Crown } from "lucide-react";
 
 const Welcome = () => {
     const navigate = useNavigate();
@@ -53,6 +55,15 @@ const Welcome = () => {
             color: "from-violet-500 to-purple-600",
             bgGradient: "from-violet-50/80 to-purple-50/80 dark:from-violet-950/20 dark:to-purple-950/20",
             iconColor: "text-purple-600"
+        },
+        {
+            image: onboarding4,
+            title: t('welcome.step5.title'),
+            description: t('welcome.step5.description'),
+            icon: Crown,
+            color: "from-yellow-400 to-amber-500",
+            bgGradient: "from-yellow-50/80 to-amber-50/80 dark:from-yellow-950/20 dark:to-amber-950/20",
+            iconColor: "text-amber-600"
         }
     ];
 
@@ -177,7 +188,7 @@ const Welcome = () => {
                                                     {stepItem.title}
                                                 </h1>
 
-                                                <p className="text-lg text-muted-foreground leading-relaxed font-medium">
+                                                <p className="text-lg text-muted-foreground leading-relaxed font-medium whitespace-pre-line">
                                                     {stepItem.description}
                                                 </p>
                                             </div>

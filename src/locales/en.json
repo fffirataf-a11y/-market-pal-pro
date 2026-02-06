@@ -33,6 +33,10 @@
       "title": "Smart Shopping Lists",
       "description": "Create and manage your shopping lists with ease. Never forget an item again!"
     },
+    "step5": {
+      "title": "Choose Your Plan",
+      "description": "• Free: 10 Actions/Day\n• Premium: 30 Actions/Day\n• Pro: Unlimited! ✨\nOffer: Save 8.5% on yearly plans."
+    },
     "step2": {
       "title": "Track Your Items",
       "description": "Check off items as you shop and keep your lists organized effortlessly."
@@ -68,7 +72,18 @@
     "welcomeBack": "Welcome back!",
     "accountCreated": "Account created!",
     "successfullyLoggedIn": "Successfully logged in",
-    "accountCreatedSuccess": "Your account has been created successfully"
+    "accountCreatedSuccess": "Your account has been created successfully",
+    "checkEmailTitle": "Check Your Email",
+    "verificationSent": "We've sent a verification link to:",
+    "spamWarningTitle": "⚠️ Can't find the email?",
+    "spamWarning1": "🗑️ Check your SPAM/JUNK folder - verification emails often end up there",
+    "spamWarning2": "⏳ Wait a few minutes - emails can take time to arrive",
+    "spamWarning3": "✉️ Check if you entered the correct email address",
+    "nextSteps": "📬 Next steps:",
+    "step1": "Open your email inbox",
+    "step2": "Click the verification link",
+    "step3": "Come back and log in",
+    "backToLogin": "Back to Login"
   },
   "lists": {
     "title": "Shopping Lists",

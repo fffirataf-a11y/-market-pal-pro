@@ -4,22 +4,14 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 
 import en from './locales/en.json';
 import tr from './locales/tr.json';
-import de from './locales/de.json';
-import fr from './locales/fr.json';
-import ja from './locales/ja.json';
-import ko from './locales/ko.json';
 
 const resources = {
   en: { translation: en },
   tr: { translation: tr },
-  de: { translation: de },
-  fr: { translation: fr },
-  ja: { translation: ja },
-  ko: { translation: ko },
 };
 
 // Desteklenen diller
-const supportedLanguages = ['en', 'tr', 'de', 'fr', 'ja', 'ko'];
+const supportedLanguages = ['en', 'tr'];
 
 // Telefon dilini algıla ve desteklenen dillerden biri mi kontrol et
 const detectLanguage = (): string => {
@@ -31,10 +23,10 @@ const detectLanguage = (): string => {
 
   // Telefon dilini algıla
   const browserLanguage = navigator.language || navigator.languages?.[0] || 'en';
-  
+
   // Tam dil kodu (örn: 'tr-TR') veya sadece dil kodu (örn: 'tr')
   const languageCode = browserLanguage.split('-')[0].toLowerCase();
-  
+
   // Desteklenen dillerden biri mi kontrol et
   if (supportedLanguages.includes(languageCode)) {
     return languageCode;
@@ -66,12 +58,12 @@ i18n
       convertDetectedLanguage: (lng: string) => {
         // Tam dil kodu (örn: 'tr-TR') veya sadece dil kodu (örn: 'tr')
         const languageCode = lng.split('-')[0].toLowerCase();
-        
+
         // Desteklenen dillerden biri mi kontrol et
         if (supportedLanguages.includes(languageCode)) {
           return languageCode;
         }
-        
+
         // Desteklenmiyorsa İngilizce kullan
         return 'en';
       },

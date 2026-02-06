@@ -194,10 +194,6 @@ const Settings = () => {
     const messages: Record<string, string> = {
       en: "Language changed to English",
       tr: "Dil Türkçe olarak değiştirildi",
-      ja: "言語が日本語に変更されました",
-      ko: "언어가 한국어로 변경되었습니다",
-      de: "Sprache wurde auf Deutsch umgestellt",
-      fr: "La langue a été changée en français",
     };
 
     i18n.changeLanguage(value);
@@ -398,13 +394,7 @@ const Settings = () => {
         });
       } else {
         console.error('❌ [IAP] Purchase failed but no error thrown');
-        toast({
-          title: i18n.language === 'tr' ? 'Satın alma iptal edildi' : 'Purchase Cancelled',
-          description: i18n.language === 'tr'
-            ? 'Satın alma işlemi tamamlanamadı.'
-            : 'Purchase could not be completed.',
-          variant: "destructive",
-        });
+        // Toast handled globally in usePurchases
       }
     } catch (error: any) {
       console.error('❌ [IAP] Purchase error:', error);
@@ -492,10 +482,6 @@ const Settings = () => {
                 <SelectContent>
                   <SelectItem value="en">English</SelectItem>
                   <SelectItem value="tr">Türkçe</SelectItem>
-                  <SelectItem value="ja">日本語</SelectItem>
-                  <SelectItem value="ko">한국어</SelectItem>
-                  <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="fr">Français</SelectItem>
                 </SelectContent>
               </Select>
             </div>
