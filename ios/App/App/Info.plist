@@ -12,7 +12,7 @@
 	<string>We need access to your camera to scan receipts.</string>
 	<key>CFBundleDisplayName</key>
 	<string>SmartMarket</string>
-	</array>
+
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
