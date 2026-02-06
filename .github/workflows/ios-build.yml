@@ -45,12 +45,12 @@ jobs:
           echo "MD5 of Repo File Text:"
           md5 cert_secret_b64.txt
           
-          # Decode using file input
-          base64 -D -i cert_secret_b64.txt -o $CERTIFICATE_PATH
+          # Decode using file input (robust against whitespace/newlines)
+          tr -d '\r\n ' < cert_secret_b64.txt | base64 -D -o $CERTIFICATE_PATH
           
           # BYPASSING SECRET: Read Profile from repo file
           cat profile_FINAL_v1_base64_PURE.txt > profile_secret_b64.txt
-          base64 -D -i profile_secret_b64.txt -o $PP_PATH
+          tr -d '\r\n ' < profile_secret_b64.txt | base64 -D -o $PP_PATH
           
           # Debugging: Check file size and hash
           ls -l $CERTIFICATE_PATH
