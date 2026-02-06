@@ -10,10 +10,6 @@
 	<array>
 		<string>Default</string>
 	</array>
-	<key>com.apple.developer.associated-domains</key>
-	<array>
-		<string>applinks:market-pal-pro.web.app</string>
-		<string>applinks:market-pal-pro.firebaseapp.com</string>
-	</array>
+
 </dict>
 </plist>
