@@ -120,7 +120,6 @@ jobs:
             CODE_SIGN_IDENTITY="Apple Distribution" \
             PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_NAME" \
             PROVISIONING_PROFILE="$PROVISIONING_PROFILE_UUID" \
-            CODE_SIGN_ENTITLEMENTS="App/App.entitlements" \
             OTHER_CODE_SIGN_FLAGS="--keychain $RUNNER_TEMP/app-signing.keychain-db" \
             | tee "$RUNNER_TEMP/build.log"
           
