@@ -103,13 +103,21 @@ jobs:
           sed -i '' "s/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Manual; PROVISIONING_PROFILE = \"$PROVISIONING_PROFILE_UUID\"; CODE_SIGN_IDENTITY = \"iPhone Distribution\";/" ios/App/App.xcodeproj/project.pbxproj
 
           cd ios
+          xcodebuild -workspace App/App.xcworkspace -scheme App -configuration Release clean
           xcodebuild -workspace App/App.xcworkspace \
             -scheme "App" \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -sdk iphoneos \
             -configuration Release \
             -destination generic/platform=iOS \
-            archive
+            archive > $RUNNER_TEMP/xcodebuild.log 2>&1
+          BUILD_STATUS=$?
+          cat $RUNNER_TEMP/xcodebuild.log
+          if [ $BUILD_STATUS -ne 0 ]; then
+            echo "::error::=== Build failed. Error lines (search for these in the log above) ==="
+            grep "error:" $RUNNER_TEMP/xcodebuild.log | head -25 || true
+            exit $BUILD_STATUS
+          fi
 
       - name: Export IPA
         env:
