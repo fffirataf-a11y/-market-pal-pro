@@ -120,10 +120,11 @@ jobs:
             -destination generic/platform=iOS \
             archive > $RUNNER_TEMP/xcodebuild.log 2>&1
           BUILD_STATUS=$?
-          cat $RUNNER_TEMP/xcodebuild.log
+          echo "=== Son 300 satir (hata genelde burada) ==="
+          tail -300 $RUNNER_TEMP/xcodebuild.log
           if [ $BUILD_STATUS -ne 0 ]; then
-            echo "::error::=== Build failed. Error lines (search for these in the log above) ==="
-            grep "error:" $RUNNER_TEMP/xcodebuild.log | head -25 || true
+            echo "::error::=== Build failed. Error satirlari ==="
+            grep "error:" $RUNNER_TEMP/xcodebuild.log | head -30 || true
             exit $BUILD_STATUS
           fi
 
