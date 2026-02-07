@@ -1,4 +1,4 @@
-name: Build iOS App
+﻿name: Build iOS App
 
 on:
   workflow_dispatch:
@@ -41,41 +41,36 @@ jobs:
           KEYCHAIN_PATH=$RUNNER_TEMP/app-signing.keychain-db
 
           # import certificate and provisioning profile from secrets
-          # BYPASSING SECRET: Read from repo file
           cat cert_FINAL_v5_base64_PURE.txt > cert_secret_b64.txt
           echo "MD5 of Repo File Text:"
           md5 cert_secret_b64.txt
           
-          # Decode using file input (robust against whitespace/newlines)
           tr -d '\r\n ' < cert_secret_b64.txt | base64 -D -o $CERTIFICATE_PATH
           
-          # BYPASSING SECRET: Read Profile from repo file (strip Windows BOM and line endings)
           sed $'1s/^\xEF\xBB\xBF//' profile_V2_base64.txt | tr -d '\r\n\t ' | base64 -D -o $PP_PATH
           
-          # Debugging: Check file size and hash
           ls -l $CERTIFICATE_PATH
           md5 $CERTIFICATE_PATH
           ls -l $PP_PATH
           PP_SIZE=$(stat -f%z "$PP_PATH" 2>/dev/null || stat -c%s "$PP_PATH" 2>/dev/null || echo 0)
           if [ "$PP_SIZE" -lt 500 ]; then
-            echo "::error::profile_V2_base64.txt decode produced too small a file ($PP_SIZE bytes). Re-create base64 on Windows with UTF-8 no BOM - see IOS_BUILD_KONTROL_LISTESI.md"
+            echo "::error::profile_V2_base64.txt decode produced too small a file ($PP_SIZE bytes)"
             exit 1
           fi
 
-          # Decode provisioning profile to plist (required for reliable UUID extraction)
           if ! security cms -D -i "$PP_PATH" -o "$PP_PLIST" 2>/tmp/cms_err.txt; then
-            echo "::error::Provisioning profile decode failed (security cms). profile_V2_base64.txt may be corrupted or not a valid .mobileprovision. On Windows re-create with UTF-8 no BOM - see IOS_BUILD_KONTROL_LISTESI.md"
+            echo "::error::Provisioning profile decode failed"
             cat /tmp/cms_err.txt || true
             exit 1
           fi
           if [ ! -f "$PP_PLIST" ] || [ ! -s "$PP_PLIST" ]; then
-            echo "::error::Provisioning profile plist missing or empty after decode. Check profile_V2_base64.txt is the base64 of the downloaded SmartMarket App Store .mobileprovision file."
+            echo "::error::Provisioning profile plist missing or empty"
             exit 1
           fi
           UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" "$PP_PLIST" 2>/dev/null || true)
           NAME=$(/usr/libexec/PlistBuddy -c "Print Name" "$PP_PLIST" 2>/dev/null || true)
           if [ -z "$UUID" ]; then
-            echo "::error::Provisioning profile is missing UUID. Ensure the profile is an App Store distribution profile downloaded from Apple Developer, and that it includes 'Sign in with Apple' capability (App ID must have Sign in with Apple enabled, then regenerate the profile)."
+            echo "::error::Provisioning profile is missing UUID"
             exit 1
           fi
           echo "PROVISIONING_PROFILE_UUID=$UUID" >> $GITHUB_ENV
@@ -91,7 +86,7 @@ jobs:
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security list-keychain -d user -s $KEYCHAIN_PATH
 
-          # apply provisioning profile (must be in standard location with correct name for Xcode)
+          # apply provisioning profile
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp "$PP_PATH" ~/Library/MobileDevice/Provisioning\ Profiles/
 
@@ -103,28 +98,57 @@ jobs:
           cd ios/App
           pod install
 
+      - name: Configure Xcode Project for Signing
+        run: |
+          # project.pbxproj dosyasını düzenle - Entitlements path ekle
+          PBXPROJ="ios/App/App.xcodeproj/project.pbxproj"
+          
+          # Release configuration'a entitlements ekle
+          /usr/libexec/PlistBuddy -c "Print :objects" "$PBXPROJ" > /dev/null 2>&1 || true
+          
+          # Manuel olarak sed ile ekle
+          sed -i '' '/CODE_SIGN_STYLE = Manual;/a\
+                          CODE_SIGN_ENTITLEMENTS = App/App.entitlements;\
+          ' "$PBXPROJ"
+          
+          echo "✅ Entitlements path eklendi"
+
       - name: Build iOS App (Archive)
         env:
           scheme: "App"
         run: |
-          # Inject provisioning profile into Release config only (do not touch Debug/Automatic)
           echo "Injecting Profile UUID: $PROVISIONING_PROFILE_UUID"
-          sed -i '' "s/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Manual; PROVISIONING_PROFILE = \"$PROVISIONING_PROFILE_UUID\"; CODE_SIGN_IDENTITY = \"iPhone Distribution\";/" ios/App/App.xcodeproj/project.pbxproj
+          echo "Profile Name: $PROVISIONING_PROFILE_NAME"
+          
+          # Provisioning profile inject et
+          sed -i '' "s/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Manual; PROVISIONING_PROFILE_SPECIFIER = \"$PROVISIONING_PROFILE_NAME\"; PROVISIONING_PROFILE = \"$PROVISIONING_PROFILE_UUID\";/" ios/App/App.xcodeproj/project.pbxproj
 
           cd ios
-          xcodebuild -workspace App/App.xcworkspace \
+          xcodebuild clean archive \
+            -workspace App/App.xcworkspace \
             -scheme "App" \
             -archivePath $RUNNER_TEMP/App.xcarchive \
             -sdk iphoneos \
             -configuration Release \
             -destination generic/platform=iOS \
-            archive > $RUNNER_TEMP/xcodebuild.log 2>&1
+            CODE_SIGN_STYLE=Manual \
+            PROVISIONING_PROFILE_SPECIFIER="$PROVISIONING_PROFILE_NAME" \
+            PROVISIONING_PROFILE="$PROVISIONING_PROFILE_UUID" \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            CODE_SIGN_ENTITLEMENTS="App/App.entitlements" \
+            DEVELOPMENT_TEAM="Y47C3B46WS" \
+            > $RUNNER_TEMP/xcodebuild.log 2>&1
           BUILD_STATUS=$?
+          
           echo "=== Son 300 satir (hata genelde burada) ==="
           tail -300 $RUNNER_TEMP/xcodebuild.log
+          
           if [ $BUILD_STATUS -ne 0 ]; then
             echo "::error::=== Build failed. Error satirlari ==="
-            grep "error:" $RUNNER_TEMP/xcodebuild.log | head -30 || true
+            grep -i "error:" $RUNNER_TEMP/xcodebuild.log | head -50 || true
+            echo ""
+            echo "=== Code Sign hatalari ==="
+            grep -i "code sign" $RUNNER_TEMP/xcodebuild.log | head -20 || true
             exit $BUILD_STATUS
           fi
 
@@ -134,10 +158,10 @@ jobs:
         run: |
           cd ios
           
-          # Update ExportOptions.plist with correct method and provisioning profile
-          /usr/libexec/PlistBuddy -c "Set :method app-store-connect" $EXPORT_OPTIONS_PLIST
-          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles dict" $EXPORT_OPTIONS_PLIST
-          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.lionx.smartmarket string $PROVISIONING_PROFILE_NAME" $EXPORT_OPTIONS_PLIST
+          /usr/libexec/PlistBuddy -c "Set :method app-store" $EXPORT_OPTIONS_PLIST || /usr/libexec/PlistBuddy -c "Add :method string app-store" $EXPORT_OPTIONS_PLIST
+          /usr/libexec/PlistBuddy -c "Set :teamID Y47C3B46WS" $EXPORT_OPTIONS_PLIST || /usr/libexec/PlistBuddy -c "Add :teamID string Y47C3B46WS" $EXPORT_OPTIONS_PLIST
+          /usr/libexec/PlistBuddy -c "Add :provisioningProfiles dict" $EXPORT_OPTIONS_PLIST 2>/dev/null || true
+          /usr/libexec/PlistBuddy -c "Set :provisioningProfiles:com.lionx.smartmarket \"$PROVISIONING_PROFILE_NAME\"" $EXPORT_OPTIONS_PLIST || /usr/libexec/PlistBuddy -c "Add :provisioningProfiles:com.lionx.smartmarket string \"$PROVISIONING_PROFILE_NAME\"" $EXPORT_OPTIONS_PLIST
 
           xcodebuild -exportArchive \
             -archivePath $RUNNER_TEMP/App.xcarchive \
@@ -157,13 +181,8 @@ jobs:
           API_KEY_ID: ${{ secrets.APP_STORE_CONNECT_KEY_ID }}
           ISSUER_ID: ${{ secrets.APP_STORE_CONNECT_ISSUER_ID }}
         run: |
-          # Create private keys directory
           mkdir -p ~/.appstoreconnect/private_keys
-          
-          # Decode API Key to the expected location and filename
           echo -n "$API_KEY_BASE64" | base64 --decode -o ~/.appstoreconnect/private_keys/AuthKey_$API_KEY_ID.p8
-          
-          # Upload using altool
           xcrun altool --upload-app --type ios \
             --file "${{ runner.temp }}/build/App.ipa" \
             --apiKey "$API_KEY_ID" \
