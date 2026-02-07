@@ -97,6 +97,10 @@ jobs:
           echo "Profile Name: $PROVISIONING_PROFILE_NAME"
           echo "========================================="
           
+          # Ensure keychain is in search list for this step (each step is a new shell)
+          KEYCHAIN_PATH="$RUNNER_TEMP/app-signing.keychain-db"
+          security list-keychain -d user -s $(security list-keychain -d user | tr '\n' ' ') "$KEYCHAIN_PATH"
+          
           cd ios
           
           # Clean build artifacts
