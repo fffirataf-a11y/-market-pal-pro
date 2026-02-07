@@ -168,3 +168,4 @@ jobs:
             --file "${{ runner.temp }}/build/App.ipa" \
             --apiKey "$API_KEY_ID" \
             --apiIssuer "$ISSUER_ID"
+            # Force rebuild - 2026-02-07 - Updated profile_V2_base64.txt
