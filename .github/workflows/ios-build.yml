@@ -49,18 +49,27 @@ jobs:
           # Decode using file input (robust against whitespace/newlines)
           tr -d '\r\n ' < cert_secret_b64.txt | base64 -D -o $CERTIFICATE_PATH
           
-          # BYPASSING SECRET: Read Profile from repo file (strip Windows BOM if present)
-          sed $'1s/^\xEF\xBB\xBF//' profile_V2_base64.txt | tr -d '\r\n ' | base64 -D -o $PP_PATH
+          # BYPASSING SECRET: Read Profile from repo file (strip Windows BOM and line endings)
+          sed $'1s/^\xEF\xBB\xBF//' profile_V2_base64.txt | tr -d '\r\n\t ' | base64 -D -o $PP_PATH
           
           # Debugging: Check file size and hash
           ls -l $CERTIFICATE_PATH
           md5 $CERTIFICATE_PATH
           ls -l $PP_PATH
+          PP_SIZE=$(stat -f%z "$PP_PATH" 2>/dev/null || stat -c%s "$PP_PATH" 2>/dev/null || echo 0)
+          if [ "$PP_SIZE" -lt 500 ]; then
+            echo "::error::profile_V2_base64.txt decode produced too small a file ($PP_SIZE bytes). Re-create base64 on Windows with UTF-8 no BOM - see IOS_BUILD_KONTROL_LISTESI.md"
+            exit 1
+          fi
 
           # Decode provisioning profile to plist (required for reliable UUID extraction)
-          security cms -D -i "$PP_PATH" -o "$PP_PLIST"
-          if [ ! -f "$PP_PLIST" ]; then
-            echo "::error::Provisioning profile decode failed. Check that profile_V2_base64.txt is valid base64 and a valid .mobileprovision file."
+          if ! security cms -D -i "$PP_PATH" -o "$PP_PLIST" 2>/tmp/cms_err.txt; then
+            echo "::error::Provisioning profile decode failed (security cms). profile_V2_base64.txt may be corrupted or not a valid .mobileprovision. On Windows re-create with UTF-8 no BOM - see IOS_BUILD_KONTROL_LISTESI.md"
+            cat /tmp/cms_err.txt || true
+            exit 1
+          fi
+          if [ ! -f "$PP_PLIST" ] || [ ! -s "$PP_PLIST" ]; then
+            echo "::error::Provisioning profile plist missing or empty after decode. Check profile_V2_base64.txt is the base64 of the downloaded SmartMarket App Store .mobileprovision file."
             exit 1
           fi
           UUID=$(/usr/libexec/PlistBuddy -c "Print UUID" "$PP_PLIST" 2>/dev/null || true)
@@ -103,7 +112,6 @@ jobs:
           sed -i '' "s/CODE_SIGN_STYLE = Manual;/CODE_SIGN_STYLE = Manual; PROVISIONING_PROFILE = \"$PROVISIONING_PROFILE_UUID\"; CODE_SIGN_IDENTITY = \"iPhone Distribution\";/" ios/App/App.xcodeproj/project.pbxproj
 
           cd ios
-          xcodebuild -workspace App/App.xcworkspace -scheme App -configuration Release clean
           xcodebuild -workspace App/App.xcworkspace \
             -scheme "App" \
             -archivePath $RUNNER_TEMP/App.xcarchive \
